@@ -50,7 +50,7 @@ end
 
 function run()
     println("ready")
-    open("/home/devjac/Code/julia/machine_learn_the_spire/out.txt", "a") do f
+    open("/home/devjac/Code/julia/solve_the_spire/out.txt", "a") do f
         try
             write(f, "\n\n\n\n============ new run ============\n")
             for t in 1:1000
