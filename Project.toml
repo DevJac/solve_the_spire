@@ -1,6 +1,6 @@
 [deps]
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 OpenAIGym = "41d6fcb8-dd24-11e8-2536-c3dc023218b5"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+TensorBoardLogger = "899adc3e-224a-11e9-021f-63837185c80f"
