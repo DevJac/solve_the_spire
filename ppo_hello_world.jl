@@ -12,7 +12,7 @@ function PolicyNetwork(in, out, hidden)
     for i in 1:length(hidden)-1
         push!(layers, Dense(hidden[i], hidden[i+1], mish, initW=Flux.kaiming_uniform))
     end
-    push!(layers, Dense(hidden[end], out, identity, initW=Flux.kaiming_uniform))
+    push!(layers, Dense(hidden[end], out, identity))
     push!(layers, softmax)
     PolicyNetwork(Chain(layers...))
 end
@@ -21,14 +21,52 @@ function (p::PolicyNetwork)(s)
     p.network(s)
 end
 
+struct QNetwork{N, A, V}
+    main_network   :: N
+    action_network :: A
+    value_network  :: V
+    function QNetwork(in, out, hidden)
+        main_layers = Any[Dense(in, hidden[1], mish, initW=Flux.kaiming_uniform)]
+        for i in 1:length(hidden)-1
+            push!(main_layers, Dense(hidden[i], hidden[i+1], mish, initW=Flux.kaiming_uniform))
+        end
+        main_network = Chain(main_layers...)
+        action_network = Dense(hidden[end], out, identity)
+        value_network = Dense(hidden[end], 1, identity)
+        new{typeof(main_network), typeof(action_network), typeof(value_network)}(main_network, action_network, value_network)
+    end
+end
+
+Flux.@functor QNetwork
+
+function (qn::QNetwork)(s)
+    n = qn.main_network(s)
+    a = qn.action_network(n)
+    v = qn.value_network(n)
+    a_mean = mean(a, dims=1)
+    @assert typeof(a) == Array{Float32, 2}
+    @assert typeof(v) == Array{Float32, 2}
+    @assert typeof(a_mean) == Array{Float32, 2}
+    v .+ a .- a_mean
+end
+
+function advantage(qn, s)
+    q = qn(s)
+    q_mean = mean(q, dims=1)
+    @assert typeof(q) == Array{Float32, 2}
+    @assert typeof(q_mean) == Array{Float32, 2}
+    q .- q_mean
+end
+
 struct Policy <: AbstractPolicy
     a_to_i
     i_to_a
-    network
+    policy_network
+    q_network
 end
 
 function Reinforce.action(policy::Policy, r, s, A)
-    a_p = policy.network(s)
+    a_p = policy.policy_network(s)
     sample(1:length(a_p), Weights(a_p)) |> policy.i_to_a
 end
 
@@ -50,7 +88,9 @@ function onehot(hot_i, length)
     result
 end
 
-function optimize!(env, policy, sars, epochs=100, ϵ=0.2)
+clip(n, ϵ) = clamp(n, 1 - ϵ, 1 + ϵ)
+
+function optimize!(env, policy, sars, epochs=10_000, ϵ=0.2)
     stack(f) = Float32.(reduce(hcat, map(f, sars)))
     s = stack(x -> x[1])
     a = stack(x -> onehot(policy.a_to_i(x[2]), length(env.actions)))
@@ -64,17 +104,33 @@ function optimize!(env, policy, sars, epochs=100, ϵ=0.2)
     @assert typeof(s′) == Array{Float32, 2} typeof(s′)
     @assert typeof(f) == Array{Float32, 2} typeof(f)
     @assert typeof(q) == Array{Float32, 2} typeof(q)
-    target_network = deepcopy(policy.network)
-    target_a_p = sum(target_network(s) .* a, dims=1)
-    opt = RMSProp(0.000_1)
+    q_opt = ADAM()
+    policy_opt = ADAM()
     for epoch in 1:epochs
-        grads = gradient(params(policy.network)) do
-            online_a_p = sum(policy.network(s) .* a, dims=1)
-            a_ratio = online_a_p ./ target_a_p
-            a_ratio_clamped = clamp.(a_ratio, 1 - ϵ, 1 + ϵ)
-            -mean(minimum([a_ratio .* q; a_ratio_clamped .* q], dims=1))
+        i_sample = sample(1:size(s)[2], 100)
+        s_sample = s[:, i_sample]
+        a_sample = a[:, i_sample]
+        q_sample = q[:, i_sample]
+        grads = gradient(params(policy.q_network)) do
+            predicted = sum(policy.q_network(s_sample) .* a_sample, dims=1)
+            mean((predicted .- q_sample).^2)
         end
-        Flux.Optimise.update!(opt, params(policy.network), grads)
+        Flux.Optimise.update!(q_opt, params(policy.q_network), grads)
+    end
+    target_policy_network = deepcopy(policy.policy_network)
+    for epoch in 1:epochs
+        i_sample = sample(1:size(s)[2], 100)
+        s_sample = s[:, i_sample]
+        a_sample = a[:, i_sample]
+        advantage_sample = advantage(policy.q_network, s_sample) .* a_sample
+        target_a_p = sum(target_policy_network(s_sample) .* a_sample, dims=1)
+        grads = gradient(params(policy.policy_network)) do
+            online_a_p = sum(policy.policy_network(s_sample) .* a_sample, dims=1)
+            a_ratio = online_a_p ./ target_a_p
+            a_ratio_clipped = clip.(a_ratio, ϵ)
+            -mean(minimum([a_ratio .* advantage_sample; a_ratio_clipped .* advantage_sample], dims=1))
+        end
+        Flux.Optimise.update!(policy_opt, params(policy.policy_network), grads)
     end
 end
 
@@ -94,18 +150,23 @@ end
 function run(generations=5000)
     env = GymEnv(:CartPole, :v1)
     rewards = []
-    policy = Policy(x -> x+1, x -> x-1, PolicyNetwork(length(env.state), length(env.actions), [32]))
+    policy = Policy(
+        x -> x+1,
+        x -> x-1,
+        PolicyNetwork(length(env.state), length(env.actions), [32]),
+        QNetwork(length(env.state), length(env.actions), [32]))
     try
         for gen in 1:generations
             sars, rs = run_episodes(env, policy, 100)
             append!(rewards, rs)
-            optimize!(env, policy, sars)
             println(mean(rs))
+            if mean(rs) >= 475; break end
+            optimize!(env, policy, sars)
         end
     catch e
         if !isa(e, InterruptException); rethrow() end
     finally
         close(env)
     end
-    return policy, rewards, sars
+    return policy, rewards
 end
