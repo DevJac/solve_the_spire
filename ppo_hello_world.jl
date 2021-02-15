@@ -1,31 +1,31 @@
 using Flux
 using OpenAIGym
 
-struct PolicyNetwork{N}
+struct VanillaNetwork{N}
     network :: N
 end
 
-Flux.@functor PolicyNetwork
+Flux.@functor VanillaNetwork
 
-function PolicyNetwork(in, out, hidden)
+function VanillaNetwork(in, out, hidden)
     layers = Any[Dense(in, hidden[1], mish, initW=Flux.kaiming_uniform)]
     for i in 1:length(hidden)-1
         push!(layers, Dense(hidden[i], hidden[i+1], mish, initW=Flux.kaiming_uniform))
     end
     push!(layers, Dense(hidden[end], out, identity))
     push!(layers, softmax)
-    PolicyNetwork(Chain(layers...))
+    VanillaNetwork(Chain(layers...))
 end
 
-function (p::PolicyNetwork)(s)
+function (p::VanillaNetwork)(s)
     p.network(s)
 end
 
-struct QNetwork{N, A, V}
+struct DuellingNetwork{N, A, V}
     main_network   :: N
     action_network :: A
     value_network  :: V
-    function QNetwork(in, out, hidden)
+    function DuellingNetwork(in, out, hidden)
         main_layers = Any[Dense(in, hidden[1], mish, initW=Flux.kaiming_uniform)]
         for i in 1:length(hidden)-1
             push!(main_layers, Dense(hidden[i], hidden[i+1], mish, initW=Flux.kaiming_uniform))
@@ -37,9 +37,9 @@ struct QNetwork{N, A, V}
     end
 end
 
-Flux.@functor QNetwork
+Flux.@functor DuellingNetwork
 
-function (qn::QNetwork)(s)
+function (qn::DuellingNetwork)(s)
     n = qn.main_network(s)
     a = qn.action_network(n)
     v = qn.value_network(n)
@@ -104,8 +104,8 @@ function optimize!(env, policy, sars, epochs=10_000, ϵ=0.2)
     @assert typeof(s′) == Array{Float32, 2} typeof(s′)
     @assert typeof(f) == Array{Float32, 2} typeof(f)
     @assert typeof(q) == Array{Float32, 2} typeof(q)
-    q_opt = ADAM()
-    policy_opt = ADAM()
+    q_opt = RMSProp()
+    policy_opt = RMSProp()
     for epoch in 1:epochs
         i_sample = sample(1:size(s)[2], 100)
         s_sample = s[:, i_sample]
@@ -153,8 +153,8 @@ function run(generations=5000)
     policy = Policy(
         x -> x+1,
         x -> x-1,
-        PolicyNetwork(length(env.state), length(env.actions), [32]),
-        QNetwork(length(env.state), length(env.actions), [32]))
+        VanillaNetwork(length(env.state), length(env.actions), [32]),
+        DuellingNetwork(length(env.state), length(env.actions), [32]))
     try
         for gen in 1:generations
             sars, rs = run_episodes(env, policy, 100)
