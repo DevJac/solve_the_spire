@@ -124,6 +124,7 @@ function optimize!(env, policy, sars, epochs=10_000, ϵ=0.2)
         a_sample = a[:, i_sample]
         advantage_sample = advantage(policy.q_network, s_sample) .* a_sample
         target_a_p = sum(target_policy_network(s_sample) .* a_sample, dims=1)
+        online_a_p = nothing
         grads = gradient(params(policy.policy_network)) do
             online_a_p = sum(policy.policy_network(s_sample) .* a_sample, dims=1)
             a_ratio = online_a_p ./ target_a_p
@@ -131,6 +132,10 @@ function optimize!(env, policy, sars, epochs=10_000, ϵ=0.2)
             -mean(minimum([a_ratio .* advantage_sample; a_ratio_clipped .* advantage_sample], dims=1))
         end
         Flux.Optimise.update!(policy_opt, params(policy.policy_network), grads)
+        if Flux.Losses.kldivergence(target_a_p, online_a_p) >= 0.01
+            println("        early stop on epoch: $epoch")
+            break
+        end
     end
 end
 
