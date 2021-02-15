@@ -1,23 +1,23 @@
 using Flux
 using OpenAIGym
 
-struct VanillaNetwork{N}
+struct SoftmaxNetwork{N}
     network :: N
 end
 
-Flux.@functor VanillaNetwork
+Flux.@functor SoftmaxNetwork
 
-function VanillaNetwork(in, out, hidden)
+function SoftmaxNetwork(in, out, hidden)
     layers = Any[Dense(in, hidden[1], mish, initW=Flux.kaiming_uniform)]
     for i in 1:length(hidden)-1
         push!(layers, Dense(hidden[i], hidden[i+1], mish, initW=Flux.kaiming_uniform))
     end
     push!(layers, Dense(hidden[end], out, identity))
     push!(layers, softmax)
-    VanillaNetwork(Chain(layers...))
+    SoftmaxNetwork(Chain(layers...))
 end
 
-function (p::VanillaNetwork)(s)
+function (p::SoftmaxNetwork)(s)
     p.network(s)
 end
 
@@ -154,7 +154,7 @@ function run(generations=50)
     policy = Policy(
         x -> x+1,
         x -> x-1,
-        VanillaNetwork(length(env.state), length(env.actions), [32]),
+        SoftmaxNetwork(length(env.state), length(env.actions), [32]),
         DuellingNetwork(length(env.state), length(env.actions), [32]))
     try
         for gen in 1:generations
