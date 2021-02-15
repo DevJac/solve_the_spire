@@ -147,9 +147,10 @@ function run_episodes(env, policy, n_episodes)
     return sars, rewards
 end
 
-function run(generations=5000)
+function run(generations=50)
     env = GymEnv(:CartPole, :v1)
     rewards = []
+    gens = 0
     policy = Policy(
         x -> x+1,
         x -> x-1,
@@ -157,6 +158,7 @@ function run(generations=5000)
         DuellingNetwork(length(env.state), length(env.actions), [32]))
     try
         for gen in 1:generations
+            gens += 1
             sars, rs = run_episodes(env, policy, 100)
             append!(rewards, rs)
             println(mean(rs))
@@ -168,5 +170,5 @@ function run(generations=5000)
     finally
         close(env)
     end
-    return policy, rewards
+    return gens, policy, rewards
 end
