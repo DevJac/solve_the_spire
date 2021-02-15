@@ -133,7 +133,6 @@ function optimize!(env, policy, sars, epochs=10_000, ϵ=0.2)
             a_ratio_clipped = clip.(a_ratio, ϵ)
             -mean(minimum([a_ratio .* advantage_sample; a_ratio_clipped .* advantage_sample], dims=1))
         end
-        Flux.Optimise.update!(policy_opt, params(policy.policy_network), grads)
         @assert !any(isnan, online_p)
         @assert !any(isnan, target_p)
         kl_div = Flux.Losses.kldivergence(online_p, target_p)
@@ -142,6 +141,7 @@ function optimize!(env, policy, sars, epochs=10_000, ϵ=0.2)
             println("        early stop on epoch: $epoch")
             break
         end
+        Flux.Optimise.update!(policy_opt, params(policy.policy_network), grads)
     end
 end
 
