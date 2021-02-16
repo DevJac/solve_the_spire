@@ -1,62 +1,7 @@
 using Flux
+using Networks
 using OpenAIGym
-
-struct SoftmaxNetwork{N}
-    network :: N
-end
-
-Flux.@functor SoftmaxNetwork
-
-function SoftmaxNetwork(in, out, hidden)
-    layers = Any[Dense(in, hidden[1], mish, initW=Flux.kaiming_uniform)]
-    for i in 1:length(hidden)-1
-        push!(layers, Dense(hidden[i], hidden[i+1], mish, initW=Flux.kaiming_uniform))
-    end
-    push!(layers, Dense(hidden[end], out, identity))
-    push!(layers, softmax)
-    SoftmaxNetwork(Chain(layers...))
-end
-
-function (p::SoftmaxNetwork)(s)
-    p.network(s)
-end
-
-struct DuellingNetwork{N, A, V}
-    main_network   :: N
-    action_network :: A
-    value_network  :: V
-    function DuellingNetwork(in, out, hidden)
-        main_layers = Any[Dense(in, hidden[1], mish, initW=Flux.kaiming_uniform)]
-        for i in 1:length(hidden)-1
-            push!(main_layers, Dense(hidden[i], hidden[i+1], mish, initW=Flux.kaiming_uniform))
-        end
-        main_network = Chain(main_layers...)
-        action_network = Dense(hidden[end], out, identity)
-        value_network = Dense(hidden[end], 1, identity)
-        new{typeof(main_network), typeof(action_network), typeof(value_network)}(main_network, action_network, value_network)
-    end
-end
-
-Flux.@functor DuellingNetwork
-
-function (qn::DuellingNetwork)(s)
-    n = qn.main_network(s)
-    a = qn.action_network(n)
-    v = qn.value_network(n)
-    a_mean = mean(a, dims=1)
-    @assert typeof(a) == Array{Float32, 2}
-    @assert typeof(v) == Array{Float32, 2}
-    @assert typeof(a_mean) == Array{Float32, 2}
-    v .+ a .- a_mean
-end
-
-function advantage(qn, s)
-    q = qn(s)
-    q_mean = mean(q, dims=1)
-    @assert typeof(q) == Array{Float32, 2}
-    @assert typeof(q_mean) == Array{Float32, 2}
-    q .- q_mean
-end
+using Utils
 
 struct Policy <: AbstractPolicy
     a_to_i
@@ -70,39 +15,19 @@ function Reinforce.action(policy::Policy, r, s, A)
     sample(1:length(a_p), Weights(a_p)) |> policy.i_to_a
 end
 
-function mc_q(r, f, γ=1.0f0)
-    result = similar(r)
-    q = 0f0
-    for i in length(r):-1:1
-        q *= 1.0f0 - f[1, i]
-        q += r[1, i]
-        result[1, i] = q
-        q *= γ
-    end
-    result
-end
-
-function onehot(hot_i, length)
-    result = zeros(Float32, length)
-    result[hot_i] = 1.0f0
-    result
-end
-
-clip(n, ϵ) = clamp(n, 1 - ϵ, 1 + ϵ)
-
 function optimize!(env, policy, sars, epochs=10_000, ϵ=0.2)
     stack(f) = Float32.(reduce(hcat, map(f, sars)))
     s = stack(x -> x[1])
     a = stack(x -> onehot(policy.a_to_i(x[2]), length(env.actions)))
     r = stack(x -> x[3])
     s′ = stack(x -> x[4])
-    f = stack(x -> x[5])
+    f = Bool.(stack(x -> x[5]))
     q = mc_q(r, f)
     @assert typeof(s) == Array{Float32, 2} typeof(s)
     @assert typeof(a) == Array{Float32, 2} typeof(a)
     @assert typeof(r) == Array{Float32, 2} typeof(r)
     @assert typeof(s′) == Array{Float32, 2} typeof(s′)
-    @assert typeof(f) == Array{Float32, 2} typeof(f)
+    @assert typeof(f) == BitArray{2} typeof(f)
     @assert typeof(q) == Array{Float32, 2} typeof(q)
     q_opt = RMSProp()
     policy_opt = RMSProp()
@@ -165,8 +90,8 @@ function run(generations=50)
     policy = Policy(
         x -> x+1,
         x -> x-1,
-        SoftmaxNetwork(length(env.state), length(env.actions), [32]),
-        DuellingNetwork(length(env.state), length(env.actions), [32]))
+        PolicyNetwork(length(env.state), length(env.actions), [32]),
+        QNetwork(length(env.state), length(env.actions), [32]))
     try
         for gen in 1:generations
             gens += 1
