@@ -1,0 +1,22 @@
+* Design
+** Agents
+*** Combat agents
+**** Card playing agent
+Receives: relics, potions, cards in hand, cards in draw pile, cards in discard pile, player state, enemy states
+Outputs: weights for potions, weights for cards, weight for end turn, target weights
+
+We will tend to play actions with the highest weight, against targets with the highest weight.
+**** Card weight override agent
+Receives: relics, potions, cards in hand, cards in draw pile, cards in discard pile, player state, enemy states
+Receives: card selected for playing and stats about that card
+Outputs: an override probability for the card selected for playing
+
+This allows us to handle cases where the cards cost is changed, as with Sneko Eye and other special cases.
+*** Other agents
+**** Card selection agent
+Receives: relics, potions, cards in deck, player stats, floor, gold, available cards
+Outputs: weights for available cards, weight for skip
+
+This allows us to pick cards and build our deck.
+**** Event agent
+**** Map agent
