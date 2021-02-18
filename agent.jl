@@ -47,6 +47,7 @@ shop_floors = []
 error_streak = 0
 
 function command(state)
+    global error_streak
     if "error" in keys(state)
         error_streak += 1
         sleep(1)
