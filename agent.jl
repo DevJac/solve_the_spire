@@ -3,7 +3,7 @@ using Sockets
 using StatsBase
 
 const SOCKET_FILE = "/home/devjac/Code/julia/solve_the_spire/relay_socket"
-const STATE_LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/state.log"
+const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
 
 function hide_map(state)
     result = deepcopy(state)
@@ -20,11 +20,11 @@ end
 
 function run()
     socket = connect(SOCKET_FILE)
-    open(STATE_LOG_FILE, "a") do state_log_file
+    open(LOG_FILE, "a") do log_file
         while true
             sts_state = JSON.parse(readline(socket))
-            JSON.print(state_log_file, sts_state)
-            write(state_log_file, "\n")
+            JSON.print(log_file, sts_state)
+            write(log_file, "\n")
             JSON.print(stdout, hide_map(sts_state), 12)
             c = command(sts_state)
             if isnothing(c)
@@ -32,8 +32,9 @@ function run()
                 print("Command: ")
                 cli_input = ""
                 while length(strip(cli_input)) == 0
-                    cli_input = readline(stdin)
+                    cli_input = strip(readline(stdin))
                 end
+                write(log_file, "Command: $cli_input\n")
                 write(socket, cli_input * "\n")
             else
                 write(socket, c * "\n")
