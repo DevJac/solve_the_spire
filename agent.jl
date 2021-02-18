@@ -50,6 +50,19 @@ function command(state)
     end
     if "game_state" in keys(state)
         gs = state["game_state"]
+        for (potion_index, potion) in enumerate(gs["potions"])
+            potion_index -= 1
+            if potion["can_use"]
+                if potion["requires_target"]
+                    monsters = collect(zip(gs["combat_state"]["monsters"], 0:100))
+                    attackable_monsters = filter(m -> !m[1]["is_gone"], monsters)
+                    random_monster_to_attack_index = sample(attackable_monsters)[2]
+                    return "potion use $potion_index $random_monster_to_attack_index"
+                else
+                    return "potion use $potion_index"
+                end
+            end
+        end
         if gs["screen_type"] == "EVENT"
             chooseables = filter(c -> "choice_index" in keys(c), gs["screen_state"]["options"])
             random_event_selection = sample(map(c -> c["choice_index"], chooseables))
