@@ -44,8 +44,16 @@ function run()
 end
 
 shop_floors = []
+error_streak = 0
 
 function command(state)
+    if "error" in keys(state)
+        error_streak += 1
+        sleep(1)
+        return error_streak % 2 == 0 ? "wait 100" : "state"
+    else
+        error_streak = 0
+    end
     if "in_game" in keys(state) && !state["in_game"]
         return "start silent"
     end
