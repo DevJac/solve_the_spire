@@ -1,5 +1,5 @@
 module Utils
-export mc_q, onehot, clip
+export DiskStringSet, mc_q, onehot, clip
 
 function mc_q(r, f, γ=1f0)
     result = Float32.(similar(r))
@@ -22,5 +22,56 @@ function onehot(hot_i, length)
 end
 
 clip(n, ϵ) = clamp(n, 1-ϵ, 1+ϵ)
+
+#################
+# DiskStringSet #
+#################
+
+struct DiskStringSet
+    file :: String
+end
+
+function Base.push!(set::DiskStringSet, s::String)
+    lines = readlines(open(set.file, create=true))
+    if strip(s) in lines; return end
+    open(set.file, append=true) do f
+        write(f, strip(s) * "\n")
+    end
+end
+
+function Base.pop!(set::DiskStringSet, s::String)
+    lines = readlines(open(set.file, create=true))
+    filter!(lines) do line
+        strip(line) != strip(s)
+    end
+    open(set.file, write=true) do f
+        for line in lines
+            write(f, strip(line) * "\n")
+        end
+    end
+end
+
+function Base.length(set::DiskStringSet)
+    lines = readlines(open(set.file, create=true))
+    length(lines)
+end
+
+function Base.iterate(set::DiskStringSet)
+    lines = readlines(open(set.file, create=true))
+    if isempty(lines)
+        nothing
+    else
+        (strip(lines[1]), 1)
+    end
+end
+
+function Base.iterate(set::DiskStringSet, state)
+    lines = readlines(open(set.file, create=true))
+    if length(lines) == state
+        nothing
+    else
+        (strip(lines[state+1]), state+1)
+    end
+end
 
 end # module
