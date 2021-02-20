@@ -23,20 +23,22 @@ function run()
     open(LOG_FILE, "a") do log_file
         while true
             sts_state = JSON.parse(readline(socket))
-            JSON.print(log_file, sts_state)
+            JSON.print(log_file, Dict("sts_state" => sts_state))
             write(log_file, "\n")
             JSON.print(stdout, hide_map(sts_state), 12)
             c = command(sts_state)
             if isnothing(c)
-                JSON.print(stdout, hide_map(sts_state), 12)
                 print("Command: ")
                 cli_input = ""
                 while length(strip(cli_input)) == 0
                     cli_input = strip(readline(stdin))
                 end
-                write(log_file, "Command: $cli_input\n")
+                JSON.print(log_file, Dict("manual_command" => cli_input))
+                write(log_file, "\n")
                 write(socket, cli_input * "\n")
             else
+                JSON.print(log_file, Dict("agent_command" => c))
+                write(log_file, "\n")
                 write(socket, c * "\n")
             end
         end
@@ -143,7 +145,8 @@ function command(state)
             if !in("choose", state["available_commands"])
                 return "proceed"
             end
-            return "choose 1"
+            random_choice = sample(0:length(gs["rest_options"])-1)
+            return "choose $random_choice"
         end
         if gs["screen_type"] == "CHEST"
             if !in("choose", state["available_commands"])
