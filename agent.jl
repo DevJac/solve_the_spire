@@ -145,7 +145,7 @@ function command(state)
             if !in("choose", state["available_commands"])
                 return "proceed"
             end
-            random_choice = sample(0:length(gs["rest_options"])-1)
+            random_choice = sample(0:length(gs["screen_state"]["rest_options"])-1)
             return "choose $random_choice"
         end
         if gs["screen_type"] == "CHEST"
