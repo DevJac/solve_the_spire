@@ -47,9 +47,11 @@ end
 
 shop_floors = []
 error_streak = 0
+reward_floor_choose_count = 0
 
 function command(state)
     global error_streak
+    global reward_floor_choose_count
     if "error" in keys(state)
         error_streak += 1
         sleep(1)
@@ -102,9 +104,11 @@ function command(state)
             return "play $random_card_to_play_index"
         end
         if gs["screen_type"] == "COMBAT_REWARD"
-            if !in("choose", state["available_commands"])
+            if !in("choose", state["available_commands"]) || reward_floor_choose_count > 10
+                reward_floor_choose_count = 0
                 return "proceed"
             end
+            reward_floor_choose_count += 1
             return "choose 0"
         end
         if gs["screen_type"] == "CARD_REWARD"
