@@ -18,37 +18,57 @@ function hide_map(state)
     result
 end
 
+function write_json(f, json)
+    JSON.print(f, json)
+    write(f, "\n")
+    flush(f)
+end
+
+function manual_command()
+    manual_command_input = ""
+    while length(strip(manual_command_input)) == 0
+        print("Command: ")
+        manual_command_input = strip(readline(stdin))
+    end
+end
+
 function run()
     socket = connect(SOCKET_FILE)
     open(LOG_FILE, "a") do log_file
         while true
             sts_state = JSON.parse(readline(socket))
-            JSON.print(log_file, Dict("sts_state" => sts_state))
-            write(log_file, "\n")
-            JSON.print(stdout, hide_map(sts_state), 12)
-            c = command(sts_state)
-            if isnothing(c)
-                print("Command: ")
-                cli_input = ""
-                while length(strip(cli_input)) == 0
-                    cli_input = strip(readline(stdin))
-                end
-                JSON.print(log_file, Dict("manual_command" => cli_input))
-                write(log_file, "\n")
-                write(socket, cli_input * "\n")
+            write_json(log_file, Dict("sts_state" => sts_state))
+            ac = agent_command(sts_state)
+            if isnothing(ac)
+                println("Agent gave no command. You may enter a manual command.")
+                mc = manual_command()
+                write_json(log_file, Dict("manual_command" => mc))
+                write(socket, mc * "\n")
             else
-                JSON.print(log_file, Dict("agent_command" => c))
-                write(log_file, "\n")
-                write(socket, c * "\n")
+                if typeof(ac) == String; ac = Command(ac) end
+                if isnothing(extra(ac))
+                    write_json(log_file, Dict("agent_command" => command(ac)))
+                else
+                    write_json(log_file, Dict("agent_command" => command(ac), "extra" => extra(ac)))
+                end
+                write(socket, command(ac) * "\n")
             end
         end
     end
 end
 
+struct Command
+    command
+    extra_json
+end
+Command(c) = Command(c, nothing)
+command(c::Command) = c.command
+extra(c::Command) = c.extra_json
+
 shop_floors = []
 error_streak = 0
 
-function command(state)
+function agent_command(state)
     global error_streak
     if "error" in keys(state)
         error_streak += 1
@@ -96,7 +116,9 @@ function command(state)
             random_card_to_play = sample(playable_hand)
             random_card_to_play_index = random_card_to_play[2]
             if random_card_to_play[1]["has_target"]
-                random_monster_to_attack_index = sample(attackable_monsters)[2]
+                min_hp = minimum(map(m -> m[1]["current_hp"], attackable_monsters))
+                min_hp_monsters = filter(m -> m[1]["current_hp"] == min_hp, attackable_monsters)
+                random_monster_to_attack_index = sample(min_hp_monsters)[2]
                 return "play $random_card_to_play_index $random_monster_to_attack_index"
             end
             return "play $random_card_to_play_index"
@@ -132,7 +154,11 @@ function command(state)
         end
         if gs["screen_type"] == "SHOP_SCREEN"
             push!(shop_floors, gs["floor"])
-            return "leave"
+            if !in("choose", state["available_commands"])
+                return "leave"
+            end
+            random_shop_choice = sample(0:length(gs["choice_list"])-1)
+            return "choose $random_shop_choice"
         end
         if gs["screen_type"] == "GRID"
             if !in("choose", state["available_commands"])
@@ -156,6 +182,10 @@ function command(state)
                 return "proceed"
             end
             return "choose 0"
+        end
+        if gs["screen_type"] == "BOSS_REWARD"
+            random_choice = sample(0:2)
+            return "choose $random_choice"
         end
     end
     nothing

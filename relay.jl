@@ -9,5 +9,6 @@ while true
     write(socket, readline(stdin) * "\n")
     command = readline(socket)
     if command == ""; break end
+    sleep(0.01)
     write(stdout, command * "\n")
 end
