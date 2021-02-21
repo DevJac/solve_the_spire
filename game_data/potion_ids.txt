@@ -1,0 +1,33 @@
+Ancient Potion
+AttackPotion
+BlessingOfTheForge
+Block Potion
+ColorlessPotion
+CultistPotion
+CunningPotion
+Dexterity Potion
+DistilledChaos
+DuplicationPotion
+Energy Potion
+EntropicBrew
+EssenceOfSteel
+Explosive Potion
+FairyPotion
+FearPotion
+Fire Potion
+Fruit Juice
+GamblersBrew
+GhostInAJar
+LiquidBronze
+LiquidMemories
+Poison Potion
+PowerPotion
+Regen Potion
+SkillPotion
+SmokeBomb
+SneckoOil
+SpeedPotion
+SteroidPotion
+Strength Potion
+Swift Potion
+Weak Potion
