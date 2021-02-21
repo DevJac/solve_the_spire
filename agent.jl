@@ -1,3 +1,4 @@
+using Dates
 using JSON
 using Sockets
 using StatsBase
@@ -19,6 +20,8 @@ function hide_map(state)
 end
 
 function write_json(f, json)
+    json = convert(Dict{String,Any}, json)
+    json["time"] = Dates.format(now(), ISODateTimeFormat)
     JSON.print(f, json)
     write(f, "\n")
     flush(f)
