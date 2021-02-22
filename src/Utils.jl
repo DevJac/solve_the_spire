@@ -1,5 +1,5 @@
 module Utils
-export DiskStringSet, mc_q, onehot, clip
+export DiskStringSet, mc_q, onehot, clip, find
 
 function mc_q(r, f, γ=1f0)
     result = Float32.(similar(r))
@@ -22,5 +22,14 @@ function onehot(hot_i, length)
 end
 
 clip(n, ϵ) = clamp(n, 1-ϵ, 1+ϵ)
+
+function find(needle, haystack)
+    matching_i = findall(x -> x == needle, haystack)
+    if isempty(matching_i)
+        nothing
+    else
+        only(matching_i)
+    end
+end
 
 end # module

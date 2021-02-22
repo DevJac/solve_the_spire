@@ -26,3 +26,8 @@ end
     @test clip(1, 0.2) == 1
     @test clip(0, 0.2) == 0.8
 end
+
+@testset "find" begin
+    @test find(2, [1, 2, 3]) == 2
+    @test find(4, [1, 2, 3]) == nothing
+end
