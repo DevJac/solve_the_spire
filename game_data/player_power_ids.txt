@@ -1,3 +1,4 @@
+Accuracy
 After Image
 Artifact
 Blur
@@ -19,6 +20,8 @@ IntangiblePlayer
 Magnetism
 Mayhem
 Next Turn Block
+NoBlockPower
+No Draw
 Noxious Fumes
 Pen Nib
 Phantasmal
@@ -27,9 +30,14 @@ Regeneration
 Retain Cards
 Ritual
 Strength
+TheBomb0
+TheBomb1
+TheBomb2
+TheBomb3
 Thorns
 Thousand Cuts
 Tools Of The Trade
+Vigor
 Vulnerable
 Weakened
 Wraith Form v2

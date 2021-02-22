@@ -3,12 +3,16 @@ Angry
 Artifact
 Barricade
 Choked
+CorpseExplosionPower
 Curl Up
+Flight
 Malleable
 Metallicize
 Mode Shift
 Painful Stabs
+Plated Armor
 Poison
+Regenerate
 Ritual
 Shackled
 Sharp Hide

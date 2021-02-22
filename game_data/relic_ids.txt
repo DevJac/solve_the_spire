@@ -1,4 +1,6 @@
+Akabeko
 Anchor
+Ancient Tea Set
 Art of War
 Astrolabe
 Bag of Marbles
@@ -6,6 +8,7 @@ Bag of Preparation
 Bird Faced Urn
 Black Star
 Blood Vial
+Blue Candle
 Boot
 Bottled Flame
 Bottled Lightning
@@ -15,25 +18,35 @@ Busted Crown
 CaptainsWheel
 Centennial Puzzle
 Chemical X
+Calling Bell
+CeramicFish
 ClockworkSouvenir
 Coffee Dripper
 Cursed Key
 Darkstone Periapt
+Dead Branch
 Dream Catcher
 Eternal Feather
+Ectoplasm
 Frozen Egg 2
 Gambling Chip
 Girya
 Golden Idol
 HandDrill
+Gremlin Horn
 Happy Flower
 HornCleat
+HoveringKite
+Ice Cream
+Incense Burner
+InkBottle
 Juzu Bracelet
 Kunai
 Lantern
 Lee's Waffle
 Lizard Tail
 Mango
+Matryoshka
 MawBank
 MealTicket
 Meat on the Bone
@@ -46,39 +59,62 @@ NeowsBlessing
 Ninja Scroll
 Nloth's Gift
 NlothsMask
+Nunchaku
 Oddly Smooth Stone
 Odd Mushroom
 Old Coin
+Omamori
 Orichalcum
 Orrery
+Ornamental Fan
 Pandora's Box
 Pantograph
 Paper Crane
+Peace Pipe
+Pear
 Pen Nib
+Philosopher's Stone
+Pocketwatch
 Potion Belt
+Prayer Wheel
 PreservedInsect
 PrismaticShard
 Question Card
 Regal Pillow
 Ring of the Snake
+Runic Dome
 Runic Pyramid
 SacredBark
+Shovel
 Shuriken
 Snake Skull
+Singing Bowl
 Snecko Eye
 Sozu
 StoneCalendar
+SsserpentHead
+Strange Spoon
 Strawberry
+StrikeDummy
 Sundial
 TheAbacus
 The Courier
 Toolbox
+The Specimen
+Tingsha
+Tiny Chest
+Tiny House
+Torii
+Tough Bandages
 Toxic Egg 2
 Toy Ornithopter
 TungstenRod
+Turnip
 TwistedFunnel
 Vajra
 Velvet Choker
 War Paint
+WarpedTongs
 Whetstone
 White Beast Statue
+WingedGreaves

@@ -1,3 +1,4 @@
+Accuracy
 Acrobatics
 Adrenaline
 After Image
@@ -6,6 +7,8 @@ Apotheosis
 A Thousand Cuts
 Backflip
 Backstab
+Bandage Up
+Bane
 Blade Dance
 Blind
 Blur
@@ -15,15 +18,21 @@ Burn
 Burst
 Calculated Gamble
 Caltrops
+Catalyst
 Choke
 Chrysalis
+Cloak And Dagger
+Concentrate
+Corpse Explosion
 Crippling Poison
+CurseOfTheBell
 Dagger Spray
 Dagger Throw
 Dark Shackles
 Dash
 Dazed
 Deadly Poison
+Decay
 Deep Breath
 Defend_G
 Deflect
@@ -47,11 +56,16 @@ Flechettes
 Flying Knee
 Footwork
 Forethought
+Ghostly
 Glass Knife
 Good Instincts
+Grand Finale
+HandOfGreed
 Heel Hook
+Impatience
 Infinite Blades
 Injury
+Iron Wave
 Jack Of All Trades
 Leg Sweep
 Madness
@@ -66,8 +80,10 @@ Neutralize
 Night Terror
 Noxious Fumes
 Outmaneuver
+Pain
 Panacea
 Panache
+PanicButton
 Parasite
 Phantasmal Killer
 PiercingWail
@@ -83,17 +99,21 @@ Sadistic Nature
 Secret Technique
 Secret Weapon
 Shame
+Setup
 Shiv
 Skewer
 Slice
 Slimed
+Storm of Steel
 Strike_G
 Sucker Punch
 Survivor
 Tactician
 Terror
+The Bomb
 Thinking Ahead
 Tools of the Trade
+Transmutation
 Trip
 Underhanded Strike
 Unload
