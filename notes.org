@@ -2,10 +2,47 @@
 ** Agents
 *** Combat agents
 **** Card playing agent
-Receives: relics, potions, cards in hand, cards in draw pile, cards in discard pile, player state, enemy states
-Outputs: weights for potions, weights for cards, weight for end turn, target weights
+This agent answers one or two questions:
 
-We will tend to play actions with the highest weight, against targets with the highest weight.
+1. What card or potion should I play?
+2. What target should I play the card/potion against?
+
+Not all cards/potions have targets, so the second question will not always need to be answered.
+***** Receives / State
+- Encoded draw pile
+- Encoded discard pile
+- Hand details, zero padded, shuffled, all cards (not just playable cards)
+- Monster details, zero padded, shuffled
+- Player details
+- One-hot encoded potions
+****** Hand card details
+- One-hot encoded card
+- Cost
+- Upgrades
+****** Monster details
+- Encoded monster powers
+- Move hits, hit damage, total damage
+- Block
+- Current HP, max HP, HP ratio (current HP / max HP)
+******* Monster power details
+- One-hot encoded power category / id
+- Power amount
+****** Player details
+- Current HP, max HP, HP ratio (current HP / max HP)
+- Encoded player powers
+******* Player power details
+- One-hot encoded power category / id
+- Power amount
+****** Encoded draw and discard piles
+- One-hot encoded card category / id
+- Mean-hot encoded card upgrades
+***** Outputs / Action
+- Card/potion weights
+- Target weights
+
+The applicable weights will be run though a softmax function to give the final percentages for the playable actions.
+***** Training / Reward
+Reward is amount of HP lost.
 **** Card weight override agent
 Receives: relics, potions, cards in hand, cards in draw pile, cards in discard pile, player state, enemy states
 Receives: card selected for playing and stats about that card
