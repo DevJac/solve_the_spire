@@ -26,31 +26,3 @@ end
     @test clip(1, 0.2) == 1
     @test clip(0, 0.2) == 0.8
 end
-
-@testset "DiskStringSet" begin
-    filename = "for_testing_DiskStringSet.delete_me.temp"
-    s = DiskStringSet(filename)
-    push!(s, "one")
-    push!(s, "one")
-    push!(s, "two")
-    push!(s, "three")
-    push!(s, "two")
-    push!(s, "three")
-    push!(s, " one")
-    push!(s, "one ")
-    push!(s, " two ")
-    push!(s, "   three")
-    push!(s, "   two       ")
-    push!(s, "           three  ")
-    @test length(s) == 3
-    @test "two" in s
-    pop!(s, "two")
-    @test !("two" in s)
-    @test length(s) == 2
-    @test "one" in s
-    @test "three" in s
-    a = collect(s)
-    @test length(a) == 2
-    @test read(open(filename), String) == "one\nthree\n"
-    rm(filename)
-end
