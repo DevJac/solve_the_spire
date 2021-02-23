@@ -15,6 +15,7 @@ Not all cards/potions have targets, so the second question will not always need 
 - Monster details, zero padded, shuffled
 - Player details
 - One-hot encoded potions
+- Incomming attack, player block, attack difference (attack - block)
 ****** Hand card details
 - One-hot encoded card
 - Cost
@@ -29,6 +30,7 @@ Not all cards/potions have targets, so the second question will not always need 
 - Power amount
 ****** Player details
 - Current HP, max HP, HP ratio (current HP / max HP)
+- Block
 - Encoded player powers
 ******* Player power details
 - One-hot encoded power category / id
@@ -43,12 +45,10 @@ Not all cards/potions have targets, so the second question will not always need 
 The applicable weights will be run though a softmax function to give the final percentages for the playable actions.
 ***** Training / Reward
 Reward is amount of HP lost.
-**** Card weight override agent
-Receives: relics, potions, cards in hand, cards in draw pile, cards in discard pile, player state, enemy states
-Receives: card selected for playing and stats about that card
-Outputs: an override probability for the card selected for playing
-
-This allows us to handle cases where the cards cost is changed, as with Sneko Eye and other special cases.
+**** Keyword agents
+- Discard agent
+- Retain agent
+- Forethought agent
 *** Other agents
 **** Card selection agent
 Receives: relics, potions, cards in deck, player stats, floor, gold, available cards
@@ -57,3 +57,4 @@ Outputs: weights for available cards, weight for skip
 This allows us to pick cards and build our deck.
 **** Event agent
 **** Map agent
+**** Discard / special card selection agent
