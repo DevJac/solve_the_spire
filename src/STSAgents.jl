@@ -19,34 +19,81 @@ const DefaultGameData = GameData(
     readlines("game_data/player_power_ids.txt"),
     readlines("game_data/monster_power_ids.txt"))
 
-function find_p1(needle, haystack)
-    i = find(needle, haystack)
-    isnothing(i) ? length(haystack)+1 : i
+export Encoder, encode
+
+struct Encoder
+    encoders :: Vector{Function}
+end
+Encoder() = Encoder([])
+
+function add_encoder(f, encoder::Encoder)
+    push!(encoder.encoders, f)
 end
 
-function encode_card_in_hand(game_data, card_json)
-    encoding = zeros(Float32, length(game_data.card_ids)+4)
-    i = find_p1(card_json["id"], game_data.card_ids)
-    encoding[i] = 1
-    encoding[end-2] = 1
-    encoding[end-1] = card_json["upgrades"]
-    encoding[end] = card_json["cost"]
-    Float32.(encoding)
+function encode(encoder::Encoder, sts_state_json)
+    encoded = zeros(Float32, length(encoder.encoders))
+    for i in 1:length(encoded)
+        encoded[i] = Float32(encoder.encoders[i](sts_state_json))
+    end
+    encoded
 end
 
-function encode_cards_in_draw_discard_pile(game_data, cards_json)
-    encoding = zeros(Float32, (length(game_data.card_ids)+1)*2)
-    for cj in cards_json
-        i = find_p1(cj["id"], game_data.card_ids)
-        encoding[i*2-1] += 1
-        encoding[i*2] += cj["upgrades"]
+function make_hand_encoder(game_data)
+    encoder = Encoder()
+    ae(f) = add_encoder(f, encoder)
+    hand(j) = j["game_state"]["combat_state"]["hand"]
+    for i in 1:10
+        for card_id in game_data.card_ids
+            ae() do j
+                if i > length(hand(j)); return 0 end
+                hand(j)[i]["id"] == card_id
+            end
+        end
+        ae() do j
+            if i > length(hand(j)); return 0 end
+            !in(hand(j)[i]["id"], game_data.card_ids)
+        end
+        ae() do j
+            !(i > length(hand(j)))
+        end
+        ae() do j
+            if i > length(hand(j)); return 0 end
+            hand(j)[i]["upgrades"]
+        end
+        ae() do j
+            if i > length(hand(j)); return 0 end
+            hand(j)[i]["cost"]
+        end
     end
-    for i in 1:length(game_data.card_ids)+1
-        encoding[i*2] /= encoding[i*2-1]
-        encoding[i*2-1] /= length(cards_json)
-    end
-    Float32.(encoding)
+    encoder
 end
+
+function make_draw_discard_encoder(game_data)
+    encoder = Encoder()
+    ae(f) = add_encoder(f, encoder)
+    draw(j) = j["game_state"]["combat_state"]["draw_pile"]
+    discard(j) = j["game_state"]["combat_state"]["discard_pile"]
+    for pile in (draw, discard)
+        for card_id in game_data.card_ids
+            ae() do j
+                count(c -> c["id"] == card_id, pile(j)) / length(pile(j))
+            end
+            ae() do j
+                matching = filter(c -> c["id"] == card_id, pile(j))
+                sum(c -> c["upgrades"], matching) / length(matching)
+            end
+        end
+    end
+    encoder
+end
+
+
+
+
+
+
+# =====================================
+
 
 function encode_potion(game_data, potion_json)
     encoding = zeros(Float32, length(game_data.potion_ids))
