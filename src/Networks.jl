@@ -55,4 +55,25 @@ end
 
 (q::QNetwork)(s) = q.network(s)
 
+##################
+# Embed Network #
+##################
+
+struct EmbedNetwork{N}
+    network :: N
+end
+
+Flux.@functor EmbedNetwork
+
+function EmbedNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
+    layers = Any[Dense(in, hidden[1], activation, initW=initW)]
+    for i in 1:length(hidden)-1
+        push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
+    end
+    push!(layers, Dense(hidden[end], out, identity))
+    EmbedNetwork(Chain(layers...))
+end
+
+(n::EmbedNetwork)(s) = n.network(s)
+
 end # module

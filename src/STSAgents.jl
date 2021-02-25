@@ -31,11 +31,10 @@ function add_encoder(f, encoder::Encoder)
 end
 
 function encode(encoder::Encoder, sts_state_json)
-    encoded = zeros(Float32, length(encoder.encoders))
-    for i in 1:length(encoded)
-        encoded[i] = Float32(encoder.encoders[i](sts_state_json))
+    encoded = map(encoder.encoders) do e
+        e(sts_state_json)
     end
-    encoded
+    Float32.(encoded)
 end
 
 function make_hand_encoder(game_data)
