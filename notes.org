@@ -8,6 +8,14 @@ This agent answers one or two questions:
 2. What target should I play the card/potion against?
 
 Not all cards/potions have targets, so the second question will not always need to be answered.
+***** New Plan
+Feed networks and potions through an embedding network, max pool the embeddings, this will give you a hand / potion representation.
+
+Feed that hand / potion representation into a policy network, along with each individual card / potion. For 10 cards, you will evaluate the policy network 10 times, each time with the same hand represntation, but for different individual cards. (Maybe embed the individual cards / potions as well.)
+
+Then choose the card / potion to play based on the output weights.
+
+This idea is inspired by Discord user rrenaud.
 ***** Receives / State
 - Encoded draw pile
 - Encoded discard pile
