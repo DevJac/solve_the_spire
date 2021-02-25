@@ -27,8 +27,8 @@ end
     @test size(q(rand(4, 10))) == (3, 10)
 end
 
-@testset "EmbedNetwork" begin
-    n = EmbedNetwork(4, 3, [8])
-    @test params(p) .|> length == [32, 8, 24, 3]
+@testset "VanillaNetwork" begin
+    n = VanillaNetwork(4, 3, [8])
+    @test params(n) .|> length == [32, 8, 24, 3]
     @test size(n(rand(4, 10))) == (3, 10)
 end
