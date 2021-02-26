@@ -1,6 +1,16 @@
 * Design
 ** Agents
 *** Combat agents
+**** Simplified card playing agent
+Selects card to play. We'll keep the "attack lowest HP enemy" logic for now.
+***** Receives / State
+- Encoded draw pile
+- Encoded discard pile
+- Player details
+- Attack details, player block, attack difference (attack - block)
+- Embedded-max-pool of full draw pile
+- Embedded-max-pool of monsters
+- Card to weigh for play
 **** Card playing agent
 This agent answers one or two questions:
 
@@ -16,6 +26,17 @@ Feed that hand / potion representation into a policy network, along with each in
 Then choose the card / potion to play based on the output weights.
 
 This idea is inspired by Discord user rrenaud.
+***** New Plan Receives / State
+- Encoded draw pile
+- Encoded discard pile
+- Player details
+- Incomming attack, player block, attack difference (attack - block)
+- Embedded-max-pool of full draw pile
+- Embedded-max-pool of all monsters
+- Embedded-max-pool of all potions
+- Card to weigh
+- Potion to weigh
+- Monster to weigh
 ***** Receives / State
 - Encoded draw pile
 - Encoded discard pile
