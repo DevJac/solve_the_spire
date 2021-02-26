@@ -37,32 +37,19 @@ function encode(encoder::Encoder, sts_state_json)
     Float32.(encoded)
 end
 
-function make_hand_encoder(game_data)
+function make_hand_card_encoder(game_data)
     encoder = Encoder()
     ae(f) = add_encoder(f, encoder)
-    hand(j) = j["game_state"]["combat_state"]["hand"]
-    for i in 1:10
-        for card_id in game_data.card_ids
-            ae() do j
-                if i > length(hand(j)); return 0 end
-                hand(j)[i]["id"] == card_id
-            end
-        end
+    for card_id in game_data.card_ids
         ae() do j
-            if i > length(hand(j)); return 0 end
-            !in(hand(j)[i]["id"], game_data.card_ids)
+            j["id"] == card_id
         end
-        ae() do j
-            !(i > length(hand(j)))
-        end
-        ae() do j
-            if i > length(hand(j)); return 0 end
-            hand(j)[i]["upgrades"]
-        end
-        ae() do j
-            if i > length(hand(j)); return 0 end
-            hand(j)[i]["cost"]
-        end
+    end
+    ae() do j
+        j["upgrades"]
+    end
+    ae() do j
+        j["cost"]
     end
     encoder
 end
@@ -86,21 +73,26 @@ function make_draw_discard_encoder(game_data)
     encoder
 end
 
-
-
-
-
-
-# =====================================
-
-
-function encode_potion(game_data, potion_json)
-    encoding = zeros(Float32, length(game_data.potion_ids))
-    if potion_json["id"] != "Potion Slot"
-        encoding[find(potion_json["id"], game_data.potion_ids)] = 1
+function make_player_powers_encoder(game_data)
+    encoder = Encoder()
+    ae(f) = add_encoder(f, encoder)
+    powers(j) = j["game_state"]["combat_state"]["player"]["powers"]
+    for power_id in game_data.player_power_ids
+        ae() do j
+            any(powers(j)) do power
+                power["id"] == power_id
+            end
+        end
+        ae() do j
+            matching = filter(p -> p["id"] == power_id, powers(j))
+            !isempty(matching) ? only(matching)["amount"] : 0
+        end
     end
-    Float32.(encoding)
+    encoder
 end
+
+
+
 
 function encode_player_powers(game_data, player_powers_json)
     encoding = zeros(Float32, (length(game_data.player_power_ids)+1)*2)
