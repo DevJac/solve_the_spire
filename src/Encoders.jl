@@ -59,11 +59,11 @@ function make_draw_discard_encoder(game_data)
     for pile in (draw, discard)
         for card_id in game_data.card_ids
             ae() do j
-                count(c -> c["id"] == card_id, pile(j)) / length(pile(j))
+                isempty(pile(j)) ? 0 : count(c -> c["id"] == card_id, pile(j)) / length(pile(j))
             end
             ae() do j
                 matching = filter(c -> c["id"] == card_id, pile(j))
-                sum(c -> c["upgrades"], matching) / length(matching)
+                isempty(matching) ? 0 : sum(c -> c["upgrades"], matching) / length(matching)
             end
         end
     end
