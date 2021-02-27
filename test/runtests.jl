@@ -4,10 +4,10 @@ using Test
     include("Utils.jl")
 end
 
-@testset "Networks" begin
-    include("Networks.jl")
+@testset "Encoders" begin
+    include("Encoders.jl")
 end
 
-@testset "STSAgents" begin
-    include("STSAgents.jl")
+@testset "Networks" begin
+    include("Networks.jl")
 end

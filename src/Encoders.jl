@@ -1,10 +1,7 @@
-module STSAgents
-using Utils
+module Encoders
 
 export GameData, DefaultGameData
-
-const MAX_STS_HAND_SIZE = 10
-const MAX_STS_MONSTER_COUNT = 5
+export make_hand_card_encoder, make_draw_discard_encoder, make_player_encoder
 
 struct GameData
     card_ids
@@ -19,22 +16,22 @@ const DefaultGameData = GameData(
     readlines("game_data/player_power_ids.txt"),
     readlines("game_data/monster_power_ids.txt"))
 
-export Encoder, encode
-
 struct Encoder
     encoders :: Vector{Function}
 end
 Encoder() = Encoder([])
 
-function add_encoder(f, encoder::Encoder)
-    push!(encoder.encoders, f)
-end
-
-function encode(encoder::Encoder, sts_state_json)
+function (encoder::Encoder)(sts_state_json)
     encoded = map(encoder.encoders) do e
         e(sts_state_json)
     end
     Float32.(encoded)
+end
+
+Base.length(e::Encoder) = length(e.encoders)
+
+function add_encoder(f, encoder::Encoder)
+    push!(encoder.encoders, f)
 end
 
 function make_hand_card_encoder(game_data)
