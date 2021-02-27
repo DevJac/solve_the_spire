@@ -6,10 +6,8 @@ Selects card to play. We'll keep the "attack lowest HP enemy" logic for now.
 ***** Receives / State
 - Encoded draw pile
 - Encoded discard pile
-- Player details
-- Attack details, player block, attack difference (attack - block)
+- Player details, player block, attack difference (attack - block)
 - Embedded-max-pool of full draw pile
-- Embedded-max-pool of monsters
 - Card to weigh for play
 **** Card playing agent
 This agent answers one or two questions:
