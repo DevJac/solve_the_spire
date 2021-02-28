@@ -2,6 +2,7 @@ using Dates
 using JSON
 using Sockets
 using StatsBase
+using STSAgents
 
 const SOCKET_FILE = "/home/devjac/Code/julia/solve_the_spire/relay_socket"
 const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
@@ -70,6 +71,7 @@ extra(c::Command) = c.extra_json
 
 shop_floors = []
 error_streak = 0
+const card_playing_agent = CardPlayingAgent()
 
 function agent_command(state)
     global error_streak
@@ -109,22 +111,18 @@ function agent_command(state)
         end
         if gs["screen_type"] == "NONE"
             cs = gs["combat_state"]
-            hand = collect(zip(cs["hand"], 1:100))
-            monsters = collect(zip(cs["monsters"], 0:100))
-            playable_hand = filter(c -> c[1]["is_playable"], hand)
-            if length(playable_hand) == 0
-                return "end"
+            card_to_play = select_card_to_play(card_playing_agent, state)
+            if isnothing(card_to_play); return "end" end
+            card_to_play_index = card_to_play[1]
+            if card_to_play[2]["has_target"]
+                monsters = collect(enumerate(cs["monsters"]))
+                attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
+                min_hp = minimum(map(m -> m[2]["current_hp"], attackable_monsters))
+                min_hp_monsters = filter(m -> m[2]["current_hp"] == min_hp, attackable_monsters)
+                monster_to_attack_index = sample(min_hp_monsters)[1]-1
+                return "play $card_to_play_index $monster_to_attack_index"
             end
-            attackable_monsters = filter(m -> !m[1]["is_gone"], monsters)
-            random_card_to_play = sample(playable_hand)
-            random_card_to_play_index = random_card_to_play[2]
-            if random_card_to_play[1]["has_target"]
-                min_hp = minimum(map(m -> m[1]["current_hp"], attackable_monsters))
-                min_hp_monsters = filter(m -> m[1]["current_hp"] == min_hp, attackable_monsters)
-                random_monster_to_attack_index = sample(min_hp_monsters)[2]
-                return "play $random_card_to_play_index $random_monster_to_attack_index"
-            end
-            return "play $random_card_to_play_index"
+            return "play $card_to_play_index"
         end
         if gs["screen_type"] == "COMBAT_REWARD"
             if !in("choose", state["available_commands"])
