@@ -2,9 +2,11 @@ module STSAgents
 using Encoders
 using Flux
 using Networks
+using SARSM
 using StatsBase
 
-export CardPlayingAgent, select_card_to_play
+export action
+export CardPlayingAgent
 
 struct CardPlayingAgent
     player_encoder
@@ -12,6 +14,7 @@ struct CardPlayingAgent
     hand_card_encoder
     hand_card_embedder
     hand_card_selector
+    sars
 end
 
 function CardPlayingAgent()
@@ -23,10 +26,10 @@ function CardPlayingAgent()
         length(draw_discard_encoder) + length(player_encoder) + length(hand_card_encoder) + 100,
         1,
         [500, 500, 500])
-    CardPlayingAgent(player_encoder, draw_discard_encoder, hand_card_encoder, hand_card_embedder, hand_card_selector)
+    CardPlayingAgent(player_encoder, draw_discard_encoder, hand_card_encoder, hand_card_embedder, hand_card_selector, SARS())
 end
 
-function select_card_to_play(agent::CardPlayingAgent, sts_state)
+function action_probabilities(agent::CardPlayingAgent, sts_state)
     hand = collect(enumerate(sts_state["game_state"]["combat_state"]["hand"]))
     embedded_cards = map(c -> agent.hand_card_embedder(agent.hand_card_encoder(c[2])), hand)
     pooled_cards = maximum(reduce(hcat, embedded_cards), dims=2)
@@ -38,8 +41,12 @@ function select_card_to_play(agent::CardPlayingAgent, sts_state)
     end
     selector_input = reduce(hcat, selector_input_separate)
     selection_weights = reshape(agent.hand_card_selector(selector_input), length(playable_hand))
-    selection_probabilities = softmax(selection_weights)
-    selected_card = sample(playable_hand, Weights(selection_probabilities))
+    softmax(selection_weights), playable_hand
+end
+
+function action(agent::CardPlayingAgent, sts_state)
+    aps, playable_hand = action_probabilities(agent, sts_state)
+    selected_card = sample(playable_hand, Weights(aps))
     return selected_card
 end
 

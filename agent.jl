@@ -112,8 +112,7 @@ function agent_command(state)
         if gs["screen_type"] == "NONE"
             cs = gs["combat_state"]
             if !any(c -> c["is_playable"], cs["hand"]); return "end" end
-            card_to_play = select_card_to_play(card_playing_agent, state)
-            if isnothing(card_to_play); return "end" end
+            card_to_play = action(card_playing_agent, state)
             card_to_play_index = card_to_play[1]
             if card_to_play[2]["has_target"]
                 monsters = collect(enumerate(cs["monsters"]))
