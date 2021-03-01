@@ -28,13 +28,11 @@ end
 
 function select_card_to_play(agent::CardPlayingAgent, sts_state)
     hand = collect(enumerate(sts_state["game_state"]["combat_state"]["hand"]))
-    if isempty(hand); return nothing end
-    playable_hand = filter(c -> c[2]["is_playable"], hand)
-    if isempty(playable_hand); return nothing end
     embedded_cards = map(c -> agent.hand_card_embedder(agent.hand_card_encoder(c[2])), hand)
     pooled_cards = maximum(reduce(hcat, embedded_cards), dims=2)
     player_encoded = agent.player_encoder(sts_state)
     draw_discard_encoded = agent.draw_discard_encoder(sts_state)
+    playable_hand = filter(c -> c[2]["is_playable"], hand)
     selector_input_separate = map(playable_hand) do hand_card
         vcat(player_encoded, draw_discard_encoded, pooled_cards, agent.hand_card_encoder(hand_card[2]))
     end
