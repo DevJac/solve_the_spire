@@ -18,19 +18,25 @@ Busted Crown
 CaptainsWheel
 Centennial Puzzle
 Chemical X
+Calipers
 Calling Bell
+Centennial Puzzle
 CeramicFish
+Chemical X
 ClockworkSouvenir
 Coffee Dripper
 Cursed Key
 Darkstone Periapt
 Dead Branch
+DollysMirror
 Dream Catcher
 Eternal Feather
 Ectoplasm
+FossilizedHelix
 Frozen Egg 2
 Gambling Chip
 Girya
+Frozen Eye
 Golden Idol
 HandDrill
 Gremlin Horn
@@ -89,10 +95,14 @@ Shovel
 Shuriken
 Snake Skull
 Singing Bowl
+Sling
+Smiling Mask
+Snake Skull
 Snecko Eye
 Sozu
 StoneCalendar
 SsserpentHead
+StoneCalendar
 Strange Spoon
 Strawberry
 StrikeDummy
@@ -101,9 +111,11 @@ TheAbacus
 The Courier
 Toolbox
 The Specimen
+Thread and Needle
 Tingsha
 Tiny Chest
 Tiny House
+Toolbox
 Torii
 Tough Bandages
 Toxic Egg 2
@@ -111,6 +123,7 @@ Toy Ornithopter
 TungstenRod
 Turnip
 TwistedFunnel
+Unceasing Top
 Vajra
 Velvet Choker
 War Paint
@@ -118,3 +131,4 @@ WarpedTongs
 Whetstone
 White Beast Statue
 WingedGreaves
+WristBlade
