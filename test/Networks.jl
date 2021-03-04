@@ -23,7 +23,7 @@ end
 
 @testset "QNetwork" begin
     q = QNetwork(4, 3, [8, 9])
-    @test params(q) .|> length == [32, 8, 72, 9, 27, 3]
+    @test params(q) .|> length == [32, 8, 72, 9, 27, 3, 9, 1]
     @test size(q(rand(4, 10))) == (3, 10)
 end
 

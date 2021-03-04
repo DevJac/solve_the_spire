@@ -38,22 +38,30 @@ end
 # Q Network #
 #############
 
-struct QNetwork{N}
-    network :: N
+struct QNetwork{T, A, V}
+    trunk_network  :: T
+    action_network :: A
+    value_network  :: V
+    function QNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
+        layers = Any[Dense(in, hidden[1], activation, initW=initW)]
+        for i in 1:length(hidden)-1
+            push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
+        end
+        t = Chain(layers...)
+        a = Dense(hidden[end], out, identity)
+        v = Dense(hidden[end], 1, identity)
+        new{typeof(t), typeof(a), typeof(v)}(t, a, v)
+    end
 end
 
 Flux.@functor QNetwork
 
-function QNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
-    layers = Any[Dense(in, hidden[1], activation, initW=initW)]
-    for i in 1:length(hidden)-1
-        push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
-    end
-    push!(layers, Dense(hidden[end], out, identity))
-    QNetwork(Chain(layers...))
+function (q::QNetwork)(s)
+    t = q.trunk_network(s)
+    a = q.action_network(t)
+    v = q.value_network(t)
+    v .+ a .- mean(a, dims=1)
 end
-
-(q::QNetwork)(s) = q.network(s)
 
 ##################
 # Vanilla Network #
