@@ -47,7 +47,9 @@ function optimize!(env, policy, sars, epochs=10_000, ϵ=0.2)
         i_sample = sample(1:size(s)[2], 100)
         s_sample = s[:, i_sample]
         a_sample = a[:, i_sample]
-        advantage_sample = advantage(policy.q_network, s_sample) .* a_sample
+        q_sample = q[:, i_sample]
+        value_sample = mean(policy.q_network(s_sample), dims=1)
+        advantage_sample = q_sample .- value_sample
         target_p = target_policy_network(s_sample)
         target_a_p = sum(target_p .* a_sample, dims=1)
         local online_p
