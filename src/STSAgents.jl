@@ -5,7 +5,7 @@ using Networks
 using SARSM
 using StatsBase
 
-export action
+export action, reward
 export CardPlayingAgent
 
 struct CardPlayingAgent
@@ -45,9 +45,19 @@ function action_probabilities(agent::CardPlayingAgent, sts_state)
 end
 
 function action(agent::CardPlayingAgent, sts_state)
+    add_state(agent.sars, sts_state)
     aps, playable_hand = action_probabilities(agent, sts_state)
-    selected_card = sample(playable_hand, Weights(aps))
-    return selected_card
+    selected_card = sample(collect(enumerate(playable_hand)), Weights(aps))
+    add_action(agent.sars, selected_card[1])
+    return selected_card[2]
+end
+
+function reward(agent::CardPlayingAgent, sts_state, continuity=1.0f0)
+    if awaiting(agent.sars) == sar_reward
+        last_hp = agent.sars.states[end]["game_state"]["current_hp"]
+        current_hp = sts_state["game_state"]["current_hp"]
+        add_reward(agent.sars, current_hp - last_hp, continuity)
+    end
 end
 
 end # module

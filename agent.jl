@@ -106,12 +106,14 @@ function agent_command(state)
             return "choose $random_event_selection"
         end
         if gs["screen_type"] == "MAP"
+            reward(card_playing_agent, state, 0)
             random_map_selection = sample(0:length(gs["choice_list"])-1)
             return "choose $random_map_selection"
         end
         if gs["screen_type"] == "NONE"
             cs = gs["combat_state"]
             if !any(c -> c["is_playable"], cs["hand"]); return "end" end
+            reward(card_playing_agent, state)
             card_to_play = action(card_playing_agent, state)
             card_to_play_index = card_to_play[1]
             if card_to_play[2]["has_target"]
@@ -125,6 +127,7 @@ function agent_command(state)
             return "play $card_to_play_index"
         end
         if gs["screen_type"] == "COMBAT_REWARD"
+            reward(card_playing_agent, state, 0)
             if !in("choose", state["available_commands"])
                 return "proceed"
             end
@@ -169,6 +172,7 @@ function agent_command(state)
             return "choose $random_choice"
         end
         if gs["screen_type"] == "GAME_OVER"
+            reward(card_playing_agent, state, 0)
             return "proceed"
         end
         if gs["screen_type"] == "REST"
