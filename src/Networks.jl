@@ -1,11 +1,13 @@
 module Networks
 using Flux
 using Statistics
-export PolicyNetwork, QNetwork, VanillaNetwork, advantage
+export PolicyNetwork, QNetwork, VanillaNetwork, value, advantage
 
 #####################
 # Utility Functions #
 #####################
+
+value(network, s) = mean(network(s), dims=1)
 
 function advantage(network, s)
     q = network(s)
@@ -23,7 +25,8 @@ end
 Flux.@functor PolicyNetwork
 
 function PolicyNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
-    layers = Any[Dense(in, hidden[1], activation, initW=initW)]
+    pushfirst!(hidden, in)
+    layers = Any[]
     for i in 1:length(hidden)-1
         push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
     end
@@ -43,7 +46,8 @@ struct QNetwork{T, A, V}
     action_network :: A
     value_network  :: V
     function QNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
-        layers = Any[Dense(in, hidden[1], activation, initW=initW)]
+        pushfirst!(hidden, in)
+        layers = Any[]
         for i in 1:length(hidden)-1
             push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
         end
@@ -74,7 +78,8 @@ end
 Flux.@functor VanillaNetwork
 
 function VanillaNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
-    layers = Any[Dense(in, hidden[1], activation, initW=initW)]
+    pushfirst!(hidden, in)
+    layers = Any[]
     for i in 1:length(hidden)-1
         push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
     end

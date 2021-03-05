@@ -3,6 +3,13 @@ using Test
 
 using Networks
 
+@testset "value" begin
+    q = QNetwork(4, 3, [])
+    i = rand(4, 10)
+    @test size(q(i)) == (3, 10)
+    @test size(value(q, i)) == (1, 10)
+end
+
 @testset "advantage" begin
     p = PolicyNetwork(4, 3, [8, 9])
     result = advantage(p, rand(4, 10))
