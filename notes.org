@@ -85,3 +85,7 @@ This allows us to pick cards and build our deck.
 **** Event agent
 **** Map agent
 **** Discard / special card selection agent
+** Agent coordination
+There is a pile of agents. Every agent receives every state. Agents indicate whether they will handle each state. Throw an error if multiple states try to handle the same state.
+
+This allows each agent to be isolated. When playing cards in combat, the card playing agent can step in and say "I got this" then choose the best move. The card playing agent can also keep an eye on all other states in order to determine its own rewards.
