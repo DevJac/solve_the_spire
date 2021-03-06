@@ -1,5 +1,9 @@
 using Test
 
+@testset "SARSM" begin
+    include("SARSM.jl")
+end
+
 @testset "Utils" begin
     include("Utils.jl")
 end

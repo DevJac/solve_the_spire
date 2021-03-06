@@ -24,7 +24,7 @@ function add_reward(sars::SARS, reward, continuity=1.0f0)
     push!(sars.rewards, (reward, continuity))
 end
 
-@enum SAR sar_state sar_action sar_reward
+@enum SARPart sar_state sar_action sar_reward
 
 function awaiting(sars::SARS)
     if all(v -> length(sars.states) == length(v), (sars.actions, sars.rewards))
@@ -36,6 +36,28 @@ function awaiting(sars::SARS)
     if all(v -> length(sars.rewards)+1 == length(v), (sars.states, sars.actions))
         return sar_reward
     end
+end
+
+export SingleSAR, fill_q
+
+struct SingleSAR
+    state
+    action
+    reward
+    q
+end
+
+function fill_q(sars::SARS, discount_factor=1.0f0)
+    @assert all(v -> length(sars.states) == length(v), (sars.actions, sars.rewards))
+    result = SingleSAR[]
+    q = 0.0f0
+    for i in length(sars.rewards):-1:1
+        reward, continuity = sars.rewards[i]
+        q *= continuity * discount_factor
+        q += reward
+        push!(result, SingleSAR(sars.states[i], sars.actions[i], reward, q))
+    end
+    reverse(result)
 end
 
 end # module
