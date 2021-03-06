@@ -9,6 +9,12 @@ struct SARS
 end
 SARS() = SARS([], [], [])
 
+function Base.empty!(sars::SARS)
+    empty!(sars.states)
+    empty!(sars.actions)
+    empty!(sars.rewards)
+end
+
 function add_state(sars::SARS, state)
     @assert all(v -> length(sars.states) == length(v), (sars.actions, sars.rewards))
     push!(sars.states, state)
