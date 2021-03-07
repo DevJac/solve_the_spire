@@ -1,8 +1,11 @@
 using Dates
 using JSON
+using OwnTime
+using Profile
 using Sockets
 using StatsBase
 using STSAgents
+using TensorBoardLogger
 
 const SOCKET_FILE = "/home/devjac/Code/julia/solve_the_spire/relay_socket"
 const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
@@ -69,12 +72,17 @@ Command(c) = Command(c, nothing)
 command(c::Command) = c.command
 extra(c::Command) = c.extra_json
 
+tb_log = TBLogger("tb_logs/agent")
 shop_floors = []
 error_streak = 0
+agent_calls = 0
+generation_floors_reached = Int[]
 const card_playing_agent = CardPlayingAgent()
 
 function agent_command(state)
     global error_streak
+    global agent_calls
+    agent_calls += 1
     if "error" in keys(state)
         error_streak += 1
         sleep(1)
@@ -87,6 +95,7 @@ function agent_command(state)
     end
     if "game_state" in keys(state)
         gs = state["game_state"]
+        log_value(tb_log, "rewards_length", length(card_playing_agent.sars.rewards), step=agent_calls)
         for (potion_index, potion) in enumerate(gs["potions"])
             potion_index -= 1
             if potion["can_use"]
@@ -149,7 +158,6 @@ function agent_command(state)
             random_card_choice = sample(0:length(gs["choice_list"])-1)
             return "choose $random_card_choice"
         end
-        # Peek at the shop to help us learn cards and relics.
         if gs["screen_type"] == "SHOP_ROOM"
             if gs["floor"] in shop_floors
                 return "proceed"
@@ -172,7 +180,26 @@ function agent_command(state)
             return "choose $random_choice"
         end
         if gs["screen_type"] == "GAME_OVER"
+            log_value(tb_log, "performance/floor_reached", gs["floor"], step=agent_calls)
+            push!(generation_floors_reached, gs["floor"])
             reward(card_playing_agent, state, 0)
+            if length(card_playing_agent.sars.rewards) >= min(1000, agent_calls/5)
+                mean_reward = mean(x -> x[1], card_playing_agent.sars.rewards)
+                sum_reward = sum(x -> x[1], card_playing_agent.sars.rewards)
+                log_value(tb_log, "performance/mean_reward", mean_reward, step=agent_calls)
+                log_value(tb_log, "performance/sum_reward", sum_reward, step=agent_calls)
+                log_histogram(tb_log, "generation_floors_reached", generation_floors_reached, step=agent_calls)
+                log_text(tb_log, "generation_floors_reached", repr(generation_floors_reached), step=agent_calls)
+                empty!(generation_floors_reached)
+                Profile.init(1_000_000, 0.01)
+                Profile.clear()
+                @profile train!(card_playing_agent)
+                open("profile.txt", "w") do f
+                    show(f, owntime(stackframe_filter=filecontains("STSAgent")))
+                    show(f, totaltime(stackframe_filter=filecontains("STSAgent")))
+                end
+                @assert length(card_playing_agent.sars.rewards) == 0
+            end
             return "proceed"
         end
         if gs["screen_type"] == "REST"

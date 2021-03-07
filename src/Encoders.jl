@@ -96,6 +96,9 @@ function make_player_encoder(game_data)
         player(j)["current_hp"] / player(j)["max_hp"]
     end
     ae() do j
+        player(j)["energy"]
+    end
+    ae() do j
         player(j)["block"]
     end
     ae() do j

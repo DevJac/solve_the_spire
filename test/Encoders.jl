@@ -59,7 +59,8 @@ end
     gd = GameData([], [], ["power_1", "power_2"], [])
     encoder = make_player_encoder(gd)
     # 2 encoded vectors for each power (2)
-    @test length(encoder) == 2 * 2 + 5
+    # current_health, max_health, health_ratio, energy, block, surplus block (6)
+    @test length(encoder) == 2 * 2 + 6
     j1 = JSON.parse("""
         {
             "game_state": {
@@ -71,7 +72,8 @@ end
                         ],
                         "current_hp": 30,
                         "max_hp": 70,
-                        "block": 6
+                        "block": 6,
+                        "energy": 3
                     },
                     "monsters": [
                         {"intent": "ATTACK", "move_hits": 1, "move_adjusted_damage": 5},
@@ -92,7 +94,8 @@ end
                         ],
                         "current_hp": 20,
                         "max_hp": 77,
-                        "block": 0
+                        "block": 0,
+                        "energy": 0
                     },
                     "monsters": [
                         {"intent": "ATTACK", "move_hits": 1, "move_adjusted_damage": 5},
@@ -103,6 +106,6 @@ end
             }
         }
     """)
-    @test encoder(j1) == Float32.([1, -1, 1, 1, 30, 70, 30 / 70, 6, 6 - 15])
-    @test encoder(j2) == Float32.([0, 0, 1, 3, 20, 77, 20 / 77, 0, -25])
+    @test encoder(j1) == Float32.([1, -1, 1, 1, 30, 70, 30 / 70, 3, 6, 6 - 15])
+    @test encoder(j2) == Float32.([0, 0, 1, 3, 20, 77, 20 / 77, 0, 0, -25])
 end
