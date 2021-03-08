@@ -38,4 +38,10 @@ end
     n = VanillaNetwork(4, 3, [8, 9])
     @test params(n) .|> length == [32, 8, 72, 9, 27, 3]
     @test size(n(rand(4, 10))) == (3, 10)
+    n = VanillaNetwork(4, 3, [8])
+    @test params(n) .|> length == [32, 8, 24, 3]
+    @test size(n(rand(4, 10))) == (3, 10)
+    n = VanillaNetwork(4, 3, [])
+    @test params(n) .|> length == [12, 3]
+    @test size(n(rand(4, 10))) == (3, 10)
 end

@@ -1,2 +1,11 @@
 using PackageCompiler
-create_sysimage([:Flux, :Zygote], sysimage_path="J")
+create_sysimage([
+    :BSON
+    :Flux
+    :JSON
+    :NNlib
+    :OwnTime
+    :StatsBase
+    :TensorBoardLogger
+    :Zygote
+], sysimage_path="J")

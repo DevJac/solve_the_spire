@@ -23,9 +23,9 @@ struct CardPlayingAgent
 end
 
 function CardPlayingAgent()
-    embedder_layers = [200]
-    embedding_size = 100
-    selector_layers = [200, 200, 200, 200]
+    embedder_layers = [50]
+    embedding_size = 50
+    selector_layers = [50, 50, 50]
     player_encoder = make_player_encoder(DefaultGameData)
     draw_discard_encoder = make_draw_discard_encoder(DefaultGameData)
     hand_card_encoder = make_hand_card_encoder(DefaultGameData)

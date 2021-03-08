@@ -103,6 +103,26 @@ function agent_command(state)
         error_streak = 0
     end
     if "in_game" in keys(state) && !state["in_game"]
+        if length(card_playing_agent.sars.rewards) >= 1000
+            mean_reward = mean(x -> x[1], card_playing_agent.sars.rewards)
+            sum_reward = sum(x -> x[1], card_playing_agent.sars.rewards)
+            BSON.bson(
+                @sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
+                model=card_playing_agent, performance=mean_reward)
+            log_value(tb_log, "performance/mean_reward", mean_reward, step=agent_calls)
+            log_value(tb_log, "performance/sum_reward", sum_reward, step=agent_calls)
+            log_histogram(tb_log, "generation_floors_reached", generation_floors_reached, step=agent_calls)
+            log_text(tb_log, "generation_floors_reached_txt", repr(generation_floors_reached), step=agent_calls)
+            empty!(generation_floors_reached)
+            Profile.init(1_000_000, 0.01)
+            Profile.clear()
+            @profile train!(card_playing_agent)
+            open("profile.txt", "w") do f
+                show(f, owntime(stackframe_filter=filecontains(pwd())))
+                show(f, totaltime(stackframe_filter=filecontains(pwd())))
+            end
+            @assert length(card_playing_agent.sars.rewards) == 0
+        end
         return "start silent"
     end
     if "game_state" in keys(state)
@@ -195,26 +215,6 @@ function agent_command(state)
             log_value(tb_log, "performance/floor_reached", gs["floor"], step=agent_calls)
             push!(generation_floors_reached, gs["floor"])
             reward(card_playing_agent, state, 0)
-            if length(card_playing_agent.sars.rewards) >= 1000
-                mean_reward = mean(x -> x[1], card_playing_agent.sars.rewards)
-                sum_reward = sum(x -> x[1], card_playing_agent.sars.rewards)
-                BSON.bson(
-                    @sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
-                    model=card_playing_agent, performance=mean_reward)
-                log_value(tb_log, "performance/mean_reward", mean_reward, step=agent_calls)
-                log_value(tb_log, "performance/sum_reward", sum_reward, step=agent_calls)
-                log_histogram(tb_log, "generation_floors_reached", generation_floors_reached, step=agent_calls)
-                log_text(tb_log, "generation_floors_reached_txt", repr(generation_floors_reached), step=agent_calls)
-                empty!(generation_floors_reached)
-                Profile.init(1_000_000, 0.01)
-                Profile.clear()
-                @profile train!(card_playing_agent)
-                open("profile.txt", "w") do f
-                    show(f, owntime(stackframe_filter=filecontains(pwd())))
-                    show(f, totaltime(stackframe_filter=filecontains(pwd())))
-                end
-                @assert length(card_playing_agent.sars.rewards) == 0
-            end
             return "proceed"
         end
         if gs["screen_type"] == "REST"
