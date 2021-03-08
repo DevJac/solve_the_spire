@@ -26,10 +26,22 @@ end
         0 <= n && n <= 1
     end
     @test isapprox(sum(result, dims=1), ones(1, 10))
+    hidden_layers = [8, 9]
+    p = PolicyNetwork(4, 3, hidden_layers)
+    @test params(p) .|> length == [32, 8, 72, 9, 27, 3]
+    p = PolicyNetwork(4, 3, hidden_layers)
+    @test params(p) .|> length == [32, 8, 72, 9, 27, 3]
 end
 
 @testset "QNetwork" begin
     q = QNetwork(4, 3, [8, 9])
+    @test params(q) .|> length == [32, 8, 72, 9, 27, 3, 9, 1]
+    @test size(q(rand(4, 10))) == (3, 10)
+    hidden_layers = [8, 9]
+    q = QNetwork(4, 3, hidden_layers)
+    @test params(q) .|> length == [32, 8, 72, 9, 27, 3, 9, 1]
+    @test size(q(rand(4, 10))) == (3, 10)
+    q = QNetwork(4, 3, hidden_layers)
     @test params(q) .|> length == [32, 8, 72, 9, 27, 3, 9, 1]
     @test size(q(rand(4, 10))) == (3, 10)
 end
@@ -43,5 +55,12 @@ end
     @test size(n(rand(4, 10))) == (3, 10)
     n = VanillaNetwork(4, 3, [])
     @test params(n) .|> length == [12, 3]
+    @test size(n(rand(4, 10))) == (3, 10)
+    hidden_layers = [8, 9]
+    n = VanillaNetwork(4, 3, hidden_layers)
+    @test params(n) .|> length == [32, 8, 72, 9, 27, 3]
+    @test size(n(rand(4, 10))) == (3, 10)
+    n = VanillaNetwork(4, 3, hidden_layers)
+    @test params(n) .|> length == [32, 8, 72, 9, 27, 3]
     @test size(n(rand(4, 10))) == (3, 10)
 end

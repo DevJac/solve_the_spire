@@ -25,7 +25,7 @@ end
 Flux.@functor PolicyNetwork
 
 function PolicyNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
-    pushfirst!(hidden, in)
+    hidden = vcat(in, hidden)
     layers = Any[]
     for i in 1:length(hidden)-1
         push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
@@ -46,7 +46,7 @@ struct QNetwork{T, A, V}
     action_network :: A
     value_network  :: V
     function QNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
-        pushfirst!(hidden, in)
+        hidden = vcat(in, hidden)
         layers = Any[]
         for i in 1:length(hidden)-1
             push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
@@ -78,7 +78,7 @@ end
 Flux.@functor VanillaNetwork
 
 function VanillaNetwork(in, out, hidden, activation=mish, initW=Flux.kaiming_uniform)
-    pushfirst!(hidden, in)
+    hidden = vcat(in, hidden)
     layers = Any[]
     for i in 1:length(hidden)-1
         push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
