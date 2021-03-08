@@ -1,5 +1,5 @@
 module Utils
-export DiskStringSet, mc_q, onehot, clip, find
+export mc_q, onehot, clip, find, max_file_number
 
 function mc_q(r, f, γ=1f0)
     result = Float32.(similar(r))
@@ -30,6 +30,18 @@ function find(needle, haystack)
     else
         only(matching_i)
     end
+end
+
+function max_file_number(directory, prefix)
+    files = filter(readdir(directory)) do f
+        startswith(f, prefix)
+    end
+    if isempty(files); return 0 end
+    file_numbers = map(files) do f
+        m = match(r"\d+", f)
+        isnothing(m) ? 0 : parse(Int, m.match)
+    end
+    maximum(file_numbers)
 end
 
 end # module

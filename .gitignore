@@ -1,4 +1,7 @@
 J
 log.txt
+profile.txt
 tracefile.info
 coverage/
+tb_logs/
+models/

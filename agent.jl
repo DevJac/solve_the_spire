@@ -1,11 +1,18 @@
+using BSON
 using Dates
+using Encoders
 using JSON
+using Networks
+using NNlib
 using OwnTime
+using Printf
 using Profile
+using SARSM
 using Sockets
 using StatsBase
 using STSAgents
 using TensorBoardLogger
+using Utils
 
 const SOCKET_FILE = "/home/devjac/Code/julia/solve_the_spire/relay_socket"
 const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
@@ -77,7 +84,12 @@ shop_floors = []
 error_streak = 0
 agent_calls = 0
 generation_floors_reached = Int[]
-const card_playing_agent = CardPlayingAgent()
+mkpath("models")
+if max_file_number("models", "cpa") == 0
+    global const card_playing_agent = CardPlayingAgent()
+else
+    global const card_playing_agent = BSON.load(@sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")))[:model]
+end
 
 function agent_command(state)
     global error_streak
@@ -183,9 +195,12 @@ function agent_command(state)
             log_value(tb_log, "performance/floor_reached", gs["floor"], step=agent_calls)
             push!(generation_floors_reached, gs["floor"])
             reward(card_playing_agent, state, 0)
-            if length(card_playing_agent.sars.rewards) >= min(1000, agent_calls/5)
+            if length(card_playing_agent.sars.rewards) >= 1000
                 mean_reward = mean(x -> x[1], card_playing_agent.sars.rewards)
                 sum_reward = sum(x -> x[1], card_playing_agent.sars.rewards)
+                BSON.bson(
+                    @sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
+                    model=card_playing_agent, performance=mean_reward)
                 log_value(tb_log, "performance/mean_reward", mean_reward, step=agent_calls)
                 log_value(tb_log, "performance/sum_reward", sum_reward, step=agent_calls)
                 log_histogram(tb_log, "generation_floors_reached", generation_floors_reached, step=agent_calls)
@@ -195,8 +210,8 @@ function agent_command(state)
                 Profile.clear()
                 @profile train!(card_playing_agent)
                 open("profile.txt", "w") do f
-                    show(f, owntime(stackframe_filter=filecontains("STSAgent")))
-                    show(f, totaltime(stackframe_filter=filecontains("STSAgent")))
+                    show(f, owntime(stackframe_filter=filecontains(pwd())))
+                    show(f, totaltime(stackframe_filter=filecontains(pwd())))
                 end
                 @assert length(card_playing_agent.sars.rewards) == 0
             end
