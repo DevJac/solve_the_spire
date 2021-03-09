@@ -116,7 +116,7 @@ end
 const critic_opt = ADADelta()
 const policy_opt = ADADelta()
 
-function train!(agent::CardPlayingAgent, epochs=200)
+function train!(agent::CardPlayingAgent, epochs=1000)
     tb_log = TBLogger("tb_logs/card_playing_agent")
     sars = fill_q(agent.sars)
     for epoch in 1:epochs
