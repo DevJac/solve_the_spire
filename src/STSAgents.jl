@@ -141,23 +141,34 @@ function train!(agent::CardPlayingAgent, epochs=200)
         prms = params(agent.hand_card_embedder, agent.hand_card_selector)
         local aps = Float32[]
         local kl_divs = Float32[]
+        local actual_value = Float32[]
+        local estimated_value = Float32[]
+        local entropys = Float32[]
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
                 online_aps = action_probabilities(agent, sar.state)[1]
-                Zygote.ignore(() -> append!(aps, online_aps))
                 online_ap = online_aps[sar.action]
                 target_aps = action_probabilities(target_agent, sar.state)[1]
                 target_ap = target_aps[sar.action]
                 advantage = sar.q - only(action_value(target_agent, sar.state))
-                Zygote.ignore(() -> push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps)))
+                Zygote.ignore() do
+                    append!(aps, online_aps)
+                    push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
+                    push!(actual_value, online_ap * sars.q)
+                    push!(estimated_value, online_ap * action_value(target_agent, sar.state))
+                    push!(entropys, entropy(online_aps))
+                end
                 min(
                     (online_ap / target_ap) * advantage,
                     clip(online_ap / target_ap, 0.2) * advantage)
             end
         end
         log_value(tb_log, "train/policy_loss", loss, step=epoch)
-        log_value(tb_log, "train/kl_div", mean(kl_divs), step=epoch)
         log_histogram(tb_log, "train/action_probabilities", aps, step=epoch)
+        log_value(tb_log, "train/kl_div", mean(kl_divs), step=epoch)
+        log_value(tb_log, "train/actual_value", mean(actual_value))
+        log_value(tb_log, "train/estimated_value", mean(estimated_value))
+        log_value(tb_log, "train/entropy", mean(entropys))
         Flux.Optimise.update!(policy_opt, prms, grads)
     end
     empty!(agent.sars)
