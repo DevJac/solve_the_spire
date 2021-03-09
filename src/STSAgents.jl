@@ -122,17 +122,21 @@ function train!(agent::CardPlayingAgent, epochs=1000)
     for epoch in 1:epochs
         batch = sample(sars, 100)
         prms = params(agent.critic_hand_card_embedder, agent.critic)
+        local individual_value_losses = Float32[]
         loss, grads = valgrad(prms) do
             mean(batch) do sar
                 predicted_q = only(action_value(agent, sar.state))
                 Zygote.ignore(() -> @assert !isnan(predicted_q))
                 actual_q = sar.q
                 Zygote.ignore(() -> @assert !isnan(actual_q))
-                (predicted_q - actual_q)^2
+                l = (predicted_q - actual_q)^2
+                Zygote.ignore(() -> push!(individual_value_losses, l))
+                l
             end
         end
         @assert !isnan(loss)
         log_value(tb_log, "train/value_loss", loss, step=epoch)
+        log_histogram(tb_log, "train/individual_value_losses", individual_value_losses, step=epoch)
         Flux.Optimise.update!(critic_opt, prms, grads)
     end
     target_agent = deepcopy(agent)
@@ -144,6 +148,7 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         local actual_value = Float32[]
         local estimated_value = Float32[]
         local entropys = Float32[]
+        local individual_policy_losses = Float32[]
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
                 online_aps = action_probabilities(agent, sar.state)[1]
@@ -151,16 +156,18 @@ function train!(agent::CardPlayingAgent, epochs=1000)
                 target_aps = action_probabilities(target_agent, sar.state)[1]
                 target_ap = target_aps[sar.action]
                 advantage = sar.q - only(action_value(target_agent, sar.state))
+                l = min(
+                    (online_ap / target_ap) * advantage,
+                    clip(online_ap / target_ap, 0.2) * advantage)
                 Zygote.ignore() do
                     append!(aps, online_aps)
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
                     push!(actual_value, online_ap * sar.q)
                     push!(estimated_value, online_ap * only(action_value(target_agent, sar.state)))
                     push!(entropys, entropy(online_aps))
+                    push!(individual_policy_losses, l)
                 end
-                min(
-                    (online_ap / target_ap) * advantage,
-                    clip(online_ap / target_ap, 0.2) * advantage)
+                l
             end
         end
         log_value(tb_log, "train/policy_loss", loss, step=epoch)
@@ -169,6 +176,7 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         log_value(tb_log, "train/actual_value", mean(actual_value), step=epoch)
         log_value(tb_log, "train/estimated_value", mean(estimated_value), step=epoch)
         log_value(tb_log, "train/entropy", mean(entropys), step=epoch)
+        log_histogram(tb_log, "train/individual_policy_losses", individual_policy_losses, step=epoch)
         Flux.Optimise.update!(policy_opt, prms, grads)
     end
     empty!(agent.sars)
