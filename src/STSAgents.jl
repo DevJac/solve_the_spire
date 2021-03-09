@@ -154,8 +154,8 @@ function train!(agent::CardPlayingAgent, epochs=200)
                 Zygote.ignore() do
                     append!(aps, online_aps)
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
-                    push!(actual_value, online_ap * sars.q)
-                    push!(estimated_value, online_ap * action_value(target_agent, sar.state))
+                    push!(actual_value, online_ap * sar.q)
+                    push!(estimated_value, online_ap * only(action_value(target_agent, sar.state)))
                     push!(entropys, entropy(online_aps))
                 end
                 min(
@@ -166,9 +166,9 @@ function train!(agent::CardPlayingAgent, epochs=200)
         log_value(tb_log, "train/policy_loss", loss, step=epoch)
         log_histogram(tb_log, "train/action_probabilities", aps, step=epoch)
         log_value(tb_log, "train/kl_div", mean(kl_divs), step=epoch)
-        log_value(tb_log, "train/actual_value", mean(actual_value))
-        log_value(tb_log, "train/estimated_value", mean(estimated_value))
-        log_value(tb_log, "train/entropy", mean(entropys))
+        log_value(tb_log, "train/actual_value", mean(actual_value), step=epoch)
+        log_value(tb_log, "train/estimated_value", mean(estimated_value), step=epoch)
+        log_value(tb_log, "train/entropy", mean(entropys), step=epoch)
         Flux.Optimise.update!(policy_opt, prms, grads)
     end
     empty!(agent.sars)
