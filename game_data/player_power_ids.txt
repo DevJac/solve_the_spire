@@ -34,6 +34,7 @@ TheBomb0
 TheBomb1
 TheBomb2
 TheBomb3
+TheBomb4
 Thorns
 Thousand Cuts
 Tools Of The Trade

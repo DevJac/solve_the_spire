@@ -79,6 +79,7 @@ Metamorphosis
 Mind Blast
 Neutralize
 Night Terror
+Normality
 Noxious Fumes
 Outmaneuver
 Pain

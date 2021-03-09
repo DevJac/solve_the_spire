@@ -20,6 +20,8 @@ Centennial Puzzle
 Chemical X
 Calipers
 Calling Bell
+CaptainsWheel
+Cauldron
 Centennial Puzzle
 CeramicFish
 Chemical X
@@ -30,16 +32,22 @@ Darkstone Periapt
 Dead Branch
 DollysMirror
 Dream Catcher
+Du-Vu Doll
 Eternal Feather
 Ectoplasm
+FaceOfCleric
 FossilizedHelix
 Frozen Egg 2
+Frozen Eye
+Fusion Hammer
 Gambling Chip
+Ginger
 Girya
 Frozen Eye
 Golden Idol
 HandDrill
 Gremlin Horn
+HandDrill
 Happy Flower
 HornCleat
 HoveringKite
@@ -50,6 +58,7 @@ Juzu Bracelet
 Kunai
 Lantern
 Lee's Waffle
+Letter Opener
 Lizard Tail
 Mango
 Matryoshka
@@ -70,9 +79,10 @@ Oddly Smooth Stone
 Odd Mushroom
 Old Coin
 Omamori
+OrangePellets
 Orichalcum
-Orrery
 Ornamental Fan
+Orrery
 Pandora's Box
 Pantograph
 Paper Crane
