@@ -26,7 +26,7 @@ end
 function CardPlayingAgent()
     embedder_layers = [50]
     embedding_size = 50
-    selector_layers = [50, 50, 50]
+    selector_layers = [100, 50, 50]
     player_encoder = make_player_encoder(DefaultGameData)
     draw_discard_encoder = make_draw_discard_encoder(DefaultGameData)
     monsters_encoder = make_monsters_encoder(DefaultGameData)
@@ -120,7 +120,7 @@ function reward(agent::CardPlayingAgent, sts_state, continuity=1.0f0)
         last_hp = agent.sars.states[end]["game_state"]["current_hp"]
         current_hp = sts_state["game_state"]["current_hp"]
         r = current_hp - last_hp
-        if win; r+= 100 end
+        if win; r+= 10 end
         add_reward(agent.sars, r, continuity)
     end
 end
