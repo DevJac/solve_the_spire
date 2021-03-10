@@ -147,6 +147,7 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         local kl_divs = Float32[]
         local actual_value = Float32[]
         local estimated_value = Float32[]
+        local estimated_advantage = Float32[]
         local entropys = Float32[]
         local individual_policy_losses = Float32[]
         loss, grads = valgrad(prms) do
@@ -164,6 +165,7 @@ function train!(agent::CardPlayingAgent, epochs=1000)
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
                     push!(actual_value, online_ap * sar.q)
                     push!(estimated_value, online_ap * only(action_value(target_agent, sar.state)))
+                    push!(estimated_advantage, online_ap * advantage)
                     push!(entropys, entropy(online_aps))
                     push!(individual_policy_losses, l)
                 end
@@ -175,9 +177,11 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         log_value(tb_log, "train/kl_div", mean(kl_divs), step=epoch)
         log_value(tb_log, "train/actual_value", mean(actual_value), step=epoch)
         log_value(tb_log, "train/estimated_value", mean(estimated_value), step=epoch)
+        log_value(tb_log, "train/estimated_advantage", mean(estimated_advantage), step=epoch)
         log_value(tb_log, "train/entropy", mean(entropys), step=epoch)
         log_histogram(tb_log, "train/individual_policy_losses", individual_policy_losses, step=epoch)
         Flux.Optimise.update!(policy_opt, prms, grads)
+        if mean(kl_divs) > 0.01; break end
     end
     empty!(agent.sars)
 end
