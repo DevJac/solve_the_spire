@@ -1,20 +1,22 @@
 module Encoders
 
 export GameData, DefaultGameData
-export make_hand_card_encoder, make_draw_discard_encoder, make_player_encoder
+export make_hand_card_encoder, make_draw_discard_encoder, make_player_encoder, make_monster_encoder
 
 struct GameData
     card_ids
     potion_ids
-    player_power_ids
+    monster_ids
     monster_power_ids
+    player_power_ids
 end
 
 const DefaultGameData = GameData(
     readlines("game_data/card_ids.txt"),
     readlines("game_data/potion_ids.txt"),
-    readlines("game_data/player_power_ids.txt"),
-    readlines("game_data/monster_power_ids.txt"))
+    readlines("game_data/monster_ids.txt"),
+    readlines("game_data/monster_power_ids.txt"),
+    readlines("game_data/player_power_ids.txt"))
 
 struct Encoder
     encoders :: Vector{Function}
@@ -113,6 +115,20 @@ function monster_total_attack(monster_json)
     else
         monster_json["move_adjusted_damage"] * monster_json["move_hits"]
     end
+end
+
+function make_monster_encoder(game_data)
+    encoder = Encoder()
+    ae(f) = add_encoder(f, encoder)
+    monsters(j) = j["game_state"]["combat_state"]["monsters"]
+    for monster in game_data.monster_ids
+        ae() do j
+            any(monsters(j)) do m
+                m["id"] == monster
+            end
+        end
+    end
+    encoder
 end
 
 end # module

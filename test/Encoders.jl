@@ -4,7 +4,7 @@ using Test
 using Encoders
 
 @testset "make_hand_card_encoder" begin
-    gd = GameData(["card_1", "card_2"], [], [], [])
+    gd = GameData(["card_1", "card_2"], [], [], [], [])
     encoder = make_hand_card_encoder(gd)
     # One-hot encoding for each card (2)
     # Card upgrades (1)
@@ -24,7 +24,7 @@ using Encoders
 end
 
 @testset "make_draw_discard_encoder" begin
-    gd = GameData(["card_1", "card_2"], [], [], [])
+    gd = GameData(["card_1", "card_2"], [], [], [], [])
     encoder = make_draw_discard_encoder(gd)
     # 2 encoded vectors for each card (2), in both piles
     @test length(encoder) == 2 * 2 * 2
@@ -56,7 +56,7 @@ end
 end
 
 @testset "make_player_encoder" begin
-    gd = GameData([], [], ["power_1", "power_2"], [])
+    gd = GameData([], [], [], [], ["power_1", "power_2"])
     encoder = make_player_encoder(gd)
     # 2 encoded vectors for each power (2)
     # current_health, max_health, health_ratio, energy, block, surplus block (6)
@@ -108,4 +108,31 @@ end
     """)
     @test encoder(j1) == Float32.([1, -1, 1, 1, 30, 70, 30 / 70, 3, 6, 6 - 15])
     @test encoder(j2) == Float32.([0, 0, 1, 3, 20, 77, 20 / 77, 0, 0, -25])
+end
+
+@testset "make_monster_encoder" begin
+    gd = GameData([], [], ["monster_1", "monster_2"], [], [])
+    encoder = make_monster_encoder(gd)
+    # One-hot encoding for each monster
+    @test length(encoder) == 2
+    j1 = JSON.parse("""
+        {"game_state": {"combat_state": {"monsters": [
+            {"id": "monster_1"},
+            {"id": "monster_2"}
+        ]}}}
+    """)
+    j2 = JSON.parse("""
+        {"game_state": {"combat_state": {"monsters": [
+            {"id": "monster_2"}
+        ]}}}
+    """)
+    j3 = JSON.parse("""
+        {"game_state": {"combat_state": {"monsters": [
+            {"id": "monster_1"},
+            {"id": "monster_1"}
+        ]}}}
+    """)
+    @test encoder(j1) == Float32.([1, 1])
+    @test encoder(j2) == Float32.([0, 1])
+    @test encoder(j3) == Float32.([1, 0])
 end
