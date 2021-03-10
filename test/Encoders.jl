@@ -110,9 +110,9 @@ end
     @test encoder(j2) == Float32.([0, 0, 1, 3, 20, 77, 20 / 77, 0, 0, -25])
 end
 
-@testset "make_monster_encoder" begin
+@testset "make_monsters_encoder" begin
     gd = GameData([], [], ["monster_1", "monster_2"], [], [])
-    encoder = make_monster_encoder(gd)
+    encoder = make_monsters_encoder(gd)
     # One-hot encoding for each monster
     @test length(encoder) == 2
     j1 = JSON.parse("""

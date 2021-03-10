@@ -1,7 +1,7 @@
 module Encoders
 
 export GameData, DefaultGameData
-export make_hand_card_encoder, make_draw_discard_encoder, make_player_encoder, make_monster_encoder
+export make_hand_card_encoder, make_draw_discard_encoder, make_player_encoder, make_monsters_encoder
 
 struct GameData
     card_ids
@@ -117,7 +117,7 @@ function monster_total_attack(monster_json)
     end
 end
 
-function make_monster_encoder(game_data)
+function make_monsters_encoder(game_data)
     encoder = Encoder()
     ae(f) = add_encoder(f, encoder)
     monsters(j) = j["game_state"]["combat_state"]["monsters"]
