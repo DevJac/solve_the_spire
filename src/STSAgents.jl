@@ -14,6 +14,7 @@ export CardPlayingAgent
 struct CardPlayingAgent
     player_encoder
     draw_discard_encoder
+    monsters_encoder
     hand_card_encoder
     hand_card_embedder
     hand_card_selector
@@ -28,20 +29,27 @@ function CardPlayingAgent()
     selector_layers = [50, 50, 50]
     player_encoder = make_player_encoder(DefaultGameData)
     draw_discard_encoder = make_draw_discard_encoder(DefaultGameData)
+    monsters_encoder = make_monsters_encoder(DefaultGameData)
     hand_card_encoder = make_hand_card_encoder(DefaultGameData)
     hand_card_embedder = VanillaNetwork(length(hand_card_encoder), embedding_size, embedder_layers)
     hand_card_selector = VanillaNetwork(
-        length(player_encoder) + length(draw_discard_encoder) + embedding_size + length(hand_card_encoder),
+        sum([
+            length(player_encoder)
+            length(draw_discard_encoder)
+            length(monsters_encoder)
+            embedding_size
+            length(hand_card_encoder)]),
         1,
         selector_layers)
     critic_hand_card_embedder = VanillaNetwork(length(hand_card_encoder), embedding_size, embedder_layers)
     critic = VanillaNetwork(
-        length(player_encoder) + length(draw_discard_encoder) + embedding_size,
+        length(player_encoder) + length(draw_discard_encoder) + length(monsters_encoder) + embedding_size,
         1,
         selector_layers)
     CardPlayingAgent(
         player_encoder,
         draw_discard_encoder,
+        monsters_encoder,
         hand_card_encoder,
         hand_card_embedder,
         hand_card_selector,
@@ -58,11 +66,13 @@ function action_value(agent::CardPlayingAgent, sts_state)
     Zygote.ignore(() -> @assert nonan(player_encoded))
     draw_discard_encoded = Zygote.ignore(() -> agent.draw_discard_encoder(sts_state))
     Zygote.ignore(() -> @assert nonan(draw_discard_encoded))
+    monsters_encoded = Zygote.ignore(() -> agent.monsters_encoder(sts_state))
+    Zygote.ignore(() -> @assert nonan(monsters_encoded))
     embedded_cards = map(c -> agent.critic_hand_card_embedder(Zygote.ignore(() -> agent.hand_card_encoder(c[2]))), hand)
     Zygote.ignore(() -> @assert all(nonan, embedded_cards))
     pooled_cards = sum(reduce(hcat, embedded_cards), dims=2)
     Zygote.ignore(() -> @assert nonan(pooled_cards))
-    critic_input = vcat(player_encoded, draw_discard_encoded, pooled_cards)
+    critic_input = vcat(player_encoded, draw_discard_encoded, monsters_encoded, pooled_cards)
     Zygote.ignore(() -> @assert nonan(critic_input))
     agent.critic(critic_input)
 end
@@ -74,11 +84,18 @@ function action_probabilities(agent::CardPlayingAgent, sts_state)
     Zygote.ignore(() -> @assert nonan(player_encoded))
     draw_discard_encoded = Zygote.ignore(() -> agent.draw_discard_encoder(sts_state))
     Zygote.ignore(() -> @assert nonan(draw_discard_encoded))
+    monsters_encoded = Zygote.ignore(() -> agent.monsters_encoder(sts_state))
+    Zygote.ignore(() -> @assert nonan(monsters_encoded))
     embedded_cards = map(c -> agent.hand_card_embedder(Zygote.ignore(() -> agent.hand_card_encoder(c[2]))), hand)
     pooled_cards = sum(reduce(hcat, embedded_cards), dims=2)
     Zygote.ignore(() -> @assert nonan(pooled_cards))
     selector_input_separate = map(playable_hand) do hand_card
-        vcat(player_encoded, draw_discard_encoded, pooled_cards, Zygote.ignore(() -> agent.hand_card_encoder(hand_card[2])))
+        vcat(
+            player_encoded,
+            draw_discard_encoded,
+            monsters_encoded,
+            pooled_cards,
+            Zygote.ignore(() -> agent.hand_card_encoder(hand_card[2])))
     end
     selector_input = reduce(hcat, selector_input_separate)
     Zygote.ignore(() -> @assert nonan(selector_input))
