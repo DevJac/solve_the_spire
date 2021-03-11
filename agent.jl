@@ -89,10 +89,9 @@ Command(c) = Command(c, nothing)
 command(c::Command) = c.command
 extra(c::Command) = c.extra_json
 
-tb_log = TBLogger("tb_logs/agent")
+tb_log = TBLogger("tb_logs/agent", tb_append)
 shop_floors = []
 error_streak = 0
-agent_calls = 0
 generation_floors_reached = Int[]
 mkpath("models")
 if max_file_number("models", "cpa") == 0
@@ -102,7 +101,7 @@ else
 end
 
 function agent_command(state)
-    global agent_calls += 1
+    increment_step!(tb_log, 1)
     if "error" in keys(state)
         global error_streak += 1
         sleep(1)
@@ -114,14 +113,12 @@ function agent_command(state)
         if length(card_playing_agent.sars.rewards) >= 1000
             if !isempty(generation_floors_reached)
                 mean_reward = mean(x -> x[1], card_playing_agent.sars.rewards)
-                sum_reward = sum(x -> x[1], card_playing_agent.sars.rewards)
                 BSON.bson(
                     @sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
                     model=card_playing_agent, performance=mean_reward)
-                log_value(tb_log, "performance/mean_reward", mean_reward, step=agent_calls)
-                log_value(tb_log, "performance/sum_reward", sum_reward, step=agent_calls)
-                log_histogram(tb_log, "generation_floors_reached", generation_floors_reached, step=agent_calls)
-                log_text(tb_log, "generation_floors_reached_txt", repr(generation_floors_reached), step=agent_calls)
+                log_value(tb_log, "performance/mean_reward", mean_reward)
+                log_histogram(tb_log, "generation_floors_reached", generation_floors_reached)
+                log_text(tb_log, "generation_floors_reached_txt", repr(generation_floors_reached))
                 empty!(generation_floors_reached)
             end
             Profile.init(1_000_000, 0.01)
@@ -132,13 +129,16 @@ function agent_command(state)
                 show(f, totaltime(stackframe_filter=filecontains(pwd())))
             end
             @assert length(card_playing_agent.sars.rewards) == 0
+            BSON.bson(
+                @sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
+                model=card_playing_agent, performance=mean_reward)
         end
         empty!(shop_floors)
         return "start silent"
     end
     if "game_state" in keys(state)
         gs = state["game_state"]
-        log_value(tb_log, "rewards_length", length(card_playing_agent.sars.rewards), step=agent_calls)
+        log_value(tb_log, "rewards_length", length(card_playing_agent.sars.rewards))
         for (potion_index, potion) in enumerate(gs["potions"])
             potion_index -= 1
             if potion["can_use"]
@@ -223,7 +223,7 @@ function agent_command(state)
             return "choose $random_choice"
         end
         if gs["screen_type"] == "GAME_OVER"
-            log_value(tb_log, "performance/floor_reached", gs["floor"], step=agent_calls)
+            log_value(tb_log, "performance/floor_reached", gs["floor"])
             push!(generation_floors_reached, gs["floor"])
             reward(card_playing_agent, state, 0)
             return "proceed"

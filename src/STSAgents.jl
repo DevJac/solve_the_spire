@@ -135,38 +135,34 @@ const policy_opt = ADADelta()
 
 function train!(agent::CardPlayingAgent, epochs=1000)
     tb_log = TBLogger("tb_logs/card_playing_agent")
+    set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
     sars = fill_q(agent.sars)
     for epoch in 1:epochs
         batch = sample(sars, 100)
         prms = params(agent.critic_hand_card_embedder, agent.critic)
-        local individual_value_losses = Float32[]
         loss, grads = valgrad(prms) do
             mean(batch) do sar
                 predicted_q = only(action_value(agent, sar.state))
                 Zygote.ignore(() -> @assert !isnan(predicted_q))
                 actual_q = sar.q
                 Zygote.ignore(() -> @assert !isnan(actual_q))
-                l = (predicted_q - actual_q)^2
-                Zygote.ignore(() -> push!(individual_value_losses, l))
-                l
+                (predicted_q - actual_q)^2
             end
         end
         @assert !isnan(loss)
         log_value(tb_log, "train/value_loss", loss, step=epoch)
-        log_histogram(tb_log, "train/individual_value_losses", individual_value_losses, step=epoch)
         Flux.Optimise.update!(critic_opt, prms, grads)
     end
     target_agent = deepcopy(agent)
     for epoch in 1:epochs
         batch = sample(sars, 100)
         prms = params(agent.hand_card_embedder, agent.hand_card_selector)
-        local aps = Float32[]
         local kl_divs = Float32[]
         local actual_value = Float32[]
         local estimated_value = Float32[]
         local estimated_advantage = Float32[]
         local entropys = Float32[]
-        local individual_policy_losses = Float32[]
+        local p_ratios = Float32[]
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
                 online_aps = action_probabilities(agent, sar.state)[1]
@@ -174,31 +170,28 @@ function train!(agent::CardPlayingAgent, epochs=1000)
                 target_aps = action_probabilities(target_agent, sar.state)[1]
                 target_ap = target_aps[sar.action]
                 advantage = sar.q - only(action_value(target_agent, sar.state))
-                l = min(
-                    (online_ap / target_ap) * advantage,
-                    clip(online_ap / target_ap, 0.2) * advantage)
                 Zygote.ignore() do
-                    append!(aps, online_aps)
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
                     push!(actual_value, online_ap * sar.q)
                     push!(estimated_value, online_ap * only(action_value(target_agent, sar.state)))
                     push!(estimated_advantage, online_ap * advantage)
                     push!(entropys, entropy(online_aps))
-                    push!(individual_policy_losses, l)
+                    push!(p_ratios, online_ap / target_ap)
                 end
-                l
+                min(
+                    (online_ap / target_ap) * advantage,
+                    clip(online_ap / target_ap, 0.2) * advantage)
             end
         end
         log_value(tb_log, "train/policy_loss", loss, step=epoch)
-        log_histogram(tb_log, "train/action_probabilities", aps, step=epoch)
         log_value(tb_log, "train/kl_div", mean(kl_divs), step=epoch)
         log_value(tb_log, "train/actual_value", mean(actual_value), step=epoch)
         log_value(tb_log, "train/estimated_value", mean(estimated_value), step=epoch)
         log_value(tb_log, "train/estimated_advantage", mean(estimated_advantage), step=epoch)
         log_value(tb_log, "train/entropy", mean(entropys), step=epoch)
-        log_histogram(tb_log, "train/individual_policy_losses", individual_policy_losses, step=epoch)
+        log_histogram(tb_log, "train/p_ratios", p_ratios, step=epoch)
         Flux.Optimise.update!(policy_opt, prms, grads)
-        if mean(kl_divs) > 0.01; break end
+        if mean(kl_divs) > 0.05; break end
     end
     empty!(agent.sars)
 end
