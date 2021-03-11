@@ -48,9 +48,19 @@ end
 
 function run()
     socket = connect(SOCKET_FILE)
+    socket_channel = Channel(10_000)
+    @async begin
+        while true
+            put!(socket_channel, readline(socket))
+        end
+    end
     open(LOG_FILE, "a") do log_file
         while true
-            sts_state = JSON.parse(readline(socket))
+            local sts_state
+            while true
+                sts_state = JSON.parse(take!(socket_channel))
+                if isempty(socket_channel); break end
+            end
             write_json(log_file, Dict("sts_state" => sts_state))
             ac = agent_command(sts_state)
             if isnothing(ac)
@@ -92,15 +102,13 @@ else
 end
 
 function agent_command(state)
-    global error_streak
-    global agent_calls
-    agent_calls += 1
+    global agent_calls += 1
     if "error" in keys(state)
-        error_streak += 1
+        global error_streak += 1
         sleep(1)
         return error_streak % 2 == 0 ? "wait 100" : "state"
     else
-        error_streak = 0
+        global error_streak = 0
     end
     if "in_game" in keys(state) && !state["in_game"]
         if length(card_playing_agent.sars.rewards) >= 1000

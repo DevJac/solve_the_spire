@@ -17,8 +17,8 @@ end
 socket_to_sts = @async begin
     while true
         command = readline(socket)
+        sleep(0.01)
         global last_command = time()
-        if command == ""; return end
         write(stdout, command * "\n")
     end
 end
@@ -32,4 +32,6 @@ state_wakeup = @async begin
     end
 end
 
+wait(sts_to_socket)
 wait(socket_to_sts)
+wait(state_wakeup)
