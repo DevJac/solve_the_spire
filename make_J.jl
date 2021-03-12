@@ -1,3 +1,4 @@
+# To run: julia --project make_J.jl
 using PackageCompiler
 create_sysimage([
     :BSON

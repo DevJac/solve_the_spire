@@ -111,14 +111,14 @@ This allows each agent to be isolated. When playing cards in combat, the card pl
 - [X] │   ├── extract_player_powers.sh
 - [X] │   ├── extract_potions.sh
 - [X] │   └── extract_relics.sh
-- [ ] ├── logs
-- [ ] │   ├── random_log.txt.xz
-- [ ] │   └── README.txt
-- [ ] ├── make_J.jl
-- [ ] ├── Manifest.toml
+- [X] ├── logs
+- [X] │   ├── random_log.txt.xz
+- [X] │   └── README.txt
+- [X] ├── make_J.jl
+- [X] ├── Manifest.toml
 - [ ] ├── notes.org
 - [ ] ├── ppo_hello_world.jl
-- [ ] ├── Project.toml
+- [X] ├── Project.toml
 - [ ] ├── README.md
 - [ ] ├── relay.jl
 - [ ] ├── repl.jl
