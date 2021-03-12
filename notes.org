@@ -117,11 +117,11 @@ This allows each agent to be isolated. When playing cards in combat, the card pl
 - [X] ├── make_J.jl
 - [X] ├── Manifest.toml
 - [ ] ├── notes.org
-- [ ] ├── ppo_hello_world.jl
+- [X] ├── ppo_hello_world.jl
 - [X] ├── Project.toml
 - [ ] ├── README.md
 - [ ] ├── relay.jl
-- [ ] ├── repl.jl
+- [X] ├── repl.jl
 - [ ] ├── src
 - [ ] │   ├── Encoders.jl
 - [ ] │   ├── Networks.jl
@@ -134,4 +134,4 @@ This allows each agent to be isolated. When playing cards in combat, the card pl
 - [ ] │   ├── runtests.jl
 - [ ] │   ├── SARSM.jl
 - [ ] │   └── Utils.jl
-- [ ] └── test_with_coverage.sh
+- [X] └── test_with_coverage.sh
