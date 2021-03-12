@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-jq '.. | .potions?[]?.id' log.txt | sort | uniq
+jq -r '.. | .potions?[]? | select(.id != "Potion Slot") | .id' log.txt | sort | uniq

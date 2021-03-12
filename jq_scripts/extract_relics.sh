@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-jq '.. | .relics?[]?.id' log.txt | sort | uniq
+jq -r '.. | .relics?[]?.id' log.txt | sort | uniq
