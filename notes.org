@@ -89,3 +89,49 @@ This allows us to pick cards and build our deck.
 There is a pile of agents. Every agent receives every state. Agents indicate whether they will handle each state. Throw an error if multiple states try to handle the same state.
 
 This allows each agent to be isolated. When playing cards in combat, the card playing agent can step in and say "I got this" then choose the best move. The card playing agent can also keep an eye on all other states in order to determine its own rewards.
+* Refactor
+- [ ] .
+- [ ] ├── agent.jl
+- [ ] ├── check_settings.sh
+- [ ] ├── config_copies
+- [ ] │   ├── communication_mod_config.properties
+- [ ] │   └── SuperFastModeConfig.properties
+- [ ] ├── game_data
+- [ ] │   ├── card_ids.txt
+- [ ] │   ├── monster_ids.txt
+- [ ] │   ├── monster_power_ids.txt
+- [ ] │   ├── player_power_ids.txt
+- [ ] │   ├── potion_ids.txt
+- [ ] │   └── relic_ids.txt
+- [ ] ├── .gitignore
+- [ ] ├── jq_scripts
+- [ ] │   ├── extract_cards.sh
+- [ ] │   ├── extract_monster_powers.sh
+- [ ] │   ├── extract_monsters.sh
+- [ ] │   ├── extract_player_powers.sh
+- [ ] │   ├── extract_potions.sh
+- [ ] │   └── extract_relics.sh
+- [ ] ├── logs
+- [ ] │   ├── random_log.txt.xz
+- [ ] │   └── README.txt
+- [ ] ├── make_J.jl
+- [ ] ├── Manifest.toml
+- [ ] ├── notes.org
+- [ ] ├── ppo_hello_world.jl
+- [ ] ├── Project.toml
+- [ ] ├── README.md
+- [ ] ├── relay.jl
+- [ ] ├── repl.jl
+- [ ] ├── src
+- [ ] │   ├── Encoders.jl
+- [ ] │   ├── Networks.jl
+- [ ] │   ├── SARSM.jl
+- [ ] │   ├── STSAgents.jl
+- [ ] │   └── Utils.jl
+- [ ] ├── test
+- [ ] │   ├── Encoders.jl
+- [ ] │   ├── Networks.jl
+- [ ] │   ├── runtests.jl
+- [ ] │   ├── SARSM.jl
+- [ ] │   └── Utils.jl
+- [ ] └── test_with_coverage.sh
