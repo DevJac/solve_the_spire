@@ -90,6 +90,7 @@ command(c::Command) = c.command
 extra(c::Command) = c.extra_json
 
 tb_log = TBLogger("tb_logs/agent", tb_append)
+set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
 shop_floors = []
 error_streak = 0
 generation_floors_reached = Int[]

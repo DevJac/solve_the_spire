@@ -135,7 +135,6 @@ const policy_opt = ADADelta()
 
 function train!(agent::CardPlayingAgent, epochs=1000)
     tb_log = TBLogger("tb_logs/card_playing_agent")
-    set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
     sars = fill_q(agent.sars)
     for epoch in 1:epochs
         batch = sample(sars, 100)
