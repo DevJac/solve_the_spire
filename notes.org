@@ -92,46 +92,18 @@ This allows each agent to be isolated. When playing cards in combat, the card pl
 * Refactor
 - [ ] .
 - [ ] ├── agent.jl
-- [X] ├── check_settings.sh
-- [X] ├── config_copies
-- [X] │   ├── communication_mod_config.properties
-- [X] │   └── SuperFastModeConfig.properties
-- [X] ├── game_data
-- [X] │   ├── card_ids.txt
-- [X] │   ├── monster_ids.txt
-- [X] │   ├── monster_power_ids.txt
-- [X] │   ├── player_power_ids.txt
-- [X] │   ├── potion_ids.txt
-- [X] │   └── relic_ids.txt
-- [X] ├── .gitignore
-- [X] ├── jq_scripts
-- [X] │   ├── extract_cards.sh
-- [X] │   ├── extract_monster_powers.sh
-- [X] │   ├── extract_monsters.sh
-- [X] │   ├── extract_player_powers.sh
-- [X] │   ├── extract_potions.sh
-- [X] │   └── extract_relics.sh
-- [X] ├── logs
-- [X] │   ├── random_log.txt.xz
-- [X] │   └── README.txt
-- [X] ├── make_J.jl
-- [X] ├── Manifest.toml
 - [ ] ├── notes.org
-- [X] ├── ppo_hello_world.jl
-- [X] ├── Project.toml
 - [ ] ├── README.md
 - [ ] ├── relay.jl
-- [X] ├── repl.jl
 - [ ] ├── src
 - [ ] │   ├── Encoders.jl
 - [ ] │   ├── Networks.jl
 - [ ] │   ├── SARSM.jl
 - [ ] │   ├── STSAgents.jl
 - [ ] │   └── Utils.jl
-- [ ] ├── test
-- [ ] │   ├── Encoders.jl
-- [ ] │   ├── Networks.jl
-- [ ] │   ├── runtests.jl
-- [ ] │   ├── SARSM.jl
-- [ ] │   └── Utils.jl
-- [X] └── test_with_coverage.sh
+- [ ] └── test
+- [ ]     ├── Encoders.jl
+- [ ]     ├── Networks.jl
+- [ ]     ├── runtests.jl
+- [ ]     ├── SARSM.jl
+- [ ]     └── Utils.jl
