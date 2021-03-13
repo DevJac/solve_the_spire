@@ -257,4 +257,14 @@ function agent_command(state)
     nothing
 end
 
-main()
+while true
+    try
+        main()
+    catch e
+        if typeof(e) == ErrorException && occursin("Unexpected end of input", e.msg)
+            sleep(3)
+            continue
+        end
+        rethrow()
+    end
+end
