@@ -91,18 +91,18 @@ There is a pile of agents. Every agent receives every state. Agents indicate whe
 This allows each agent to be isolated. When playing cards in combat, the card playing agent can step in and say "I got this" then choose the best move. The card playing agent can also keep an eye on all other states in order to determine its own rewards.
 * Refactor
 - [ ] .
-- [X] ├── agent.jl
+- [ ] ├── agent.jl
 - [ ] ├── notes.org
 - [ ] ├── README.md
-- [ ] ├── relay.jl
+- [X] ├── relay.jl
 - [ ] ├── src
-- [ ] │   ├── Encoders.jl
+- [X] │   ├── Encoders.jl
 - [ ] │   ├── Networks.jl
 - [ ] │   ├── SARSM.jl
 - [ ] │   ├── STSAgents.jl
 - [ ] │   └── Utils.jl
 - [ ] └── test
-- [ ]     ├── Encoders.jl
+- [X]     ├── Encoders.jl
 - [ ]     ├── Networks.jl
 - [ ]     ├── runtests.jl
 - [ ]     ├── SARSM.jl

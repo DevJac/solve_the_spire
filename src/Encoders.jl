@@ -1,34 +1,45 @@
 module Encoders
+using Zygote
 
 export GameData, DefaultGameData
-export make_hand_card_encoder, make_draw_discard_encoder, make_player_encoder, make_monsters_encoder
 
 struct GameData
     card_ids
-    potion_ids
+    card_rarities
+    card_types
     monster_ids
     monster_power_ids
     player_power_ids
+    potion_ids
+    relic_ids
 end
 
 const DefaultGameData = GameData(
     readlines("game_data/card_ids.txt"),
-    readlines("game_data/potion_ids.txt"),
+    readlines("game_data/card_rarities.txt"),
+    readlines("game_data/card_types.txt"),
     readlines("game_data/monster_ids.txt"),
     readlines("game_data/monster_power_ids.txt"),
-    readlines("game_data/player_power_ids.txt"))
+    readlines("game_data/player_power_ids.txt"),
+    readlines("game_data/potion_ids.txt"),
+    readlines("game_data/relic_ids.txt"))
 
 struct Encoder
+    name :: String
     encoders :: Vector{Function}
 end
-Encoder() = Encoder([])
+Encoder(name) = Encoder(name, [])
 
 function (encoder::Encoder)(sts_state_json)
-    encoded = map(encoder.encoders) do e
-        e(sts_state_json)
+    Zygote.ignore() do
+        encoded = map(encoder.encoders) do e
+            e(sts_state_json)
+        end
+        Float32.(encoded)
     end
-    Float32.(encoded)
 end
+
+Base.show(io::IO, encoder::Encoder) = println(io, "<Encoder: $name $(length(encoder))>")
 
 Base.length(e::Encoder) = length(e.encoders)
 
@@ -36,25 +47,40 @@ function add_encoder(f, encoder::Encoder)
     push!(encoder.encoders, f)
 end
 
+export make_hand_card_encoder, make_draw_discard_encoder, make_player_encoder, make_monsters_encoder
+
 function make_hand_card_encoder(game_data)
-    encoder = Encoder()
+    encoder = Encoder("Hand Card")
     ae(f) = add_encoder(f, encoder)
     for card_id in game_data.card_ids
         ae() do j
             j["id"] == card_id
         end
     end
+    for card_rarity in game_data.card_rarities
+        ae() do j
+            j["rarity"] == card_rarity
+        end
+    end
+    for card_type in game_data.card_types
+        ae() do j
+            j["type"] == card_type
+        end
+    end
     ae() do j
-        j["upgrades"]
+        j["has_target"]
     end
     ae() do j
         j["cost"]
+    end
+    ae() do j
+        j["upgrades"]
     end
     encoder
 end
 
 function make_draw_discard_encoder(game_data)
-    encoder = Encoder()
+    encoder = Encoder("Draw Discard")
     ae(f) = add_encoder(f, encoder)
     draw(j) = j["game_state"]["combat_state"]["draw_pile"]
     discard(j) = j["game_state"]["combat_state"]["discard_pile"]
@@ -73,7 +99,7 @@ function make_draw_discard_encoder(game_data)
 end
 
 function make_player_encoder(game_data)
-    encoder = Encoder()
+    encoder = Encoder("Player")
     ae(f) = add_encoder(f, encoder)
     player(j) = j["game_state"]["combat_state"]["player"]
     powers(j) = player(j)["powers"]
@@ -118,15 +144,19 @@ function monster_total_attack(monster_json)
 end
 
 function make_monsters_encoder(game_data)
-    encoder = Encoder()
+    encoder = Encoder("Monsters")
     ae(f) = add_encoder(f, encoder)
     monsters(j) = j["game_state"]["combat_state"]["monsters"]
     for monster in game_data.monster_ids
         ae() do j
-            any(monsters(j)) do m
-                m["id"] == monster
-            end
+            count(m -> m["id"] == monster, monsters(j))
         end
+    end
+    ae() do j
+        minimum(m -> m["current_hp"], monsters(j))
+    end
+    ae() do j
+        maximum(m -> m["current_hp"], monsters(j))
     end
     encoder
 end
