@@ -97,13 +97,13 @@ This allows each agent to be isolated. When playing cards in combat, the card pl
 - [X] ├── relay.jl
 - [ ] ├── src
 - [X] │   ├── Encoders.jl
-- [ ] │   ├── Networks.jl
-- [ ] │   ├── SARSM.jl
+- [X] │   ├── Networks.jl
+- [X] │   ├── SARSM.jl
 - [ ] │   ├── STSAgents.jl
-- [ ] │   └── Utils.jl
-- [ ] └── test
+- [X] │   └── Utils.jl
+- [X] └── test
 - [X]     ├── Encoders.jl
-- [ ]     ├── Networks.jl
-- [ ]     ├── runtests.jl
-- [ ]     ├── SARSM.jl
-- [ ]     └── Utils.jl
+- [X]     ├── Networks.jl
+- [X]     ├── runtests.jl
+- [X]     ├── SARSM.jl
+- [X]     └── Utils.jl

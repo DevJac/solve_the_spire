@@ -13,8 +13,11 @@ using SARSM
     add_action(sars, 1)
     add_reward(sars, 1, 0)
 
+    @test awaiting(sars) == sar_state
     add_state(sars, 1)
+    @test awaiting(sars) == sar_action
     add_action(sars, 1)
+    @test awaiting(sars) == sar_reward
     add_reward(sars, 1, 0)
 
     add_state(sars, 1)
