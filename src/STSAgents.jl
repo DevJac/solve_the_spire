@@ -25,8 +25,8 @@ end
 
 function CardPlayingAgent()
     embedder_layers = [50]
-    embedding_size = 50
-    selector_layers = [100, 50, 50]
+    embedding_size = 10
+    selector_layers = [100, 50]
     player_encoder = make_player_encoder(DefaultGameData)
     draw_discard_encoder = make_draw_discard_encoder(DefaultGameData)
     monsters_encoder = make_monsters_encoder(DefaultGameData)
@@ -130,28 +130,12 @@ function valgrad(f, x...)
     val, back(1)
 end
 
-const critic_opt = ADADelta()
 const policy_opt = ADADelta()
+const critic_opt = ADADelta()
 
 function train!(agent::CardPlayingAgent, epochs=1000)
     tb_log = TBLogger("tb_logs/card_playing_agent")
     sars = fill_q(agent.sars)
-    for epoch in 1:epochs
-        batch = sample(sars, 100)
-        prms = params(agent.critic_hand_card_embedder, agent.critic)
-        loss, grads = valgrad(prms) do
-            mean(batch) do sar
-                predicted_q = only(action_value(agent, sar.state))
-                Zygote.ignore(() -> @assert !isnan(predicted_q))
-                actual_q = sar.q
-                Zygote.ignore(() -> @assert !isnan(actual_q))
-                (predicted_q - actual_q)^2
-            end
-        end
-        @assert !isnan(loss)
-        log_value(tb_log, "train/value_loss", loss, step=epoch)
-        Flux.Optimise.update!(critic_opt, prms, grads)
-    end
     target_agent = deepcopy(agent)
     for epoch in 1:epochs
         batch = sample(sars, 100)
@@ -190,7 +174,23 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         log_value(tb_log, "train/entropy", mean(entropys), step=epoch)
         log_histogram(tb_log, "train/p_ratios", p_ratios, step=epoch)
         Flux.Optimise.update!(policy_opt, prms, grads)
-        if mean(kl_divs) > 0.05; break end
+        if mean(kl_divs) > 0.01; break end
+    end
+    for epoch in 1:epochs
+        batch = sample(sars, 100)
+        prms = params(agent.critic_hand_card_embedder, agent.critic)
+        loss, grads = valgrad(prms) do
+            mean(batch) do sar
+                predicted_q = only(action_value(agent, sar.state))
+                Zygote.ignore(() -> @assert !isnan(predicted_q))
+                actual_q = sar.q
+                Zygote.ignore(() -> @assert !isnan(actual_q))
+                (predicted_q - actual_q)^2
+            end
+        end
+        @assert !isnan(loss)
+        log_value(tb_log, "train/value_loss", loss, step=epoch)
+        Flux.Optimise.update!(critic_opt, prms, grads)
     end
     empty!(agent.sars)
 end

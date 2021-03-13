@@ -139,7 +139,7 @@ function agent_command(state)
             @assert length(card_playing_agent.sars.rewards) == 0
             BSON.bson(
                 @sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
-                model=card_playing_agent, performance=mean_reward)
+                model=card_playing_agent)
         end
         empty!(shop_floors)
         return "start silent"
