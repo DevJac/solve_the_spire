@@ -1,3 +1,4 @@
+using AgentCommands
 using BSON
 using Dates
 using Encoders
@@ -95,12 +96,6 @@ function main()
     end
 end
 
-struct Command
-    command
-    extra
-end
-Command(c) = Command(c, nothing)
-
 tb_log = TBLogger("tb_logs/agent", tb_append)
 set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
 shop_floors = []
@@ -134,7 +129,7 @@ function agent_command(state)
                 log_text(tb_log, "generation_floors_reached_txt", repr(generation_floors_reached))
                 empty!(generation_floors_reached)
             end
-            Profile.init(1_000_000, 0.01)
+            Profile.init(1_000_000, 0.1)
             Profile.clear()
             @profile train!(card_playing_agent)
             open("profile.txt", "w") do f
