@@ -14,7 +14,6 @@ using STSAgents
 using TensorBoardLogger
 using Utils
 
-const SOCKET_FILE = "/home/devjac/Code/julia/solve_the_spire/relay_socket"
 const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
 
 function hide_map(state)
@@ -46,9 +45,24 @@ function manual_command()
     end
 end
 
-function run()
-    socket = connect(SOCKET_FILE)
-    socket_channel = Channel(10_000)
+function launch_sts()
+    ENV["STS_COMMUNICATION_SOCKET"] = tempname()
+    run(pipeline(`./launch_sts.sh`, stdout="sts_out.txt", stderr="sts_err.txt"), wait=false)
+    timeout_start = time()
+    while timeout_start + 30 > time()
+        try
+            sleep(3)
+            return connect(ENV["STS_COMMUNICATION_SOCKET"])
+        catch e
+            if !isa(e, Base.IOError); rethrow() end
+        end
+    end
+    throw("Couldn't connect to relay socket")
+end
+
+function main()
+    socket = launch_sts()
+    socket_channel = Channel(1000)
     @async begin
         while true
             put!(socket_channel, readline(socket))
@@ -70,12 +84,12 @@ function run()
                 write(socket, mc * "\n")
             else
                 if typeof(ac) == String; ac = Command(ac) end
-                if isnothing(extra(ac))
-                    write_json(log_file, Dict("agent_command" => command(ac)))
+                if isnothing(ac.extra)
+                    write_json(log_file, Dict("agent_command" => ac.command))
                 else
-                    write_json(log_file, Dict("agent_command" => command(ac), "extra" => extra(ac)))
+                    write_json(log_file, Dict("agent_command" => ac.command, "extra" => ac.extra))
                 end
-                write(socket, command(ac) * "\n")
+                write(socket, ac.command * "\n")
             end
         end
     end
@@ -83,11 +97,9 @@ end
 
 struct Command
     command
-    extra_json
+    extra
 end
 Command(c) = Command(c, nothing)
-command(c::Command) = c.command
-extra(c::Command) = c.extra_json
 
 tb_log = TBLogger("tb_logs/agent", tb_append)
 set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
@@ -250,4 +262,4 @@ function agent_command(state)
     nothing
 end
 
-run()
+main()

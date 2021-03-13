@@ -1,5 +1,7 @@
 J
 log.txt
+sts_out.txt
+sts_err.txt
 profile.txt
 tracefile.info
 coverage/
