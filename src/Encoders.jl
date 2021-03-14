@@ -39,7 +39,7 @@ function (encoder::Encoder)(sts_state_json)
     end
 end
 
-Base.show(io::IO, encoder::Encoder) = println(io, "<Encoder: $name $(length(encoder))>")
+Base.show(io::IO, encoder::Encoder) = println(io, "<Encoder: $(encoder.name) $(length(encoder))>")
 
 Base.length(e::Encoder) = length(e.encoders)
 
