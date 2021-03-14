@@ -1,4 +1,5 @@
 module Utils
+
 export mc_q, onehot, clip, find, max_file_number
 
 function mc_q(r, f, γ=1f0)
@@ -42,6 +43,18 @@ function max_file_number(directory, prefix)
         isnothing(m) ? 0 : parse(Int, m.match)
     end
     maximum(file_numbers)
+end
+
+export Smoother, smooth!
+
+mutable struct Smoother
+    factor :: Float32
+    value  :: Float32
+    Smoother(smoothing_factor=0.9; initial_value=0) = new(smoothing_factor, initial_value)
+end
+
+function smooth!(smoother::Smoother, value)
+    smoother.value = smoother.factor * smoother.value + (1 - smoother.factor) * value
 end
 
 end # module

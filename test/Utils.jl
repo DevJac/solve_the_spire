@@ -31,3 +31,21 @@ end
     @test find(2, [1, 2, 3]) == 2
     @test find(4, [1, 2, 3]) == nothing
 end
+
+@testset "Smoother" begin
+    s = Smoother(0.9)
+    @test isapprox(smooth!(s, 1), 0.1)
+    @test isapprox(smooth!(s, 1), 0.19)
+    s = Smoother(0.1)
+    @test isapprox(smooth!(s, 1), 0.9)
+    @test isapprox(smooth!(s, 1), 0.99)
+    s = Smoother(0.0)
+    @test isapprox(smooth!(s, 1), 1)
+    @test isapprox(smooth!(s, 2), 2)
+    s = Smoother(0.1, initial_value=1)
+    @test isapprox(smooth!(s, 2), 1.9)
+    @test isapprox(smooth!(s, 2), 1.99)
+    s = Smoother()
+    @test isapprox(smooth!(s, 1), 0.1)
+    @test isapprox(smooth!(s, 1), 0.19)
+end

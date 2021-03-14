@@ -137,8 +137,9 @@ function train!(agent::CardPlayingAgent, epochs=1000)
     tb_log = TBLogger("tb_logs/card_playing_agent")
     sars = fill_q(agent.sars)
     target_agent = deepcopy(agent)
+    kl_div_smoother = Smoother()
     for epoch in 1:epochs
-        batch = sample(sars, 100)
+        batch = sample(sars, 500, replace=false)
         prms = params(agent.hand_card_embedder, agent.hand_card_selector)
         local kl_divs = Float32[]
         local actual_value = Float32[]
@@ -174,10 +175,10 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         log_value(tb_log, "train/entropy", mean(entropys), step=epoch)
         log_histogram(tb_log, "train/p_ratios", p_ratios, step=epoch)
         Flux.Optimise.update!(policy_opt, prms, grads)
-        if mean(kl_divs) > 0.01; break end
+        if smooth!(kl_div_smoother, mean(kl_divs)) > 0.02; break end
     end
     for epoch in 1:epochs
-        batch = sample(sars, 100)
+        batch = sample(sars, 100, replace=false)
         prms = params(agent.critic_hand_card_embedder, agent.critic)
         loss, grads = valgrad(prms) do
             mean(batch) do sar
