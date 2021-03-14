@@ -150,15 +150,15 @@ function train!(agent::CardPlayingAgent, epochs=1000)
             -mean(batch) do sar
                 online_aps = action_probabilities(agent, sar.state)[1]
                 online_ap = online_aps[sar.action]
-                target_aps = action_probabilities(target_agent, sar.state)[1]
+                target_aps = Zygote.ignore(() -> action_probabilities(target_agent, sar.state)[1])
                 target_ap = target_aps[sar.action]
-                advantage = sar.q - only(action_value(target_agent, sar.state))
+                advantage = sar.q - Zygote.ignore(() -> only(action_value(target_agent, sar.state)))
                 Zygote.ignore() do
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
                     push!(actual_value, online_ap * sar.q)
                     push!(estimated_value, online_ap * only(action_value(target_agent, sar.state)))
                     push!(estimated_advantage, online_ap * advantage)
-                    push!(entropys, entropy(online_aps))
+                    push!(entropys, entropy(online_aps) / (-log(1/max(2, length(online_aps)))))
                     push!(p_ratios, online_ap / target_ap)
                 end
                 min(
