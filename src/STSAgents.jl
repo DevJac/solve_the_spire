@@ -139,7 +139,7 @@ function train!(agent::CardPlayingAgent, epochs=1000)
     target_agent = deepcopy(agent)
     kl_div_smoother = Smoother()
     for epoch in 1:epochs
-        batch = sample(sars, 500, replace=false)
+        batch = sample(sars, 1000, replace=false)
         prms = params(agent.hand_card_embedder, agent.hand_card_selector)
         local kl_divs = Float32[]
         local actual_value = Float32[]

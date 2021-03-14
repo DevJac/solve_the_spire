@@ -118,7 +118,7 @@ function agent_command(state)
         global error_streak = 0
     end
     if "in_game" in keys(state) && !state["in_game"]
-        if length(card_playing_agent.sars.rewards) >= 1000
+        if length(card_playing_agent.sars.rewards) >= 2000
             if !isempty(generation_floors_reached)
                 mean_reward = mean(x -> x[1], card_playing_agent.sars.rewards)
                 BSON.bson(
