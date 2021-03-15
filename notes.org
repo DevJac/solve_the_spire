@@ -1,90 +1,19 @@
 * Design
 ** Agents
-*** Combat agents
-**** Simplified card playing agent
-Selects card to play. We'll keep the "attack lowest HP enemy" logic for now.
-***** Receives / State
-- Encoded draw pile
-- Encoded discard pile
-- Player details, player block, attack difference (attack - block)
-- Embedded-max-pool of full draw pile
-- Card to weigh for play
-**** Card playing agent
-This agent answers one or two questions:
-
-1. What card or potion should I play?
-2. What target should I play the card/potion against?
-
-Not all cards/potions have targets, so the second question will not always need to be answered.
-***** New Plan
-Feed networks and potions through an embedding network, max pool the embeddings, this will give you a hand / potion representation.
-
-Feed that hand / potion representation into a policy network, along with each individual card / potion. For 10 cards, you will evaluate the policy network 10 times, each time with the same hand represntation, but for different individual cards. (Maybe embed the individual cards / potions as well.)
-
-Then choose the card / potion to play based on the output weights.
-
-This idea is inspired by Discord user rrenaud.
-***** New Plan Receives / State
-- Encoded draw pile
-- Encoded discard pile
-- Player details
-- Incomming attack, player block, attack difference (attack - block)
-- Embedded-max-pool of full draw pile
-- Embedded-max-pool of all monsters
-- Embedded-max-pool of all potions
-- Card to weigh
-- Potion to weigh
-- Monster to weigh
-***** Receives / State
-- Encoded draw pile
-- Encoded discard pile
-- Hand details, zero padded, shuffled, all cards (not just playable cards)
-- Monster details, zero padded, shuffled
-- Player details
-- One-hot encoded potions
-- Incomming attack, player block, attack difference (attack - block)
-****** Hand card details
-- One-hot encoded card
-- Cost
-- Upgrades
-****** Monster details
-- Encoded monster powers
-- Move hits, hit damage, total damage
-- Block
-- Current HP, max HP, HP ratio (current HP / max HP)
-******* Monster power details
-- One-hot encoded power category / id
-- Power amount
-****** Player details
-- Current HP, max HP, HP ratio (current HP / max HP)
-- Block
-- Encoded player powers
-******* Player power details
-- One-hot encoded power category / id
-- Power amount
-****** Encoded draw and discard piles
-- One-hot encoded card category / id
-- Mean-hot encoded card upgrades
-***** Outputs / Action
-- Card/potion weights
-- Target weights
-
-The applicable weights will be run though a softmax function to give the final percentages for the playable actions.
-***** Training / Reward
-Reward is amount of HP lost.
-**** Keyword agents
-- Discard agent
-- Retain agent
-- Forethought agent
-*** Other agents
-**** Card selection agent
-Receives: relics, potions, cards in deck, player stats, floor, gold, available cards
-Outputs: weights for available cards, weight for skip
-
-This allows us to pick cards and build our deck.
-**** Event agent
-**** Map agent
-**** Discard / special card selection agent
+*** Card Playing Agent
+Selects which card to play against which targets. Short term reward feedback.
+*** Card Selection Agent
+Selects which cards to add to deck. Long term reward feedback.
+*** Potion Agent
+Selects when to play potions. Long term reward feedback.
+*** Navigation Agent
+Selects map movements. Long term reward feedback.
+*** Event Agent
+Selects event actions. Long term reward feedback.
+*** Upgrade Agent
+Selects cards to upgrade. Long term reward feedback.
+*** Special Agents
+Will need one or more additional agents to handle things like card discards, and other special selections, etc.
 ** Agent coordination
 There is a pile of agents. Every agent receives every state. Agents indicate whether they will handle each state. Throw an error if multiple states try to handle the same state.
 
