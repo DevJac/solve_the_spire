@@ -13,95 +13,120 @@ export CardPlayingAgent
 
 struct CardPlayingAgent
     player_encoder
+    player_embedder
+
+
     draw_discard_encoder
+    draw_discard_embedder
+
     monsters_encoder
+    monsters_embedder
+
     hand_card_encoder
-    hand_card_embedder
+    single_hand_card_embedder
+    all_hand_cards_embedder
+
     hand_card_selector
-    critic_hand_card_embedder
     critic
     sars
 end
 
 function CardPlayingAgent()
-    embedder_layers = [50]
-    embedding_size = 10
-    selector_layers = [100, 50]
     player_encoder = make_player_encoder(DefaultGameData)
+    player_embedder = VanillaNetwork(length(player_encoder), 10, [50])
+
     draw_discard_encoder = make_draw_discard_encoder(DefaultGameData)
+    draw_discard_embedder = VanillaNetwork(length(draw_discard_encoder), 10, [50])
+
     monsters_encoder = make_monsters_encoder(DefaultGameData)
+    monsters_embedder = VanillaNetwork(length(monsters_encoder), 10, [50])
+
     hand_card_encoder = make_hand_card_encoder(DefaultGameData)
-    hand_card_embedder = VanillaNetwork(length(hand_card_encoder), embedding_size, embedder_layers)
+    single_hand_card_embedder = VanillaNetwork(length(hand_card_encoder), 10, [50])
+    all_hand_cards_embedder = VanillaNetwork(length(hand_card_encoder), 10, [50])
+
     hand_card_selector = VanillaNetwork(
-        sum([
-            length(player_encoder)
-            length(draw_discard_encoder)
-            length(monsters_encoder)
-            embedding_size
-            length(hand_card_encoder)]),
+        sum(length, [
+            player_embedder,
+            draw_discard_embedder,
+            monsters_embedder,
+            single_hand_card_embedder,
+            all_hand_cards_embedder]),
         1,
-        selector_layers)
-    critic_hand_card_embedder = VanillaNetwork(length(hand_card_encoder), embedding_size, embedder_layers)
+        [50, 50, 50, 50, 50])
     critic = VanillaNetwork(
-        length(player_encoder) + length(draw_discard_encoder) + length(monsters_encoder) + embedding_size,
+        sum(length, [
+            player_embedder,
+            draw_discard_embedder,
+            monsters_embedder,
+            all_hand_cards_embedder]),
         1,
-        selector_layers)
+        [40, 40, 40, 40, 40])
     CardPlayingAgent(
         player_encoder,
+        player_embedder,
+
         draw_discard_encoder,
+        draw_discard_embedder,
+
         monsters_encoder,
+        monsters_embedder,
+
         hand_card_encoder,
-        hand_card_embedder,
+        single_hand_card_embedder,
+        all_hand_cards_embedder,
+
         hand_card_selector,
-        critic_hand_card_embedder,
         critic,
         SARS())
 end
 
-nonan(x) = !any(isnan, x)
-
 function action_value(agent::CardPlayingAgent, sts_state)
     hand = Zygote.ignore(() -> collect(enumerate(sts_state["game_state"]["combat_state"]["hand"])))
-    player_encoded = Zygote.ignore(() -> agent.player_encoder(sts_state))
-    Zygote.ignore(() -> @assert nonan(player_encoded))
-    draw_discard_encoded = Zygote.ignore(() -> agent.draw_discard_encoder(sts_state))
-    Zygote.ignore(() -> @assert nonan(draw_discard_encoded))
-    monsters_encoded = Zygote.ignore(() -> agent.monsters_encoder(sts_state))
-    Zygote.ignore(() -> @assert nonan(monsters_encoded))
-    embedded_cards = map(c -> agent.critic_hand_card_embedder(Zygote.ignore(() -> agent.hand_card_encoder(c[2]))), hand)
-    Zygote.ignore(() -> @assert all(nonan, embedded_cards))
-    pooled_cards = sum(reduce(hcat, embedded_cards), dims=2)
-    Zygote.ignore(() -> @assert nonan(pooled_cards))
-    critic_input = vcat(player_encoded, draw_discard_encoded, monsters_encoded, pooled_cards)
-    Zygote.ignore(() -> @assert nonan(critic_input))
-    agent.critic(critic_input)
+    player_embedded = agent.player_embedder(agent.player_encoder(sts_state))
+    draw_discard_embedded = agent.draw_discard_embedder(agent.draw_discard_encoder(sts_state))
+    monsters_embedded = agent.monsters_embedder(agent.monsters_encoder(sts_state))
+
+    all_hand_cards_encoded = reduce(hcat, map(agent.hand_card_encoder, hand))
+    Zygote.ignore(() -> @assert size(all_hand_cards_encoded) == (length(agent.hand_card_encoder), length(hand)))
+    all_hand_cards_embedded = agent.all_hand_cards_embedder(all_hand_cards_encoded)
+    Zygote.ignore(() -> @assert size(all_hand_cards_embedded) == (length(agent.all_hand_cards_embedder), length(hand)))
+    all_hand_cards_pooled = maximum(all_hand_cards_embedded, dims=2)
+    Zygote.ignore(() -> @assert size(all_hand_cards_pooled) == (length(agent.all_hand_cards_embedder), 1))
+
+    only(agent.critic(vcat(
+        player_embedded,
+        draw_discard_embedded,
+        monsters_embedded,
+        all_hand_cards_embedded)))
 end
 
 function action_probabilities(agent::CardPlayingAgent, sts_state)
     hand = Zygote.ignore(() -> collect(enumerate(sts_state["game_state"]["combat_state"]["hand"])))
-    playable_hand = Zygote.ignore(() -> filter(c -> c[2]["is_playable"], hand))
-    player_encoded = Zygote.ignore(() -> agent.player_encoder(sts_state))
-    Zygote.ignore(() -> @assert nonan(player_encoded))
-    draw_discard_encoded = Zygote.ignore(() -> agent.draw_discard_encoder(sts_state))
-    Zygote.ignore(() -> @assert nonan(draw_discard_encoded))
-    monsters_encoded = Zygote.ignore(() -> agent.monsters_encoder(sts_state))
-    Zygote.ignore(() -> @assert nonan(monsters_encoded))
-    embedded_cards = map(c -> agent.hand_card_embedder(Zygote.ignore(() -> agent.hand_card_encoder(c[2]))), hand)
-    pooled_cards = sum(reduce(hcat, embedded_cards), dims=2)
-    Zygote.ignore(() -> @assert nonan(pooled_cards))
-    selector_input_separate = map(playable_hand) do hand_card
-        vcat(
-            player_encoded,
-            draw_discard_encoded,
-            monsters_encoded,
-            pooled_cards,
-            Zygote.ignore(() -> agent.hand_card_encoder(hand_card[2])))
-    end
-    selector_input = reduce(hcat, selector_input_separate)
-    Zygote.ignore(() -> @assert nonan(selector_input))
-    selection_weights = reshape(agent.hand_card_selector(selector_input), length(playable_hand))
-    Zygote.ignore(() -> @assert nonan(selection_weights))
-    softmax(selection_weights), playable_hand
+    player_embedded = agent.player_embedder(agent.player_encoder(sts_state))
+    draw_discard_embedded = agent.draw_discard_embedder(agent.draw_discard_encoder(sts_state))
+    monsters_embedded = agent.monsters_embedder(agent.monsters_encoder(sts_state))
+
+    all_hand_cards_encoded = reduce(hcat, map(agent.hand_card_encoder, hand))
+    Zygote.ignore(() -> @assert size(all_hand_cards_encoded) == (length(agent.hand_card_encoder), length(hand)))
+    all_hand_cards_embedded = agent.all_hand_cards_embedder(all_hand_cards_encoded)
+    Zygote.ignore(() -> @assert size(all_hand_cards_embedded) == (length(agent.all_hand_cards_embedder), length(hand)))
+    all_hand_cards_pooled = maximum(all_hand_cards_embedded, dims=2)
+    Zygote.ignore(() -> @assert size(all_hand_cards_pooled) == (length(agent.all_hand_cards_embedder), 1))
+
+    playable_cards = filter(c -> c["is_playable"], hand)
+    playable_cards_encoded = reduce(hcat, map(agent.hand_card_encoder, playable_cards))
+    Zygote.ignore(() -> @assert size(playable_cards_encoded) == (length(agent.hand_card_encoder), length(playable_cards)))
+    playable_cards_embedded = agent.single_hand_card_embedder(playable_cards_encoded)
+    Zygote.ignore(() -> @assert size(playable_cards_embedded) == (length(agent.single_hand_card_embedder), length(playable_cards)))
+    selection_weights = agent.hand_card_selector(vcat(
+        repeat(player_embedded, 1, length(playable_cards)),
+        repeat(draw_discard_embedded, 1, length(playable_cards)),
+        repeat(monsters_embedded, 1, length(playable_cards)),
+        repeat(all_hand_cards_pooled, 1, length(playable_cards)),
+        playable_cards_embedded))
+    Zygote.ignore(() -> @assert size(selection_weights) == (1, length(playable_cards)))
+    softmax(reshape(selection_weights, length(playable_cards))), playable_cards
 end
 
 function action(agent::CardPlayingAgent, sts_state)
@@ -140,13 +165,18 @@ function train!(agent::CardPlayingAgent, epochs=1000)
     kl_div_smoother = Smoother()
     for epoch in 1:epochs
         batch = sample(sars, 1000, replace=false)
-        prms = params(agent.hand_card_embedder, agent.hand_card_selector)
+        prms = params(
+            agent.player_embedder,
+            agent.draw_discard_embedder,
+            agent.monsters_embedder,
+            agent.single_hand_card_embedder,
+            agent.all_hand_cards_embedder,
+            agent.hand_card_selector)
         local kl_divs = Float32[]
         local actual_value = Float32[]
         local estimated_value = Float32[]
         local estimated_advantage = Float32[]
         local entropys = Float32[]
-        local p_ratios = Float32[]
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
                 online_aps = action_probabilities(agent, sar.state)[1]
@@ -160,7 +190,6 @@ function train!(agent::CardPlayingAgent, epochs=1000)
                     push!(estimated_value, online_ap * only(action_value(target_agent, sar.state)))
                     push!(estimated_advantage, online_ap * advantage)
                     push!(entropys, entropy(online_aps) / (-log(1/max(2, length(online_aps)))))
-                    push!(p_ratios, online_ap / target_ap)
                 end
                 min(
                     (online_ap / target_ap) * advantage,
@@ -173,13 +202,12 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         log_value(tb_log, "train/estimated_value", mean(estimated_value), step=epoch)
         log_value(tb_log, "train/estimated_advantage", mean(estimated_advantage), step=epoch)
         log_value(tb_log, "train/entropy", mean(entropys), step=epoch)
-        log_histogram(tb_log, "train/p_ratios", p_ratios, step=epoch)
         Flux.Optimise.update!(policy_opt, prms, grads)
         if smooth!(kl_div_smoother, mean(kl_divs)) > 0.02; break end
     end
     for epoch in 1:epochs
         batch = sample(sars, 100, replace=false)
-        prms = params(agent.critic_hand_card_embedder, agent.critic)
+        prms = params(agent.critic)
         loss, grads = valgrad(prms) do
             mean(batch) do sar
                 predicted_q = only(action_value(agent, sar.state))

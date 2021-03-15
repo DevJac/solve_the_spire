@@ -29,6 +29,7 @@ Plated Armor
 Regeneration
 Retain Cards
 Ritual
+Sadistic
 Strength
 TheBomb0
 TheBomb1

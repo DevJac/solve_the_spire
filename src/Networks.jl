@@ -89,4 +89,6 @@ end
 
 (n::VanillaNetwork)(s) = n.network(s)
 
+Base.length(n::VanillaNetwork) = length(n.network.layers[end].b)
+
 end # module

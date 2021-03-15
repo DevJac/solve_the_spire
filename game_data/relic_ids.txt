@@ -35,6 +35,8 @@ Dream Catcher
 Du-Vu Doll
 Eternal Feather
 Ectoplasm
+Empty Cage
+Eternal Feather
 FaceOfCleric
 FossilizedHelix
 Frozen Egg 2
@@ -47,6 +49,7 @@ Frozen Eye
 Golden Idol
 HandDrill
 Gremlin Horn
+GremlinMask
 HandDrill
 Happy Flower
 HornCleat
@@ -105,6 +108,7 @@ Shovel
 Shuriken
 Snake Skull
 Singing Bowl
+SlaversCollar
 Sling
 Smiling Mask
 Snake Skull

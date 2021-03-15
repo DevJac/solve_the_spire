@@ -1,6 +1,7 @@
 AcidSlime_L
 AcidSlime_M
 AcidSlime_S
+BookOfStabbing
 Byrd
 Centurion
 Chosen
@@ -21,11 +22,13 @@ Lagavulin
 Looter
 Mugger
 Sentry
+Shelled Parasite
 SlaverBlue
 SlaverBoss
 SlaverRed
 SlimeBoss
 SnakePlant
+Snecko
 SphericGuardian
 SpikeSlime_L
 SpikeSlime_M
