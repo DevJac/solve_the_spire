@@ -177,6 +177,7 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         local estimated_value = Float32[]
         local estimated_advantage = Float32[]
         local entropys = Float32[]
+        local explore = Float32[]
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
                 online_aps = action_probabilities(agent, sar.state)[1]
@@ -189,7 +190,8 @@ function train!(agent::CardPlayingAgent, epochs=1000)
                     push!(actual_value, online_ap * sar.q)
                     push!(estimated_value, online_ap * action_value(target_agent, sar.state))
                     push!(estimated_advantage, online_ap * advantage)
-                    push!(entropys, entropy(online_aps) / (-log(1/max(2, length(online_aps)))))
+                    push!(entropys, entropy(online_aps))
+                    push!(explore, (maximum(online_aps) - 0.01) > online_ap ? 1 : 0)
                 end
                 min(
                     (online_ap / target_ap) * advantage,
@@ -202,6 +204,7 @@ function train!(agent::CardPlayingAgent, epochs=1000)
         log_value(tb_log, "train/estimated_value", mean(estimated_value), step=epoch)
         log_value(tb_log, "train/estimated_advantage", mean(estimated_advantage), step=epoch)
         log_value(tb_log, "train/entropy", mean(entropys), step=epoch)
+        log_value(tb_log, "train/explore", mean(explore), step=epoch)
         Flux.Optimise.update!(policy_opt, prms, grads)
         if smooth!(kl_div_smoother, mean(kl_divs)) > 0.02; break end
     end
