@@ -7,4 +7,11 @@ using TensorBoardLogger
 using Utils
 using Zygote
 
-include("agents/CardPlayingAgent.jl")
+include("CampfireAgent.jl")
+include("CombatAgent.jl")
+include("DraftingAgent.jl")
+include("EventAgent.jl")
+include("PotionAgent.jl")
+include("RewardAgent.jl")
+include("ShopAgent.jl")
+include("StartGameOverAgent.jl")

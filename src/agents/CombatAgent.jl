@@ -1,6 +1,6 @@
-export CardPlayingAgent, action, train!
+export CombatAgent, action, train!
 
-struct CardPlayingAgent
+struct CombatAgent
     player_encoder
     player_embedder
 
@@ -20,7 +20,7 @@ struct CardPlayingAgent
     sars
 end
 
-function CardPlayingAgent()
+function CombatAgent()
     player_encoder = make_player_encoder(DefaultGameData)
     player_embedder = VanillaNetwork(length(player_encoder), 10, [50])
 
@@ -51,7 +51,7 @@ function CardPlayingAgent()
             all_hand_cards_embedder]),
         1,
         [40, 40, 40, 40, 40])
-    CardPlayingAgent(
+    CombatAgent(
         player_encoder,
         player_embedder,
 
@@ -70,7 +70,7 @@ function CardPlayingAgent()
         SARS())
 end
 
-function action_value(agent::CardPlayingAgent, sts_state)
+function action_value(agent::CombatAgent, sts_state)
     hand = Zygote.ignore(() -> collect(enumerate(sts_state["game_state"]["combat_state"]["hand"])))
     player_embedded = agent.player_embedder(agent.player_encoder(sts_state))
     draw_discard_embedded = agent.draw_discard_embedder(agent.draw_discard_encoder(sts_state))
@@ -90,7 +90,7 @@ function action_value(agent::CardPlayingAgent, sts_state)
         all_hand_cards_pooled)))
 end
 
-function action_probabilities(agent::CardPlayingAgent, sts_state)
+function action_probabilities(agent::CombatAgent, sts_state)
     hand = Zygote.ignore(() -> collect(enumerate(sts_state["game_state"]["combat_state"]["hand"])))
     player_embedded = agent.player_embedder(agent.player_encoder(sts_state))
     draw_discard_embedded = agent.draw_discard_embedder(agent.draw_discard_encoder(sts_state))
@@ -118,7 +118,7 @@ function action_probabilities(agent::CardPlayingAgent, sts_state)
     softmax(reshape(selection_weights, length(playable_hand))), playable_hand
 end
 
-function action(agent::CardPlayingAgent, sts_state)
+function action(agent::CombatAgent, sts_state)
     add_state(agent.sars, sts_state)
     aps, playable_hand = action_probabilities(agent, sts_state)
     selected_card = sample(collect(enumerate(playable_hand)), Weights(aps))
@@ -126,7 +126,7 @@ function action(agent::CardPlayingAgent, sts_state)
     return selected_card[2]
 end
 
-function reward(agent::CardPlayingAgent, sts_state, continuity=1.0f0)
+function reward(agent::CombatAgent, sts_state, continuity=1.0f0)
     if awaiting(agent.sars) == sar_reward
         win = sts_state["game_state"]["screen_type"] in ("MAP", "COMBAT_REWARD")
         lose = sts_state["game_state"]["screen_type"] == "GAME_OVER"
@@ -147,7 +147,7 @@ end
 const policy_opt = ADADelta()
 const critic_opt = ADADelta()
 
-function train!(agent::CardPlayingAgent, epochs=1000)
+function train!(agent::CombatAgent, epochs=1000)
     tb_log = TBLogger("tb_logs/card_playing_agent")
     sars = fill_q(agent.sars)
     target_agent = deepcopy(agent)
