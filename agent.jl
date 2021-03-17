@@ -17,6 +17,21 @@ using Utils
 
 const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
 
+function launch_sts()
+    ENV["STS_COMMUNICATION_SOCKET"] = tempname()
+    run(pipeline(`./launch_sts.sh`, stdout="sts_out.txt", stderr="sts_err.txt"), wait=false)
+    timeout_start = time()
+    while timeout_start + 30 > time()
+        try
+            sleep(3)
+            return connect(ENV["STS_COMMUNICATION_SOCKET"])
+        catch e
+            if !isa(e, Base.IOError); rethrow() end
+        end
+    end
+    throw("Couldn't connect to relay socket")
+end
+
 function hide_map(state)
     result = deepcopy(state)
     if "map" in keys(result)
@@ -28,6 +43,12 @@ function hide_map(state)
         end
     end
     result
+end
+
+function is_game_over(sts_state)
+    "game_state" in keys(sts_state) &&
+        "screen_type" in keys(sts_state["game_state"]) &&
+        sts_state["game_state"]["screen_type"] == "GAME_OVER"
 end
 
 function write_json(f, json)
@@ -46,22 +67,22 @@ function manual_command()
     end
 end
 
-function launch_sts()
-    ENV["STS_COMMUNICATION_SOCKET"] = tempname()
-    run(pipeline(`./launch_sts.sh`, stdout="sts_out.txt", stderr="sts_err.txt"), wait=false)
-    timeout_start = time()
-    while timeout_start + 30 > time()
+function main()
+    while true
         try
-            sleep(3)
-            return connect(ENV["STS_COMMUNICATION_SOCKET"])
+            root_agent = load_root_agent()
+            agent_main(root_agent)
         catch e
-            if !isa(e, Base.IOError); rethrow() end
+            if typeof(e) == ErrorException && occursin("Unexpected end of input", e.msg)
+                sleep(3)
+                continue
+            end
+            rethrow()
         end
     end
-    throw("Couldn't connect to relay socket")
 end
 
-function main()
+function agent_main(root_agent)
     socket = launch_sts()
     socket_channel = Channel(1000)
     @async begin
@@ -71,6 +92,9 @@ function main()
     end
     open(LOG_FILE, "a") do log_file
         while true
+            if root_agent.ready_to_train
+                # TODO: Train then save
+            end
             local sts_state
             while true
                 sts_state = JSON.parse(take!(socket_channel))
@@ -92,11 +116,30 @@ function main()
                 end
                 write(socket, ac.command * "\n")
             end
+            if is_game_over(sts_state)
+                root_agent.games += 1
+                root_agent.ready_to_train = root_agent.games % 20 == 0
+                if root_agent.games % 5 == 0
+                    BSON.bson(
+                        @sprintf("models/cpa.%04d.bson", max_file_number("models", "cpa")+1),
+                        model=root_agent)
+                end
+            end
         end
     end
 end
 
+function load_root_agent()
+    if max_file_number("models", "root_agent") == 0
+        RootAgent()
+    else
+        BSON.load(@sprintf("models/root_agent.%04d.bson", max_file_number("models", "root_agent")))[:model]
+    end
+end
+
 mutable struct RootAgent
+    games          :: Int
+    ready_to_train :: Bool
     tb_log
     agents
 end
@@ -105,7 +148,7 @@ function RootAgent()
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
     agents = []
-    RootAgent(tb_log, agents)
+    RootAgent(0, false, tb_log, agents)
 end
 
 function agent_command(root_agent::RootAgent, sts_state)
@@ -132,11 +175,6 @@ shop_floors = []
 error_streak = 0
 generation_floors_reached = Int[]
 mkpath("models")
-if max_file_number("models", "cpa") == 0
-    global const card_playing_agent = CardPlayingAgent()
-else
-    global const card_playing_agent = BSON.load(@sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")))[:model]
-end
 
 function agent_command(state)
     increment_step!(tb_log, 1)
@@ -287,14 +325,4 @@ function agent_command(state)
     nothing
 end
 
-while true
-    try
-        main()
-    catch e
-        if typeof(e) == ErrorException && occursin("Unexpected end of input", e.msg)
-            sleep(3)
-            continue
-        end
-        rethrow()
-    end
-end
+main()
