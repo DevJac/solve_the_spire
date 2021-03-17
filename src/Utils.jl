@@ -1,4 +1,5 @@
 module Utils
+using Random
 
 export mc_q, onehot, clip, find, max_file_number
 
@@ -55,6 +56,33 @@ end
 
 function smooth!(smoother::Smoother, value)
     smoother.value = smoother.factor * smoother.value + (1 - smoother.factor) * value
+end
+
+export Batcher
+
+struct Batcher{T}
+    data :: Vector{T}
+    batchsize :: Int
+    Batcher(data; batchsize) = new{eltype(data)}(data, batchsize)
+end
+
+function Base.iterate(b::Batcher)
+    shuffle!(b.data)
+    iterate(b, 1)
+end
+
+function Base.iterate(b::Batcher, state)
+    if b.batchsize > length(b.data)
+        return (shuffle!(b.data), 1)
+    end
+    if state + b.batchsize-1 > length(b.data)
+        post_shuffle_size = length(b.data) - state + 1
+        result = b.data[state:end]
+        shuffle!(b.data)
+        (append!(result, b.data[1:post_shuffle_size]), post_shuffle_size+1)
+    else
+        (b.data[state:state+b.batchsize-1], (state + b.batchsize) % length(b.data))
+    end
 end
 
 end # module

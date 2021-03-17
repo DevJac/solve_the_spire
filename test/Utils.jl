@@ -49,3 +49,26 @@ end
     @test isapprox(smooth!(s, 1), 0.1)
     @test isapprox(smooth!(s, 1), 0.19)
 end
+
+@testset "Batcher" begin
+    data = collect(1:10)
+    b = Batcher(data, batchsize=4)
+    total = 0
+    for (i, batch) in enumerate(b)
+        @test length(batch) == 4
+        total += sum(batch)
+        if i >= 10; break end
+    end
+    @test total == sum(data) * 4
+    b = Batcher(data, batchsize=20)
+    batch, _ = iterate(b)
+    @test length(batch) == 10
+    @test sum(batch) == sum(data)
+    b = Batcher(data, batchsize=10)
+    batch, _ = iterate(b)
+    @test length(batch) == 10
+    @test sum(batch) == sum(data)
+    batch, _ = iterate(b)
+    @test length(batch) == 10
+    @test sum(batch) == sum(data)
+end
