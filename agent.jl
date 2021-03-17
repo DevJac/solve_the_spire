@@ -96,8 +96,38 @@ function main()
     end
 end
 
-tb_log = TBLogger("tb_logs/agent", tb_append)
-set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
+mutable struct RootAgent
+    tb_log
+    agents
+end
+
+function RootAgent()
+    tb_log = TBLogger("tb_logs/agent", tb_append)
+    set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
+    agents = []
+    RootAgent(tb_log, agents)
+end
+
+function agent_command(root_agent::RootAgent, sts_state)
+    resulting_command = nothing
+    for agent in root_agent.agents
+        issued, command = action(agent, sts_state, isnothing(resulting_command))
+        if !isnothing(resulting_command) && issued
+            @error "Two agents issued commands" resulting_command command
+            throw("Two agents issued commands")
+        end
+        if issued
+            resulting_command = command
+        end
+    end
+    resulting_command
+end
+
+
+
+
+
+
 shop_floors = []
 error_streak = 0
 generation_floors_reached = Int[]
