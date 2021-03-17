@@ -70,10 +70,12 @@ end
 function main()
     while true
         try
+            mkpath("models")
             root_agent = load_root_agent()
             agent_main(root_agent)
         catch e
             if typeof(e) == ErrorException && occursin("Unexpected end of input", e.msg)
+                @warn "STS crashed, will restart" exception=e
                 sleep(3)
                 continue
             end
@@ -93,7 +95,11 @@ function agent_main(root_agent)
     open(LOG_FILE, "a") do log_file
         while true
             if root_agent.ready_to_train
-                # TODO: Train then save
+                train!(root_agent)
+                root_agent.generation += 1
+                BSON.bson(
+                    @sprintf("models/cpa.%04d.bson", max_file_number("models", "cpa")+1),
+                    model=root_agent)
             end
             local sts_state
             while true
@@ -119,7 +125,7 @@ function agent_main(root_agent)
             if is_game_over(sts_state)
                 root_agent.games += 1
                 root_agent.ready_to_train = root_agent.games % 20 == 0
-                if root_agent.games % 5 == 0
+                if root_agent.games % 5 == 0 || root_agent.ready_to_train
                     BSON.bson(
                         @sprintf("models/cpa.%04d.bson", max_file_number("models", "cpa")+1),
                         model=root_agent)
@@ -139,6 +145,7 @@ end
 
 mutable struct RootAgent
     games          :: Int
+    generation     :: Int
     ready_to_train :: Bool
     tb_log
     agents
@@ -148,13 +155,14 @@ function RootAgent()
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
     agents = []
-    RootAgent(0, false, tb_log, agents)
+    RootAgent(0, 0, false, tb_log, agents)
 end
 
 function agent_command(root_agent::RootAgent, sts_state)
+    increment_step!(root_agent.tb_log, 1)
     resulting_command = nothing
     for agent in root_agent.agents
-        issued, command = action(agent, sts_state, isnothing(resulting_command))
+        issued, command = action(agent, root_agent, sts_state, isnothing(resulting_command))
         if !isnothing(resulting_command) && issued
             @error "Two agents issued commands" resulting_command command
             throw("Two agents issued commands")
@@ -166,52 +174,56 @@ function agent_command(root_agent::RootAgent, sts_state)
     resulting_command
 end
 
-
-
-
-
-
-shop_floors = []
-error_streak = 0
-generation_floors_reached = Int[]
-mkpath("models")
-
-function agent_command(state)
-    increment_step!(tb_log, 1)
-    if "error" in keys(state)
-        global error_streak += 1
-        sleep(1)
-        return error_streak % 2 == 0 ? "wait 100" : "state"
-    else
-        global error_streak = 0
+function train!(root_agent::RootAgent)
+    for agent in root_agent.agents
+        train!(agent, root_agent)
     end
-    if "in_game" in keys(state) && !state["in_game"]
-        if length(card_playing_agent.sars.rewards) >= 2000
-            if !isempty(generation_floors_reached)
-                mean_reward = mean(x -> x[1], card_playing_agent.sars.rewards)
-                BSON.bson(
-                    @sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
-                    model=card_playing_agent, performance=mean_reward)
-                log_value(tb_log, "performance/mean_reward", mean_reward)
-                log_histogram(tb_log, "generation_floors_reached", generation_floors_reached)
-                log_text(tb_log, "generation_floors_reached_txt", repr(generation_floors_reached))
-                empty!(generation_floors_reached)
-            end
-            Profile.init(1_000_000, 0.1)
-            Profile.clear()
-            @profile train!(card_playing_agent)
-            open("profile.txt", "w") do f
-                show(f, owntime(stackframe_filter=filecontains(pwd())))
-                show(f, totaltime(stackframe_filter=filecontains(pwd())))
-            end
-            @assert length(card_playing_agent.sars.rewards) == 0
-            BSON.bson(
-                @sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
-                model=card_playing_agent)
-        end
-        empty!(shop_floors)
-        return "start silent"
-    end
+end
+
+
+
+
+
+#shop_floors = []
+#error_streak = 0
+#generation_floors_reached = Int[]
+#
+#function agent_command(state)
+    #increment_step!(tb_log, 1)
+    #if "error" in keys(state)
+        #global error_streak += 1
+        #sleep(1)
+        #return error_streak % 2 == 0 ? "wait 100" : "state"
+    #else
+        #global error_streak = 0
+    #end
+    #if "in_game" in keys(state) && !state["in_game"]
+        #if length(card_playing_agent.sars.rewards) >= 2000
+            #if !isempty(generation_floors_reached)
+                #mean_reward = mean(x -> x[1], card_playing_agent.sars.rewards)
+                #BSON.bson(
+                    #@sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
+                    #model=card_playing_agent, performance=mean_reward)
+                #log_value(tb_log, "performance/mean_reward", mean_reward)
+                #log_histogram(tb_log, "generation_floors_reached", generation_floors_reached)
+                #log_text(tb_log, "generation_floors_reached_txt", repr(generation_floors_reached))
+                #empty!(generation_floors_reached)
+            #end
+            #Profile.init(1_000_000, 0.1)
+            #Profile.clear()
+            #@profile train!(card_playing_agent)
+            #open("profile.txt", "w") do f
+                #show(f, owntime(stackframe_filter=filecontains(pwd())))
+                #show(f, totaltime(stackframe_filter=filecontains(pwd())))
+            #end
+            #@assert length(card_playing_agent.sars.rewards) == 0
+            #BSON.bson(
+                #@sprintf("models/cpa.%03d.bson", max_file_number("models", "cpa")+1),
+                #model=card_playing_agent)
+        #end
+        #empty!(shop_floors)
+        #return "start silent"
+    #end
     if "game_state" in keys(state)
         gs = state["game_state"]
         log_value(tb_log, "rewards_length", length(card_playing_agent.sars.rewards))
@@ -298,12 +310,12 @@ function agent_command(state)
             random_choice = sample(0:length(gs["choice_list"])-1)
             return "choose $random_choice"
         end
-        if gs["screen_type"] == "GAME_OVER"
-            log_value(tb_log, "performance/floor_reached", gs["floor"])
-            push!(generation_floors_reached, gs["floor"])
-            reward(card_playing_agent, state, 0)
-            return "proceed"
-        end
+        #if gs["screen_type"] == "GAME_OVER"
+            #log_value(tb_log, "performance/floor_reached", gs["floor"])
+            #push!(generation_floors_reached, gs["floor"])
+            #reward(card_playing_agent, state, 0)
+            #return "proceed"
+        #end
         if gs["screen_type"] == "REST"
             if !in("choose", state["available_commands"])
                 return "proceed"

@@ -1,14 +1,4 @@
-using Encoders
-using Flux
-using Networks
-using SARSM
-using StatsBase
-using TensorBoardLogger
-using Utils
-using Zygote
-
-export action, reward, train!
-export CardPlayingAgent
+export CardPlayingAgent, action, train!
 
 struct CardPlayingAgent
     player_encoder
