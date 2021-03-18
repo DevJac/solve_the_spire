@@ -98,7 +98,7 @@ function agent_main(root_agent)
                 train!(root_agent)
                 root_agent.generation += 1
                 BSON.bson(
-                    @sprintf("models/cpa.%04d.bson", max_file_number("models", "cpa")+1),
+                    @sprintf("models/agent.t.%04d.bson", max_file_number("models", "agent")+1),
                     model=root_agent)
             end
             local sts_state
@@ -127,7 +127,7 @@ function agent_main(root_agent)
                 root_agent.ready_to_train = root_agent.games % 20 == 0
                 if root_agent.games % 5 == 0 || root_agent.ready_to_train
                     BSON.bson(
-                        @sprintf("models/cpa.%04d.bson", max_file_number("models", "cpa")+1),
+                        @sprintf("models/agent.s.%04d.bson", max_file_number("models", "agent")+1),
                         model=root_agent)
                 end
             end
