@@ -9,10 +9,11 @@ using Zygote
 
 include("agents/CampfireAgent.jl")
 include("agents/CombatAgent.jl")
-include("agents/DraftingAgent.jl")
+include("agents/DeckAgent.jl")
 include("agents/EventAgent.jl")
 include("agents/MapAgent.jl")
 include("agents/MenuAgent.jl")
 include("agents/PotionAgent.jl")
 include("agents/RewardAgent.jl")
 include("agents/ShopAgent.jl")
+include("agents/SpecialActionAgent.jl")

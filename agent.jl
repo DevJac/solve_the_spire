@@ -266,29 +266,29 @@ end
             end
             return "play $card_to_play_index"
         end
-        if gs["screen_type"] == "COMBAT_REWARD"
-            reward(card_playing_agent, state, 0)
-            if !in("choose", state["available_commands"])
-                return "proceed"
-            end
-            if gs["screen_state"]["rewards"][1]["reward_type"] == "POTION" && all(p -> p["id"] != "Potion Slot", gs["potions"])
-                return "proceed"
-            end
-            return "choose 0"
-        end
-        if gs["screen_type"] == "CARD_REWARD"
-            if !in("choose", state["available_commands"])
-                return "proceed"
-            end
-            return "choose 0"
-        end
-        if gs["screen_type"] == "HAND_SELECT"
-            if !in("choose", state["available_commands"])
-                return "proceed"
-            end
-            random_card_choice = sample(0:length(gs["choice_list"])-1)
-            return "choose $random_card_choice"
-        end
+        #if gs["screen_type"] == "COMBAT_REWARD"
+            #reward(card_playing_agent, state, 0)
+            #if !in("choose", state["available_commands"])
+                #return "proceed"
+            #end
+            #if gs["screen_state"]["rewards"][1]["reward_type"] == "POTION" && all(p -> p["id"] != "Potion Slot", gs["potions"])
+                #return "proceed"
+            #end
+            #return "choose 0"
+        #end
+        #if gs["screen_type"] == "CARD_REWARD"
+            #if !in("choose", state["available_commands"])
+                #return "proceed"
+            #end
+            #return "choose 0"
+        #end
+        #if gs["screen_type"] == "HAND_SELECT"
+            #if !in("choose", state["available_commands"])
+                #return "proceed"
+            #end
+            #random_card_choice = sample(0:length(gs["choice_list"])-1)
+            #return "choose $random_card_choice"
+        #end
         #if gs["screen_type"] == "SHOP_ROOM"
             #if gs["floor"] in shop_floors
                 #return "proceed"
@@ -303,38 +303,38 @@ end
             #random_shop_choice = sample(0:length(gs["choice_list"])-1)
             #return "choose $random_shop_choice"
         #end
-        if gs["screen_type"] == "GRID"
-            if !in("choose", state["available_commands"])
-                return "confirm"
-            end
-            random_choice = sample(0:length(gs["choice_list"])-1)
-            return "choose $random_choice"
-        end
+        #if gs["screen_type"] == "GRID"
+            #if !in("choose", state["available_commands"])
+                #return "confirm"
+            #end
+            #random_choice = sample(0:length(gs["choice_list"])-1)
+            #return "choose $random_choice"
+        #end
         #if gs["screen_type"] == "GAME_OVER"
             #log_value(tb_log, "performance/floor_reached", gs["floor"])
             #push!(generation_floors_reached, gs["floor"])
             #reward(card_playing_agent, state, 0)
             #return "proceed"
         #end
-        if gs["screen_type"] == "REST"
-            if !in("choose", state["available_commands"])
-                return "proceed"
-            end
-            random_choice = sample(0:length(gs["screen_state"]["rest_options"])-1)
-            return "choose $random_choice"
-        end
-        if gs["screen_type"] == "CHEST"
-            if !in("choose", state["available_commands"])
-                return "proceed"
-            end
-            return "choose 0"
-        end
-        if gs["screen_type"] == "BOSS_REWARD"
-            random_choice = sample(0:2)
-            return "choose $random_choice"
-        end
-    end
-    nothing
-end
+        #if gs["screen_type"] == "REST"
+            #if !in("choose", state["available_commands"])
+                #return "proceed"
+            #end
+            #random_choice = sample(0:length(gs["screen_state"]["rest_options"])-1)
+            #return "choose $random_choice"
+        #end
+        #if gs["screen_type"] == "CHEST"
+            #if !in("choose", state["available_commands"])
+                #return "proceed"
+            #end
+            #return "choose 0"
+        #end
+        #if gs["screen_type"] == "BOSS_REWARD"
+            #random_choice = sample(0:2)
+            #return "choose $random_choice"
+        #end
+    #end
+    #nothing
+#end
 
 main()
