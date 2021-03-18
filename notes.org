@@ -18,6 +18,23 @@ Will need one or more additional agents to handle things like card discards, and
 There is a pile of agents. Every agent receives every state. Agents indicate whether they will handle each state. Throw an error if multiple states try to handle the same state.
 
 This allows each agent to be isolated. When playing cards in combat, the card playing agent can step in and say "I got this" then choose the best move. The card playing agent can also keep an eye on all other states in order to determine its own rewards.
+* Actions
+** DamageAction
+Game over
+** DiscardAction
+Discard one card from hand
+** DiscoveryAction
+Add one of three random cards to your hand
+** GamblingChipAction
+Discard any number of cards, then draw that many
+** HandCheckAction
+Unknown. Do we need to handle this? Appears to be rare.
+** NightmareAction
+Choose a card to copy
+** RetainCardsAction
+Cards to retain until next turn
+** SetupAction
+Put a card from your hand on top of your draw pile. It costs 0 until played.
 * Refactor
 - [ ] .
 - [ ] ├── agent.jl

@@ -224,32 +224,32 @@ end
         #empty!(shop_floors)
         #return "start silent"
     #end
-    if "game_state" in keys(state)
-        gs = state["game_state"]
-        log_value(tb_log, "rewards_length", length(card_playing_agent.sars.rewards))
-        for (potion_index, potion) in enumerate(gs["potions"])
-            potion_index -= 1
-            if potion["can_use"]
-                if potion["requires_target"]
-                    monsters = collect(zip(gs["combat_state"]["monsters"], 0:100))
-                    attackable_monsters = filter(m -> !m[1]["is_gone"], monsters)
-                    random_monster_to_attack_index = sample(attackable_monsters)[2]
-                    return "potion use $potion_index $random_monster_to_attack_index"
-                else
-                    return "potion use $potion_index"
-                end
-            end
-        end
-        if gs["screen_type"] == "EVENT"
-            chooseables = filter(c -> "choice_index" in keys(c), gs["screen_state"]["options"])
-            random_event_selection = sample(map(c -> c["choice_index"], chooseables))
-            return "choose $random_event_selection"
-        end
-        if gs["screen_type"] == "MAP"
-            reward(card_playing_agent, state, 0)
-            random_map_selection = sample(0:length(gs["choice_list"])-1)
-            return "choose $random_map_selection"
-        end
+    #if "game_state" in keys(state)
+        #gs = state["game_state"]
+        #log_value(tb_log, "rewards_length", length(card_playing_agent.sars.rewards))
+        #for (potion_index, potion) in enumerate(gs["potions"])
+            #potion_index -= 1
+            #if potion["can_use"]
+                #if potion["requires_target"]
+                    #monsters = collect(zip(gs["combat_state"]["monsters"], 0:100))
+                    #attackable_monsters = filter(m -> !m[1]["is_gone"], monsters)
+                    #random_monster_to_attack_index = sample(attackable_monsters)[2]
+                    #return "potion use $potion_index $random_monster_to_attack_index"
+                #else
+                    #return "potion use $potion_index"
+                #end
+            #end
+        #end
+        #if gs["screen_type"] == "EVENT"
+            #chooseables = filter(c -> "choice_index" in keys(c), gs["screen_state"]["options"])
+            #random_event_selection = sample(map(c -> c["choice_index"], chooseables))
+            #return "choose $random_event_selection"
+        #end
+        #if gs["screen_type"] == "MAP"
+            #reward(card_playing_agent, state, 0)
+            #random_map_selection = sample(0:length(gs["choice_list"])-1)
+            #return "choose $random_map_selection"
+        #end
         if gs["screen_type"] == "NONE"
             cs = gs["combat_state"]
             if !any(c -> c["is_playable"], cs["hand"]); return "end" end
@@ -289,20 +289,20 @@ end
             random_card_choice = sample(0:length(gs["choice_list"])-1)
             return "choose $random_card_choice"
         end
-        if gs["screen_type"] == "SHOP_ROOM"
-            if gs["floor"] in shop_floors
-                return "proceed"
-            end
-            return "choose 0"
-        end
-        if gs["screen_type"] == "SHOP_SCREEN"
-            push!(shop_floors, gs["floor"])
-            if !in("choose", state["available_commands"])
-                return "leave"
-            end
-            random_shop_choice = sample(0:length(gs["choice_list"])-1)
-            return "choose $random_shop_choice"
-        end
+        #if gs["screen_type"] == "SHOP_ROOM"
+            #if gs["floor"] in shop_floors
+                #return "proceed"
+            #end
+            #return "choose 0"
+        #end
+        #if gs["screen_type"] == "SHOP_SCREEN"
+            #push!(shop_floors, gs["floor"])
+            #if !in("choose", state["available_commands"])
+                #return "leave"
+            #end
+            #random_shop_choice = sample(0:length(gs["choice_list"])-1)
+            #return "choose $random_shop_choice"
+        #end
         if gs["screen_type"] == "GRID"
             if !in("choose", state["available_commands"])
                 return "confirm"
