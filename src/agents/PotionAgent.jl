@@ -3,7 +3,7 @@ export PotionAgent, action, train!
 struct PotionAgent
 end
 
-function action(agent::PotionAgent, ra::RootAgent, sts_state, handled)
+function action(agent::PotionAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         for (potion_index, potion) in enumerate(gs["potions"])

@@ -118,7 +118,7 @@ function action_probabilities(agent::CombatAgent, sts_state)
     softmax(reshape(selection_weights, length(playable_hand))), playable_hand
 end
 
-function action(agent::CombatAgent, ra::RootAgent, sts_state, handled)
+function action(agent::CombatAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] in ("MAP", "COMBAT_REWARD", "GAME_OVER")
