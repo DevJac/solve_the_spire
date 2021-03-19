@@ -7,7 +7,7 @@ function action(agent::CampfireAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "REST"
-            if !in("choose", state["available_commands"])
+            if !in("choose", sts_state["available_commands"])
                 return "proceed"
             end
             random_choice = sample(0:length(gs["screen_state"]["rest_options"])-1)
