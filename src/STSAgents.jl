@@ -28,6 +28,7 @@ function RootAgent()
         EventAgent(),
         MapAgent(),
         MenuAgent(),
+        PotionAgent(),
         RewardAgent(),
         ShopAgent(),
         SpecialActionAgent()]
@@ -38,7 +39,7 @@ function agent_command(root_agent::RootAgent, sts_state)
     increment_step!(root_agent.tb_log, 1)
     resulting_command = nothing
     for agent in root_agent.agents
-        command = action(agent, root_agent, sts_state)
+        command = action(agent, root_agent, sts_state, isnothing(resulting_command))
         if !isnothing(command) && !isnothing(resulting_command)
             @error "Two agents issued commands" resulting_command command
             throw("Two agents issued commands")
@@ -62,6 +63,7 @@ include("agents/DeckAgent.jl")
 include("agents/EventAgent.jl")
 include("agents/MapAgent.jl")
 include("agents/MenuAgent.jl")
+include("agents/PotionAgent.jl")
 include("agents/RewardAgent.jl")
 include("agents/ShopAgent.jl")
 include("agents/SpecialActionAgent.jl")

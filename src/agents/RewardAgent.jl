@@ -3,7 +3,7 @@ export RewardAgent, action, train!
 struct RewardAgent
 end
 
-function action(agent::RewardAgent, ra::RootAgent, sts_state)
+function action(agent::RewardAgent, ra::RootAgent, sts_state, handled)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "COMBAT_REWARD"

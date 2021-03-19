@@ -3,7 +3,7 @@ export SpecialActionAgent, action, train!
 struct SpecialActionAgent
 end
 
-function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
+function action(agent::SpecialActionAgent, ra::RootAgent, sts_state, handled)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "HAND_SELECT"
