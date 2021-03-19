@@ -20,7 +20,6 @@ function action(agent::PotionAgent, ra::RootAgent, sts_state, handled)
             end
         end
     end
-    nothing
 end
 
 function train!(agent::PotionAgent, ra::RootAgent)

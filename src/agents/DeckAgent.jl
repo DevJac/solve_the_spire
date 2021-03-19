@@ -20,7 +20,6 @@ function action(agent::DeckAgent, ra::RootAgent, sts_state, handled)
             return "choose $random_choice"
         end
     end
-    nothing
 end
 
 function train!(agent::DeckAgent, ra::RootAgent)

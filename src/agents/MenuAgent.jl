@@ -21,7 +21,6 @@ function action(agent::MenuAgent, ra::RootAgent, sts_state, handled)
         log_value(ra.tb_log, "MenuAgent/victory", Float32(gs["screen_state"]["victory"]))
         return "proceed"
     end
-    nothing
 end
 
 function train!(agent::MenuAgent, ra::RootAgent)

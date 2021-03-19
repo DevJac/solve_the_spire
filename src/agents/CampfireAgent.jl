@@ -14,7 +14,6 @@ function action(agent::CampfireAgent, ra::RootAgent, sts_state, handled)
             return "choose $random_choice"
         end
     end
-    nothing
 end
 
 function train!(agent::CampfireAgent, ra::RootAgent)

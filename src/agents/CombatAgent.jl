@@ -118,12 +118,33 @@ function action_probabilities(agent::CombatAgent, sts_state)
     softmax(reshape(selection_weights, length(playable_hand))), playable_hand
 end
 
-function action(agent::CombatAgent, sts_state)
-    add_state(agent.sars, sts_state)
-    aps, playable_hand = action_probabilities(agent, sts_state)
-    selected_card = sample(collect(enumerate(playable_hand)), Weights(aps))
-    add_action(agent.sars, selected_card[1])
-    return selected_card[2]
+function action(agent::CombatAgent, ra::RootAgent, sts_state, handled)
+    if "game_state" in keys(sts_state)
+        gs = sts_state["game_state"]
+        if gs["screen_type"] in ("MAP", "COMBAT_REWARD", "GAME_OVER")
+            reward(agent, sts_state)
+        end
+        if gs["screen_type"] == "NONE"
+            cs = gs["combat_state"]
+            if !any(c -> c["is_playable"], cs["hand"]); return "end" end
+            reward(agent, sts_state)
+            add_state(agent.sars, sts_state)
+            aps, playable_hand = action_probabilities(agent, sts_state)
+            selected_card = sample(collect(enumerate(playable_hand)), Weights(aps))
+            add_action(agent.sars, selected_card[1])
+            card_to_play = selected_card[2]
+            card_to_play_index = card_to_play[1]
+            if card_to_play[2]["has_target"]
+                monsters = collect(enumerate(cs["monsters"]))
+                attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
+                min_hp = minimum(map(m -> m[2]["current_hp"], attackable_monsters))
+                min_hp_monsters = filter(m -> m[2]["current_hp"] == min_hp, attackable_monsters)
+                monster_to_attack_index = sample(min_hp_monsters)[1]-1
+                return "play $card_to_play_index $monster_to_attack_index"
+            end
+            return "play $card_to_play_index"
+        end
+    end
 end
 
 function reward(agent::CombatAgent, sts_state, continuity=1.0f0)
@@ -148,7 +169,7 @@ const policy_opt = ADADelta()
 const critic_opt = ADADelta()
 
 function train!(agent::CombatAgent, epochs=1000)
-    tb_log = TBLogger("tb_logs/card_playing_agent")
+    tb_log = TBLogger("tb_logs/CombatAgent")
     sars = fill_q(agent.sars)
     target_agent = deepcopy(agent)
     kl_div_smoother = Smoother()

@@ -14,7 +14,6 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state, handled)
             return "choose $random_card_choice"
         end
     end
-    nothing
 end
 
 function train!(agent::SpecialActionAgent, ra::RootAgent)

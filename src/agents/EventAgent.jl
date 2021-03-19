@@ -9,7 +9,6 @@ function action(agent::EventAgent, ra::RootAgent, sts_state, handled)
         choice_index = sample(map(c -> c["choice_index"], choices))
         return "choose $choice_index"
     end
-    nothing
 end
 
 function train!(agent::EventAgent, ra::RootAgent)

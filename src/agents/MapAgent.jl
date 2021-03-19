@@ -11,7 +11,6 @@ function action(agent::MapAgent, ra::RootAgent, sts_state, handled)
             return "choose $random_map_selection"
         end
     end
-    nothing
 end
 
 function train!(agent::MapAgent, ra::RootAgent)
