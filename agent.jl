@@ -68,6 +68,7 @@ function manual_command()
         print("Command: ")
         manual_command_input = strip(readline(stdin))
     end
+    manual_command_input
 end
 
 function main()

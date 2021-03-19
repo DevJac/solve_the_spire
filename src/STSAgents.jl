@@ -21,7 +21,17 @@ end
 function RootAgent()
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
-    agents = []
+    agents = [
+        CampfireAgent(),
+        CombatAgent(),
+        DeckAgent(),
+        EventAgent(),
+        MapAgent(),
+        MenuAgent(),
+        PotionAgent(),
+        RewardAgent(),
+        ShopAgent(),
+        SpecialActionAgent()]
     RootAgent(0, 0, false, tb_log, agents)
 end
 
@@ -34,7 +44,9 @@ function agent_command(root_agent::RootAgent, sts_state)
             @error "Two agents issued commands" resulting_command command
             throw("Two agents issued commands")
         end
-        resulting_command = command
+        if !isnothing(command)
+            resulting_command = command
+        end
     end
     resulting_command
 end
