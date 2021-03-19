@@ -5,7 +5,7 @@ struct ShopAgent
 end
 ShopAgent() = ShopAgent(nothing)
 
-function action(agent::ShopAgent, ra::RootAgent, sts_state, handled)
+function action(agent::ShopAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "SHOP_ROOM"

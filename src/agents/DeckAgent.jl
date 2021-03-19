@@ -3,7 +3,7 @@ export DeckAgent, action, train!
 struct DeckAgent
 end
 
-function action(agent::DeckAgent, ra::RootAgent, sts_state, handled)
+function action(agent::DeckAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "CARD_REWARD"

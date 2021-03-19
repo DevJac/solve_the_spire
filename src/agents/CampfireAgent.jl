@@ -3,7 +3,7 @@ export CampfireAgent, action, train!
 struct CampfireAgent
 end
 
-function action(agent::CampfireAgent, ra::RootAgent, sts_state, handled)
+function action(agent::CampfireAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "REST"

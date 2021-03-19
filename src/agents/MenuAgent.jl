@@ -7,7 +7,7 @@ struct MenuAgent
 end
 MenuAgent() = MenuAgent([], [], [])
 
-function action(agent::MenuAgent, ra::RootAgent, sts_state, handled)
+function action(agent::MenuAgent, ra::RootAgent, sts_state)
     if "in_game" in keys(sts_state) && !sts_state["in_game"]
         return "start silent"
     end

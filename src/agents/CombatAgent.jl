@@ -118,11 +118,24 @@ function action_probabilities(agent::CombatAgent, sts_state)
     softmax(reshape(selection_weights, length(playable_hand))), playable_hand
 end
 
-function action(agent::CombatAgent, ra::RootAgent, sts_state, handled)
+function action(agent::CombatAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] in ("MAP", "COMBAT_REWARD", "GAME_OVER")
             reward(agent, sts_state)
+        end
+        for (potion_index, potion) in enumerate(gs["potions"])
+            potion_index -= 1  # STS uses 0-based indexing
+            if potion["can_use"]
+                if potion["requires_target"]
+                    monsters = collect(enumerate(gs["combat_state"]["monsters"]))
+                    attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
+                    monster_index = sample(attackable_monsters)[1]-1
+                    return "potion use $potion_index $monster_index"
+                else
+                    return "potion use $potion_index"
+                end
+            end
         end
         if gs["screen_type"] == "NONE"
             cs = gs["combat_state"]
