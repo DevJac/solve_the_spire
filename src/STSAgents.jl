@@ -1,3 +1,4 @@
+module STSAgents
 using Encoders
 using Flux
 using Networks
@@ -6,6 +7,43 @@ using StatsBase
 using TensorBoardLogger
 using Utils
 using Zygote
+
+export RootAgent, agent_command, action, train!
+
+mutable struct RootAgent
+    games          :: Int
+    generation     :: Int
+    ready_to_train :: Bool
+    tb_log
+    agents
+end
+
+function RootAgent()
+    tb_log = TBLogger("tb_logs/agent", tb_append)
+    set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
+    agents = []
+    RootAgent(0, 0, false, tb_log, agents)
+end
+
+function agent_command(root_agent::RootAgent, sts_state)
+    increment_step!(root_agent.tb_log, 1)
+    resulting_command = nothing
+    for agent in root_agent.agents
+        command = action(agent, root_agent, sts_state, isnothing(resulting_command))
+        if !isnothing(command) && !isnothing(resulting_command)
+            @error "Two agents issued commands" resulting_command command
+            throw("Two agents issued commands")
+        end
+        resulting_command = command
+    end
+    resulting_command
+end
+
+function train!(root_agent::RootAgent)
+    for agent in root_agent.agents
+        train!(agent, root_agent)
+    end
+end
 
 include("agents/CampfireAgent.jl")
 include("agents/CombatAgent.jl")
@@ -17,3 +55,5 @@ include("agents/PotionAgent.jl")
 include("agents/RewardAgent.jl")
 include("agents/ShopAgent.jl")
 include("agents/SpecialActionAgent.jl")
+
+end # module
