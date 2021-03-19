@@ -99,6 +99,7 @@ function agent_main(root_agent)
     open(LOG_FILE, "a") do log_file
         while true
             if root_agent.ready_to_train
+                root_agent.ready_to_train = false
                 train!(root_agent)
                 root_agent.generation += 1
                 BSON.bson(
@@ -140,11 +141,18 @@ function agent_main(root_agent)
 end
 
 function load_root_agent()
-    if max_file_number("models", "root_agent") == 0
-        RootAgent()
+    mfn = max_file_number("models", "agent")
+    if mfn == 0
+        return RootAgent()
     else
-        BSON.load(@sprintf("models/root_agent.%04d.bson", max_file_number("models", "root_agent")))[:model]
+        for marker in ("t", "s")
+            f = @sprintf("agent.%s.%04d.bson", marker, mfn)
+            if f in readdir("models")
+                return BSON.load("models/" * f)[:model]
+            end
+        end
     end
+    throw("Couldn't load root agent")
 end
 
 main()

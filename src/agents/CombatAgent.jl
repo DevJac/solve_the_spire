@@ -168,7 +168,7 @@ end
 const policy_opt = ADADelta()
 const critic_opt = ADADelta()
 
-function train!(agent::CombatAgent, epochs=1000)
+function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
     tb_log = TBLogger("tb_logs/CombatAgent")
     sars = fill_q(agent.sars)
     target_agent = deepcopy(agent)

@@ -1,6 +1,6 @@
 export ShopAgent, action, train!
 
-struct ShopAgent
+mutable struct ShopAgent
     last_visited_shop_floor :: Union{Nothing, Int}
 end
 ShopAgent() = ShopAgent(nothing)
@@ -17,7 +17,7 @@ function action(agent::ShopAgent, ra::RootAgent, sts_state)
         end
         if gs["screen_type"] == "SHOP_SCREEN"
             agent.last_visited_shop_floor = gs["floor"]
-            if !in("choose", sts_state["available_actions"])
+            if !in("choose", sts_state["available_commands"])
                 return "leave"
             end
             random_shop_choice = sample(0:length(gs["choice_list"])-1)
