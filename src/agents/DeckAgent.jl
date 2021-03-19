@@ -8,19 +8,19 @@ function action(agent::DeckAgent, ra::RootAgent, sts_state, handled)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "CARD_REWARD"
             if !in("choose", state["available_commands"])
-                return (true, "proceed")
+                return "proceed"
             end
-            return (true, "choose 0")
+            return "choose 0"
         end
         if gs["screen_type"] == "GRID"
             if !in("choose", state["available_commands"])
-                return (true, "confirm")
+                return "confirm"
             end
             random_choice = sample(0:length(gs["choice_list"])-1)
-            return (true, "choose $random_choice")
+            return "choose $random_choice"
         end
     end
-    (false, nothing)
+    nothing
 end
 
 function train!(agent::DeckAgent, ra::RootAgent)

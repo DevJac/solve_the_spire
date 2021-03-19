@@ -21,12 +21,15 @@ function launch_sts()
     ENV["STS_COMMUNICATION_SOCKET"] = tempname()
     run(pipeline(`./launch_sts.sh`, stdout="sts_out.txt", stderr="sts_err.txt"), wait=false)
     timeout_start = time()
-    while timeout_start + 30 > time()
+    while true
         try
-            sleep(3)
             return connect(ENV["STS_COMMUNICATION_SOCKET"])
         catch e
-            if !isa(e, Base.IOError); rethrow() end
+            if typeof(e) == Base.IOError && timeout_start + 30 > time()
+                sleep(3)
+                continue
+            end
+            rethrow()
         end
     end
     throw("Couldn't connect to relay socket")
@@ -162,14 +165,12 @@ function agent_command(root_agent::RootAgent, sts_state)
     increment_step!(root_agent.tb_log, 1)
     resulting_command = nothing
     for agent in root_agent.agents
-        issued, command = action(agent, root_agent, sts_state, isnothing(resulting_command))
-        if !isnothing(resulting_command) && issued
+        command = action(agent, root_agent, sts_state, isnothing(resulting_command))
+        if !isnothing(command) && !isnothing(resulting_command)
             @error "Two agents issued commands" resulting_command command
             throw("Two agents issued commands")
         end
-        if issued
-            resulting_command = command
-        end
+        resulting_command = command
     end
     resulting_command
 end

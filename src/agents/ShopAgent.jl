@@ -10,21 +10,21 @@ function action(agent::ShopAgent, ra::RootAgent, sts_state, handled)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "SHOP_ROOM"
             if gs["floor"] == agent.last_visited_shop_floor
-                return (true, "proceed")
+                return "proceed"
             end
             agent.last_visited_shop_floor = nothing
-            return (true, "choose 0")
+            return "choose 0"
         end
         if gs["screen_type"] == "SHOP_SCREEN"
             agent.last_visited_shop_floor = gs["floor"]
             if !in("choose", sts_state["available_actions"])
-                return (true, "leave")
+                return "leave"
             end
             random_shop_choice = sample(0:length(gs["choice_list"])-1)
             return "choose $random_shop_choice"
         end
     end
-    (false, nothing)
+    nothing
 end
 
 function train!(agent::ShopAgent, ra::RootAgent)
