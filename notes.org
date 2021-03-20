@@ -1,23 +1,95 @@
 * Design
 ** Agents
-*** Card Playing Agent
-Selects which card to play against which targets. Short term reward feedback.
-*** Card Selection Agent
-Selects which cards to add to deck. Long term reward feedback.
-*** Potion Agent
-Selects when to play potions. Long term reward feedback.
-*** Navigation Agent
-Selects map movements. Long term reward feedback.
-*** Event Agent
-Selects event actions. Long term reward feedback.
-*** Upgrade Agent
-Selects cards to upgrade. Long term reward feedback.
-*** Special Agents
-Will need one or more additional agents to handle things like card discards, and other special selections, etc.
-** Agent coordination
-There is a pile of agents. Every agent receives every state. Agents indicate whether they will handle each state. Throw an error if multiple states try to handle the same state.
-
-This allows each agent to be isolated. When playing cards in combat, the card playing agent can step in and say "I got this" then choose the best move. The card playing agent can also keep an eye on all other states in order to determine its own rewards.
+*** CampfireAgent
+**** States
+- Player
+- Cards in deck
+- Relics
+- Potions
+- Map path
+- Map boss
+*** CombatAgent
+**** States
+- Player
+- Player powers
+- Monsters
+- Monster powers
+- Cards in hand
+- Cards in draw
+- Cards in discard
+- Relics
+- Potions
+*** DeckAgent
+**** States
+- Cards in deck
+- Relics
+- Map boss
+*** EventAgent
+**** States
+- Player
+- Cards in deck
+- Relics
+- Potions
+- Map paths
+- Map boss
+*** MapAgent
+**** States
+- Player
+- Cards in deck
+- Relics
+- Potions
+- Map paths
+- Map boss
+*** MenuAgent
+*** PotionAgent
+**** States
+- Player
+- Player powers
+- Monsters
+- Monster powers
+- Cards in hand
+- Cards in draw
+- Cards in discard
+- Relics
+- Potions
+*** RewardAgent
+**** States
+- Player
+- Cards in deck
+- Relics
+- Potions
+*** ShopAgent
+**** States
+- Player
+- Cards in deck
+- Relics
+- Potions
+*** SpecialActionAgent
+Is this agent too broad?
+**** States
+- Player
+- Player powers
+- Monsters
+- Monster powers
+- Cards in deck
+- Cards in hand
+- Cards in draw
+- Cards in discard
+- Relics
+- Potions
+** Game states to consider
+- Player
+- Player powers
+- Monsters
+- Monster powers
+- Cards in deck
+- Cards in hand
+- Cards in draw
+- Cards in discard
+- Relics
+- Potions
+- Map paths
+- Map boss
 * Actions
 ** DamageAction
 Game over
