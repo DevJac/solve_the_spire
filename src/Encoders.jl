@@ -47,10 +47,10 @@ function add_encoder(f, encoder::Encoder)
     push!(encoder.encoders, f)
 end
 
-export make_hand_card_encoder, make_draw_discard_encoder, make_player_encoder, make_monsters_encoder
+export make_card_encoder, make_player_encoder, make_monster_encoder
 
-function make_hand_card_encoder(game_data)
-    encoder = Encoder("Hand Card")
+function make_card_encoder(game_data)
+    encoder = Encoder("Card")
     ae(f) = add_encoder(f, encoder)
     for card_id in game_data.card_ids
         ae() do j
@@ -75,25 +75,6 @@ function make_hand_card_encoder(game_data)
     end
     ae() do j
         j["upgrades"]
-    end
-    encoder
-end
-
-function make_draw_discard_encoder(game_data)
-    encoder = Encoder("Draw Discard")
-    ae(f) = add_encoder(f, encoder)
-    draw(j) = j["game_state"]["combat_state"]["draw_pile"]
-    discard(j) = j["game_state"]["combat_state"]["discard_pile"]
-    for pile in (draw, discard)
-        for card_id in game_data.card_ids
-            ae() do j
-                isempty(pile(j)) ? 0 : count(c -> c["id"] == card_id, pile(j)) / length(pile(j))
-            end
-            ae() do j
-                matching = filter(c -> c["id"] == card_id, pile(j))
-                isempty(matching) ? 0 : sum(c -> c["upgrades"], matching) / length(matching)
-            end
-        end
     end
     encoder
 end
@@ -143,20 +124,45 @@ function monster_total_attack(monster_json)
     end
 end
 
-function make_monsters_encoder(game_data)
-    encoder = Encoder("Monsters")
+function make_monster_encoder(game_data)
+    encoder = Encoder("Monster")
     ae(f) = add_encoder(f, encoder)
-    monsters(j) = j["game_state"]["combat_state"]["monsters"]
-    for monster in game_data.monster_ids
+    for monster_id in game_data.monster_ids
         ae() do j
-            count(m -> m["id"] == monster, monsters(j))
+            j["id"] == monster_id
+        end
+    end
+    for power_id in game_data.monster_power_ids
+        ae() do j
+            any(j["powers"]) do power
+                power["id"] == power_id
+            end
+        end
+        ae() do j
+            matching = filter(p -> p["id"] == power_id, j["powers"])
+            !isempty(matching) ? only(matching)["amount"] : 0
         end
     end
     ae() do j
-        minimum(m -> m["current_hp"], monsters(j))
+        j["current_hp"]
     end
     ae() do j
-        maximum(m -> m["current_hp"], monsters(j))
+        j["max_hp"]
+    end
+    ae() do j
+        j["current_hp"] / j["max_hp"]
+    end
+    ae() do j
+        j["block"]
+    end
+    ae() do j
+        j["move_adjusted_damage"]
+    end
+    ae() do j
+        j["move_hits"]
+    end
+    ae() do j
+        monster_total_attack(j)
     end
     encoder
 end
