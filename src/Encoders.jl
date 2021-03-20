@@ -1,4 +1,5 @@
 module Encoders
+using StatsBase
 using Zygote
 
 export GameData, DefaultGameData
@@ -25,15 +26,17 @@ const DefaultGameData = GameData(
     readlines("game_data/relic_ids.txt"))
 
 struct Encoder
-    name :: String
+    name     :: String
+    precoder :: Function
     encoders :: Vector{Function}
 end
-Encoder(name) = Encoder(name, [])
+Encoder(name) = Encoder(name, identity, [])
+Encoder(name, precoder) = Encoder(name, precoder, [])
 
-function (encoder::Encoder)(sts_state_json)
+function (encoder::Encoder)(sts_state_json, args...; kwargs...)
     Zygote.ignore() do
         encoded = map(encoder.encoders) do e
-            e(sts_state_json)
+            e(encoder.precoder(sts_state_json, args...; kwargs...))
         end
         Float32.(encoded)
     end
@@ -47,7 +50,7 @@ function add_encoder(f, encoder::Encoder)
     push!(encoder.encoders, f)
 end
 
-export make_card_encoder, make_player_encoder, make_monster_encoder, make_relics_encoder
+export make_card_encoder, make_player_encoder, make_monster_encoder, make_relics_encoder, make_potions_encoder
 
 function make_card_encoder(game_data)
     encoder = Encoder("Card")
@@ -180,6 +183,78 @@ function make_relics_encoder(game_data)
         end
     end
     encoder
+end
+
+function make_potions_encoder(game_data)
+    encoder = Encoder("Potion")
+    ae(f) = add_encoder(f, encoder)
+    for potion_id in game_data.potion_ids
+        ae() do j
+            count(p -> p["id"] == potion_id, j)
+        end
+    end
+    encoder
+end
+
+export make_map_encoder, map_encoder
+
+const MAP_ROOM_TYPES = ('T', 'E', 'R', 'M', '$', '?')
+
+function make_map_encoder()
+    truncate(len) = x -> x[1:min(len, length(x))]
+    function precoder(j, x, y)
+        one_path_counts = map_path_counts(map(truncate(1), map_paths(j, x, y)))
+        two_path_counts = map_path_counts(map(truncate(2), map_paths(j, x, y)))
+        full_path_counts = map_path_counts(map_paths(j, x, y))
+        (one_path_counts, two_path_counts, full_path_counts)
+    end
+    encoder = Encoder("Map", precoder)
+    ae(f) = add_encoder(f, encoder)
+    for i in 1:length(MAP_ROOM_TYPES)
+        ae() do d
+            d[1][i][1]
+        end
+        ae() do d
+            d[2][i][1]
+        end
+        ae() do d
+            d[2][i][2]
+        end
+        ae() do d
+            d[3][i][1]
+        end
+        ae() do d
+            d[3][i][2]
+        end
+    end
+    encoder
+end
+
+const map_encoder = make_map_encoder()
+
+function map_path_counts(map_paths)
+    path_counts = StatsBase.countmap.(map_paths)
+    map(MAP_ROOM_TYPES) do room_type
+        (minimum(pc -> get(pc, room_type, 0), path_counts), maximum(pc -> get(pc, room_type, 0), path_counts))
+    end
+end
+
+function map_paths(map_state, x, y, all_paths=Vector{Char}[], path=Char[])
+    leaf_node = true
+    for map_node in map_state
+        if map_node["x"] == x && map_node["y"] == y
+            push!(path, only(map_node["symbol"]))
+            for child_node in map_node["children"]
+                leaf_node = false
+                map_paths(map_state, child_node["x"], child_node["y"], all_paths, deepcopy(path))
+            end
+            break
+        end
+    end
+    if leaf_node
+        push!(all_paths, deepcopy(path))
+    end
+    all_paths
 end
 
 end # module

@@ -117,3 +117,30 @@ end
     """)
     @test encoder(j) == Float32.([1, -1, 0, 0, 1, 2])
 end
+
+@testset "make_potions_encoder" begin
+    gd = GameData([], [], [], [], [], [], ["potion_1", "potion_2", "potion_3"], [])
+    encoder = make_potions_encoder(gd)
+    # Count encoding for each potion (3)
+    @test length(encoder) == 3
+    j = JSON.parse("""
+        [
+            {"id": "potion_1"},
+            {"id": "potion_3"},
+            {"id": "potion_3"}
+        ]
+    """)
+    @test encoder(j) == Float32.([1, 0, 2])
+end
+
+@testset "map_encoder" begin
+    j = JSON.parse(read("test/map.json", String))
+    @test length(map_encoder) == 6*5
+    @test map_encoder(j, 0, 0) == Float32.([
+        0, 0, 0, 1, 1,
+        0, 0, 0, 1, 1,
+        0, 0, 0, 3, 3,
+        1, 2, 2, 4, 7,
+        0, 0, 0, 0, 1,
+        0, 0, 0, 3, 5])
+end
