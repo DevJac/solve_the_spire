@@ -4,7 +4,6 @@ struct CombatAgent
     player_encoder
     player_embedder
 
-
     draw_discard_encoder
     draw_discard_embedder
 

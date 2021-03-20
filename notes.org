@@ -37,7 +37,7 @@ Cards to retain until next turn
 Put a card from your hand on top of your draw pile. It costs 0 until played.
 * Refactor
 - [ ] .
-- [ ] ├── agent.jl
+- [X] ├── agent.jl
 - [ ] ├── notes.org
 - [ ] ├── README.md
 - [X] ├── relay.jl
@@ -46,7 +46,18 @@ Put a card from your hand on top of your draw pile. It costs 0 until played.
 - [X] │   ├── Networks.jl
 - [X] │   ├── SARSM.jl
 - [ ] │   ├── STSAgents.jl
-- [X] │   └── Utils.jl
+- [X] │   ├── Utils.jl
+- [ ] │   ├── agents
+- [ ] │   │   ├── CampfireAgent.jl
+- [ ] │   │   ├── CombatAgent.jl
+- [ ] │   │   ├── DeckAgent.jl
+- [ ] │   │   ├── EventAgent.jl
+- [ ] │   │   ├── MapAgent.jl
+- [X] │   │   ├── MenuAgent.jl
+- [ ] │   │   ├── PotionAgent.jl
+- [ ] │   │   ├── RewardAgent.jl
+- [ ] │   │   ├── ShopAgent.jl
+- [ ] │   │   └── SpecialActionAgent.jl
 - [X] └── test
 - [X]     ├── Encoders.jl
 - [X]     ├── Networks.jl
