@@ -28,9 +28,9 @@ end
 @testset "make_player_encoder" begin
     gd = GameData([], [], [], [], [], ["power_1", "power_2"], [], [])
     encoder = make_player_encoder(gd)
-    # 2 encoded vectors for each power (2)
+    # 2 encoded vectors for each power (2*2)
     # Current HP, max HP, HP ratio, energy, block, surplus block (6)
-    @test length(encoder) == 2 * 2 + 6
+    @test length(encoder) == 2*2 + 6
     j1 = JSON.parse("""
         {
             "game_state": {
@@ -83,6 +83,9 @@ end
 @testset "make_monster_encoder" begin
     gd = GameData([], [], [], ["monster_1", "monster_2"], ["m_power_1", "m_power_2"], [], [], [])
     encoder = make_monster_encoder(gd)
+    # One-hot encoded monster (2)
+    # 2 encoded vectors for each power (2*2)
+    # Current HP, max HP, HP ratio, block, move damage, move hits, total damage (7)
     @test length(encoder) == 2 + 2*2 + 7
     j1 = JSON.parse("""
         {
@@ -99,4 +102,18 @@ end
         }
     """)
     @test encoder(j1) == Float32.([1, 0, 1, 2, 0, 0, 4, 8, 1/2, 9, 3, 4, 3*4])
+end
+
+@testset "make_relics_encoder" begin
+    gd = GameData([], [], [], [], [], [], [], ["relic_1", "relic_2", "relic_3"])
+    encoder = make_relics_encoder(gd)
+    # 2 encoded vectors for each relic (2*3)
+    @test length(encoder) == 2*3
+    j = JSON.parse("""
+        [
+            {"id": "relic_1", "amount": -1},
+            {"id": "relic_3", "amount": 2}
+        ]
+    """)
+    @test encoder(j) == Float32.([1, -1, 0, 0, 1, 2])
 end

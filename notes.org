@@ -90,6 +90,13 @@ Is this agent too broad?
 - Potions
 - Map paths
 - Map boss
+** Encoders
+- Player
+- Monster
+- Card
+- Relic
+- Potion
+- Map
 * Actions
 ** DamageAction
 Game over

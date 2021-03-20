@@ -47,7 +47,7 @@ function add_encoder(f, encoder::Encoder)
     push!(encoder.encoders, f)
 end
 
-export make_card_encoder, make_player_encoder, make_monster_encoder
+export make_card_encoder, make_player_encoder, make_monster_encoder, make_relics_encoder
 
 function make_card_encoder(game_data)
     encoder = Encoder("Card")
@@ -163,6 +163,21 @@ function make_monster_encoder(game_data)
     end
     ae() do j
         monster_total_attack(j)
+    end
+    encoder
+end
+
+function make_relics_encoder(game_data)
+    encoder = Encoder("Relic")
+    ae(f) = add_encoder(f, encoder)
+    for relic_id in game_data.relic_ids
+        ae() do j
+            any(r -> r["id"] == relic_id, j)
+        end
+        ae() do j
+            matching = filter(r -> r["id"] == relic_id, j)
+            !isempty(matching) ? only(matching)["amount"] : 0
+        end
     end
     encoder
 end
