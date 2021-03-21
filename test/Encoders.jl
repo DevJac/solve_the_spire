@@ -25,9 +25,21 @@ using Encoders
     @test encoder(j[3]) == Float32.([0, 1, 1, 0, 0, 1, 0, 1, 0])
 end
 
-@testset "make_player_encoder" begin
+@testset "player_basic_encoder" begin
+    # Current HP, max HP, HP ratio (3)
+    @test length(player_basic_encoder) == 3
+    j = JSON.parse("""
+        {"game_state": {
+            "current_hp": 20,
+            "max_hp": 40
+        }}
+    """)
+    @test player_basic_encoder(j) == Float32.([20, 40, 0.5])
+end
+
+@testset "make_player_combat_encoder" begin
     gd = GameData([], [], [], [], [], ["power_1", "power_2"], [], [])
-    encoder = make_player_encoder(gd)
+    encoder = make_player_combat_encoder(gd)
     # 2 encoded vectors for each power (2*2)
     # Current HP, max HP, HP ratio, energy, block, surplus block (6)
     @test length(encoder) == 2*2 + 6
@@ -134,8 +146,11 @@ end
 end
 
 @testset "map_encoder" begin
-    j = JSON.parse(read("test/map.json", String))
+    # One-hot encoded next room type (6)
+    # Min/max encoded next two rooms (2*6)
+    # Min/max encoded remaining rooms (2*6)
     @test length(map_encoder) == 6*5
+    j = JSON.parse(read("test/map.json", String))
     @test map_encoder(j, 0, 0) == Float32.([
         0, 0, 0, 1, 1,
         0, 0, 0, 1, 1,

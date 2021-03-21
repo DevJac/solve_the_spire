@@ -50,7 +50,8 @@ function add_encoder(f, encoder::Encoder)
     push!(encoder.encoders, f)
 end
 
-export make_card_encoder, make_player_encoder, make_monster_encoder, make_relics_encoder, make_potions_encoder
+export make_card_encoder, make_player_basic_encoder, make_player_combat_encoder
+export make_monster_encoder, make_relics_encoder, make_potions_encoder, make_map_encoder
 
 function make_card_encoder(game_data)
     encoder = Encoder("Card")
@@ -82,8 +83,23 @@ function make_card_encoder(game_data)
     encoder
 end
 
-function make_player_encoder(game_data)
-    encoder = Encoder("Player")
+function make_player_basic_encoder()
+    encoder = Encoder("Player Basic")
+    ae(f) = add_encoder(f, encoder)
+    ae() do j
+        j["game_state"]["current_hp"]
+    end
+    ae() do j
+        j["game_state"]["max_hp"]
+    end
+    ae() do j
+        j["game_state"]["current_hp"] / j["game_state"]["max_hp"]
+    end
+    encoder
+end
+
+function make_player_combat_encoder(game_data)
+    encoder = Encoder("Player Combat")
     ae(f) = add_encoder(f, encoder)
     player(j) = j["game_state"]["combat_state"]["player"]
     powers(j) = player(j)["powers"]
@@ -196,16 +212,6 @@ function make_potions_encoder(game_data)
     encoder
 end
 
-export card_encoder, player_encoder, monster_encoder, relics_encoder, potions_encoder
-
-const card_encoder = make_card_encoder(DefaultGameData)
-const player_encoder = make_player_encoder(DefaultGameData)
-const monster_encoder = make_monster_encoder(DefaultGameData)
-const relics_encoder = make_relics_encoder(DefaultGameData)
-const potions_encoder = make_potions_encoder(DefaultGameData)
-
-export make_map_encoder, map_encoder
-
 const MAP_ROOM_TYPES = ('T', 'E', 'R', 'M', '$', '?')
 
 function make_map_encoder()
@@ -238,8 +244,6 @@ function make_map_encoder()
     encoder
 end
 
-const map_encoder = make_map_encoder()
-
 function map_path_counts(map_paths)
     path_counts = StatsBase.countmap.(map_paths)
     map(MAP_ROOM_TYPES) do room_type
@@ -264,5 +268,16 @@ function map_paths(map_state, x, y, all_paths=Vector{Char}[], path=Char[])
     end
     all_paths
 end
+
+export card_encoder, player_basic_encoder, player_combat_encoder
+export monster_encoder, relics_encoder, potions_encoder, map_encoder
+
+const card_encoder = make_card_encoder(DefaultGameData)
+const player_basic_encoder = make_player_basic_encoder()
+const player_combat_encoder = make_player_combat_encoder(DefaultGameData)
+const monster_encoder = make_monster_encoder(DefaultGameData)
+const relics_encoder = make_relics_encoder(DefaultGameData)
+const potions_encoder = make_potions_encoder(DefaultGameData)
+const map_encoder = make_map_encoder()
 
 end # module
