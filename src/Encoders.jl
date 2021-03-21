@@ -196,6 +196,14 @@ function make_potions_encoder(game_data)
     encoder
 end
 
+export card_encoder, player_encoder, monster_encoder, relics_encoder, potions_encoder
+
+const card_encoder = make_card_encoder(DefaultGameData)
+const player_encoder = make_player_encoder(DefaultGameData)
+const monster_encoder = make_monster_encoder(DefaultGameData)
+const relics_encoder = make_relics_encoder(DefaultGameData)
+const potions_encoder = make_potions_encoder(DefaultGameData)
+
 export make_map_encoder, map_encoder
 
 const MAP_ROOM_TYPES = ('T', 'E', 'R', 'M', '$', '?')
