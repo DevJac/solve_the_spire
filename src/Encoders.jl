@@ -5,6 +5,7 @@ using Zygote
 export GameData, DefaultGameData
 
 struct GameData
+    boss_ids
     card_ids
     card_rarities
     card_types
@@ -16,6 +17,7 @@ struct GameData
 end
 
 const DefaultGameData = GameData(
+    readlines("game_data/boss_ids.txt"),
     readlines("game_data/card_ids.txt"),
     readlines("game_data/card_rarities.txt"),
     readlines("game_data/card_types.txt"),
@@ -214,31 +216,37 @@ end
 
 const MAP_ROOM_TYPES = ('T', 'E', 'R', 'M', '$', '?')
 
-function make_map_encoder()
+function make_map_encoder(game_data)
     truncate(len) = x -> x[1:min(len, length(x))]
     function precoder(j, x, y)
-        one_path_counts = map_path_counts(map(truncate(1), map_paths(j, x, y)))
-        two_path_counts = map_path_counts(map(truncate(2), map_paths(j, x, y)))
-        full_path_counts = map_path_counts(map_paths(j, x, y))
-        (one_path_counts, two_path_counts, full_path_counts)
+        mps = map_paths(j["game_state"]["map"], x, y)
+        one_path_counts = map_path_counts(map(truncate(1), mps))
+        two_path_counts = map_path_counts(map(truncate(2), mps))
+        full_path_counts = map_path_counts(mps)
+        (j, one_path_counts, two_path_counts, full_path_counts)
     end
     encoder = Encoder("Map", precoder)
     ae(f) = add_encoder(f, encoder)
     for i in 1:length(MAP_ROOM_TYPES)
         ae() do d
-            d[1][i][1]
-        end
-        ae() do d
             d[2][i][1]
-        end
-        ae() do d
-            d[2][i][2]
         end
         ae() do d
             d[3][i][1]
         end
         ae() do d
             d[3][i][2]
+        end
+        ae() do d
+            d[4][i][1]
+        end
+        ae() do d
+            d[4][i][2]
+        end
+    end
+    for boss_id in game_data.boss_ids
+        ae() do d
+            d[1]["game_state"]["act_boss"] == boss_id
         end
     end
     encoder
@@ -278,6 +286,6 @@ const player_combat_encoder = make_player_combat_encoder(DefaultGameData)
 const monster_encoder = make_monster_encoder(DefaultGameData)
 const relics_encoder = make_relics_encoder(DefaultGameData)
 const potions_encoder = make_potions_encoder(DefaultGameData)
-const map_encoder = make_map_encoder()
+const map_encoder = make_map_encoder(DefaultGameData)
 
 end # module

@@ -4,7 +4,7 @@ using Test
 using Encoders
 
 @testset "make_card_encoder" begin
-    gd = GameData(["card_1", "card_2"], ["COMMON", "RARE"], ["ATTACK", "DEFEND"], [], [], [], [], [])
+    gd = GameData([], ["card_1", "card_2"], ["COMMON", "RARE"], ["ATTACK", "DEFEND"], [], [], [], [], [])
     encoder = make_card_encoder(gd)
     # One-hot encoding for each card (2)
     # One-hot encoding for each rarity (2)
@@ -38,7 +38,7 @@ end
 end
 
 @testset "make_player_combat_encoder" begin
-    gd = GameData([], [], [], [], [], ["power_1", "power_2"], [], [])
+    gd = GameData([], [], [], [], [], [], ["power_1", "power_2"], [], [])
     encoder = make_player_combat_encoder(gd)
     # 2 encoded vectors for each power (2*2)
     # Current HP, max HP, HP ratio, energy, block, surplus block (6)
@@ -93,7 +93,7 @@ end
 end
 
 @testset "make_monster_encoder" begin
-    gd = GameData([], [], [], ["monster_1", "monster_2"], ["m_power_1", "m_power_2"], [], [], [])
+    gd = GameData([], [], [], [], ["monster_1", "monster_2"], ["m_power_1", "m_power_2"], [], [], [])
     encoder = make_monster_encoder(gd)
     # One-hot encoded monster (2)
     # 2 encoded vectors for each power (2*2)
@@ -117,7 +117,7 @@ end
 end
 
 @testset "make_relics_encoder" begin
-    gd = GameData([], [], [], [], [], [], [], ["relic_1", "relic_2", "relic_3"])
+    gd = GameData([], [], [], [], [], [], [], [], ["relic_1", "relic_2", "relic_3"])
     encoder = make_relics_encoder(gd)
     # 2 encoded vectors for each relic (2*3)
     @test length(encoder) == 2*3
@@ -131,7 +131,7 @@ end
 end
 
 @testset "make_potions_encoder" begin
-    gd = GameData([], [], [], [], [], [], ["potion_1", "potion_2", "potion_3"], [])
+    gd = GameData([], [], [], [], [], [], [], ["potion_1", "potion_2", "potion_3"], [])
     encoder = make_potions_encoder(gd)
     # Count encoding for each potion (3)
     @test length(encoder) == 3
@@ -149,7 +149,8 @@ end
     # One-hot encoded next room type (6)
     # Min/max encoded next two rooms (2*6)
     # Min/max encoded remaining rooms (2*6)
-    @test length(map_encoder) == 6*5
+    # One-hot encoded act boss (5 currently)
+    @test length(map_encoder) == 6*5 + 5
     j = JSON.parse(read("test/map.json", String))
     @test map_encoder(j, 0, 0) == Float32.([
         0, 0, 0, 1, 1,
@@ -157,5 +158,6 @@ end
         0, 0, 0, 3, 3,
         1, 2, 2, 4, 7,
         0, 0, 0, 0, 1,
-        0, 0, 0, 3, 5])
+        0, 0, 0, 3, 5,
+        0, 0, 0, 1, 0])
 end

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+./jq_scripts/extract_bosses.sh > game_data/boss_ids.txt
 ./jq_scripts/extract_cards.sh > game_data/card_ids.txt
 ./jq_scripts/extract_monster_powers.sh > game_data/monster_power_ids.txt
 ./jq_scripts/extract_monsters.sh > game_data/monster_ids.txt
