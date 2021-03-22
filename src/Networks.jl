@@ -87,6 +87,8 @@ function VanillaNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_uni
     VanillaNetwork(Chain(layers...))
 end
 
+(n::VanillaNetwork)(f, s) = n(reduce(hcat, map(f, s)))
+
 (n::VanillaNetwork)(s) = n.network(s)
 
 Base.length(n::VanillaNetwork) = length(n.network.layers[end].b)
@@ -112,6 +114,8 @@ function PoolNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_unifor
     push!(layers, Dense(hidden[end], out, identity))
     PoolNetwork(Chain(layers...), ones(Float32, out, 4))
 end
+
+(n::PoolNetwork)(f, s) = n(reduce(hcat, map(f, s)))
 
 function (n::PoolNetwork)(s)
     # network out
