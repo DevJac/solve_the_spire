@@ -19,21 +19,21 @@ function MapAgent()
     all_map_embedder = PoolNetwork(length(map_embedder), 20, [50])
     single_map_embedder = VanillaNetwork(length(map_embedder), 20, [50])
     policy = VanillaNetwork(
-        sum(
-            length(player_embedder),
-            length(deck_embedder),
-            length(relics_embedder),
-            length(potions_embedder),
-            length(all_map_embedder),
-            length(single_map_embedder)),
+        sum(length, [
+            player_embedder,
+            deck_embedder,
+            relics_embedder,
+            potions_embedder,
+            all_map_embedder,
+            single_map_embedder]),
         1, [200, 50, 50])
     critic = VanillaNetwork(
-        sum(
-            length(player_embedder),
-            length(deck_embedder),
-            length(relics_embedder),
-            length(potions_embedder),
-            length(all_map_embedder)),
+        sum(length, [
+            player_embedder,
+            deck_embedder,
+            relics_embedder,
+            potions_embedder,
+            all_map_embedder]),
         1, [200, 50, 50])
     MapAgent(
         player_embedder,
