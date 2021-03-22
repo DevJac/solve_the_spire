@@ -95,10 +95,11 @@ end
 @testset "make_monster_encoder" begin
     gd = GameData([], [], [], [], ["monster_1", "monster_2"], ["m_power_1", "m_power_2"], [], [], [])
     encoder = make_monster_encoder(gd)
+    # 1 to indicate presence of monster (1)
     # One-hot encoded monster (2)
     # 2 encoded vectors for each power (2*2)
     # Current HP, max HP, HP ratio, block, move damage, move hits, total damage (7)
-    @test length(encoder) == 2 + 2*2 + 7
+    @test length(encoder) == 1 + 2 + 2*2 + 7
     j1 = JSON.parse("""
         {
                 "powers": [
@@ -113,7 +114,7 @@ end
                 "move_adjusted_damage": 3
         }
     """)
-    @test encoder(j1) == Float32.([1, 0, 1, 2, 0, 0, 4, 8, 1/2, 9, 3, 4, 3*4])
+    @test encoder(j1) == Float32.([1, 1, 0, 1, 2, 0, 0, 4, 8, 1/2, 9, 3, 4, 3*4])
 end
 
 @testset "make_relics_encoder" begin

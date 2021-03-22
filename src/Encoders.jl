@@ -148,6 +148,9 @@ end
 function make_monster_encoder(game_data)
     encoder = Encoder("Monster")
     ae(f) = add_encoder(f, encoder)
+    ae() do j
+        1
+    end
     for monster_id in game_data.monster_ids
         ae() do j
             j["id"] == monster_id
