@@ -1,7 +1,7 @@
 module Utils
 using Random
 
-export mc_q, onehot, clip, find, max_file_number
+export mc_q, onehot, clip, find, max_file_number, valgrad
 
 function mc_q(r, f, γ=1f0)
     result = Float32.(similar(r))
@@ -83,6 +83,11 @@ function Base.iterate(b::Batcher, state)
     else
         (b.data[state:state+b.batchsize-1], (state + b.batchsize) % length(b.data))
     end
+end
+
+function valgrad(f, x...)
+    val, back = pullback(f, x...)
+    val, back(1)
 end
 
 end # module
