@@ -2,6 +2,7 @@ using AgentCommands
 using BSON
 using Dates
 using Encoders
+using Flux
 using JSON
 using Networks
 using NNlib
