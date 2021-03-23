@@ -78,23 +78,25 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             r = current_hp - last_hp
             if win; r+= 10 end
             add_reward(agent.sars, r, win || lose ? 0 : 1)
-            log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars))
+            log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
         end
-        log_value(ra.tb_log, "CombatAgent/state_value", state_value(agent, ra, sts_state))
-        actions, probabilities = action_probabilities(agent, ra, sts_state)
-        action_i = sample(1:length(actions), Weights(probabilities))
-        add_state(agent.sars, sts_state)
-        add_action(agent.sars, action_i)
-        action = actions[action_i]
-        if length(action) == 0
-            return "end"
-        elseif length(action) == 1
-            return "play $(action[1])"
-        elseif length(action) == 2
-            return "play $(action[1]) $(action[2])"
-        else
-            @error "Unknown CombatAgent action" action
-            throw("Unknown CombatAgent action")
+        if gs["screen_type"] == "NONE"
+            log_value(ra.tb_log, "CombatAgent/state_value", state_value(agent, ra, sts_state))
+            actions, probabilities = action_probabilities(agent, ra, sts_state)
+            action_i = sample(1:length(actions), Weights(probabilities))
+            add_state(agent.sars, sts_state)
+            add_action(agent.sars, action_i)
+            action = actions[action_i]
+            if length(action) == 0
+                return "end"
+            elseif length(action) == 1
+                return "play $(action[1])"
+            elseif length(action) == 2
+                return "play $(action[1]) $(action[2])"
+            else
+                @error "Unknown CombatAgent action" action
+                throw("Unknown CombatAgent action")
+            end
         end
     end
 end
@@ -184,8 +186,8 @@ end
 
 function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
-    potions_e = agent.potions_embedder(potions_encoder(sts_state))
-    relics_e = agent.relics_embedder(relics_encoder(sts_state))
+    potions_e = agent.potions_embedder(potions_encoder(gs["potions"]))
+    relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
     player_e = agent.player_embedder(player_combat_encoder(sts_state))
     draw_e = agent.draw_embedder(card_encoder, gs["combat_state"]["draw_pile"])
     discard_e = agent.draw_embedder(card_encoder, gs["combat_state"]["discard_pile"])
@@ -251,8 +253,8 @@ end
 
 function state_value(agent::CombatAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
-    potions_e = agent.potions_embedder(potions_encoder(sts_state))
-    relics_e = agent.relics_embedder(relics_encoder(sts_state))
+    potions_e = agent.potions_embedder(potions_encoder(gs["potions"]))
+    relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
     player_e = agent.player_embedder(player_combat_encoder(sts_state))
     draw_e = agent.draw_embedder(card_encoder, gs["combat_state"]["draw_pile"])
     discard_e = agent.draw_embedder(card_encoder, gs["combat_state"]["discard_pile"])

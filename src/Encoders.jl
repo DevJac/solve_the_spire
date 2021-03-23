@@ -203,7 +203,7 @@ function make_relics_encoder(game_data)
         end
         ae() do j
             matching = filter(r -> r["id"] == relic_id, j)
-            !isempty(matching) ? only(matching)["amount"] : 0
+            !isempty(matching) ? only(matching)["counter"] : 0
         end
     end
     encoder

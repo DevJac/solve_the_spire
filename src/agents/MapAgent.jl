@@ -18,8 +18,8 @@ function MapAgent()
     deck_embedder = PoolNetwork(length(card_encoder), 20, [50])
     relics_embedder = VanillaNetwork(length(relics_encoder), 20, [50])
     potions_embedder = VanillaNetwork(length(potions_encoder), 20, [50])
-    all_map_embedder = PoolNetwork(length(map_embedder), 20, [50])
-    single_map_embedder = VanillaNetwork(length(map_embedder), 20, [50])
+    all_map_embedder = PoolNetwork(length(map_encoder), 20, [50])
+    single_map_embedder = VanillaNetwork(length(map_encoder), 20, [50])
     policy = VanillaNetwork(
         sum(length, [
             player_embedder,
@@ -57,10 +57,10 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
         if gs["screen_type"] == "GAME_OVER"
             if awaiting(agent.sars) == sar_reward
                 add_reward(agent.sars, gs["floor"], 0)
-                log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars))
+                log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] == "MAP"
-            log_value(ra.tb_log, "MapAgent/state_value", length(agent.sars))
+            log_value(ra.tb_log, "MapAgent/state_value", state_value(agent, ra, sts_state))
             actions, probabilities = action_probabilities(agent, ra, sts_state)
             action_i = sample(1:length(actions), Weights(probabilities))
             add_state(agent.sars, sts_state)
@@ -70,6 +70,7 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
         else
             if awaiting(agent.sars) == sar_reward
                 add_reward(agent.sars, 0, 0)
+                log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
         end
     end
@@ -158,8 +159,8 @@ function action_probabilities(agent::MapAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
     player_e = agent.player_embedder(player_basic_encoder(sts_state))
     deck_e = agent.deck_embedder(card_encoder, gs["deck"])
-    relics_e = agent.relics_embedder(relics_encoder(sts_state))
-    potions_e = agent.potions_embedder(potions_encoder(sts_state))
+    relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
+    potions_e = agent.potions_embedder(potions_encoder(gs["potions"]))
     all_map_e = agent.all_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), gs["screen_state"]["next_nodes"])
     single_map_e = agent.single_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), gs["screen_state"]["next_nodes"])
     Zygote.ignore() do
@@ -189,8 +190,8 @@ function state_value(agent::MapAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
     player_e = agent.player_embedder(player_basic_encoder(sts_state))
     deck_e = agent.deck_embedder(card_encoder, gs["deck"])
-    relics_e = agent.relics_embedder(relics_encoder(sts_state))
-    potions_e = agent.potions_embedder(potions_encoder(sts_state))
+    relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
+    potions_e = agent.potions_embedder(potions_encoder(gs["potions"]))
     all_map_e = agent.all_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), gs["screen_state"]["next_nodes"])
     only(agent.critic(vcat(
         player_e,

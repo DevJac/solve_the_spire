@@ -126,8 +126,8 @@ end
     @test length(encoder) == 2*3
     j = JSON.parse("""
         [
-            {"id": "relic_1", "amount": -1},
-            {"id": "relic_3", "amount": 2}
+            {"id": "relic_1", "counter": -1},
+            {"id": "relic_3", "counter": 2}
         ]
     """)
     @test encoder(j) == Float32.([1, -1, 0, 0, 1, 2])
