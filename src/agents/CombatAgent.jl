@@ -106,9 +106,10 @@ function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
     discard_e = agent.draw_embedder(card_encoder, gs["combat_state"]["discard_pile"])
     all_hand_e = agent.all_hand_embedder(card_encoder, gs["combat_state"]["hand"])
     all_monster_e = agent.all_monster_embedder(monster_encoder, gs["combat_state"]["monsters"])
-    local playable_hand
-    local attackable_monsters
     local actions
+    local action_cards_encoded
+    local action_monsters_encoded
+    local expected_action_length
     Zygote.ignore() do
         @assert size(potions_e) == (20,)
         @assert size(relics_e) == (20,)
@@ -122,27 +123,31 @@ function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
         monsters = collect(zip(0:99, gs["combat_state"]["monsters"]))
         attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
         actions = Any[()]
-    end
-    action_es = Any[vcat(
-        agent.single_hand_embedder(zeros(length(card_encoder)+1)),
-        agent.single_monster_embedder(zeros(length(monster_encoder))))]
-    for card in playable_hand
-        if card[2]["has_target"]
-            for monster in attackable_monsters
-                push!(actions, (card[1], monster[1]))
-                push!(action_es, vcat(
-                    agent.single_hand_embedder([card_encoder(card);0]),
-                    agent.single_monster_embedder(monster_encoder(monster))))
+        action_cards_encoded = Any[[zeros(length(card_encoder));1]]
+        action_monsters_encoded = Any[zeros(length(monster_encoder))]
+        for card in playable_hand
+            if card[2]["has_target"]
+                for monster in attackable_monsters
+                    push!(actions, (card[1], monster[1]))
+                    push!(action_cards_encoded, [card_encoder(card);0])
+                    push!(action_monsters_encoded, monster_encoder(monster))
+                end
+            else
+                push!(actions, (card[1],))
+                push!(action_cards_encoded, [card_encoder(card);0])
+                push!(action_monsters_encoded, zeros(length(monster_encoder)))
             end
-        else
-            push!(actions, (card[1],))
-            push!(action_es, vcat(
-                agent.single_hand_embedder([card_encoder(card);0]),
-                agent.single_monster_embedder(zeros(length(monster_encoder)))))
         end
+        @assert length(actions) == length(action_cards_encoded) == length(action_monsters_encoded)
+        expected_action_length = (
+            count(c -> c[2]["has_target"], playable_hand) * (length(attackable_monsters)-1) +
+            length(playable_hand) + 1)
+        @assert length(actions) == expected_action_length
     end
-    Zygote.@ignore @assert length(actions) == length(action_es)
-    action_e = reduce(hcat, action_es)
+    action_e = vcat(
+        agent.single_hand_embedder(reduce(hcat, action_cards_encoded)),
+        agent.single_monster_embedder(reduce(hcat, action_monsters_encoded)))
+    Zygote.@ignore @assert size(action_e)[2] == expected_action_length
     action_weights = agent.policy(vcat(
         repeat(potions_e, 1, size(action_e)[2]),
         repeat(relics_e, 1, size(action_e)[2]),
@@ -154,7 +159,7 @@ function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
         action_e))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
     Zygote.ignore() do
-        @assert length(actions) == length(probabilities)
+        @assert length(actions) == length(probabilities) == expected_action_length
         actions, probabilities
     end
 end
