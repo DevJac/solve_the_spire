@@ -149,13 +149,13 @@ function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
                     clip(online_ap / target_ap, 0.2) * advantage)
             end
         end
-        log_value(train_log, "policy/loss", loss, step=epoch)
-        log_value(train_log, "policy/kl_div", mean(kl_divs), step=epoch)
-        log_value(train_log, "policy/actual_value", mean(actual_value), step=epoch)
-        log_value(train_log, "policy/estimated_value", mean(estimated_value), step=epoch)
-        log_value(train_log, "policy/estimated_advantage", mean(estimated_advantage), step=epoch)
-        log_value(train_log, "policy/entropy", mean(entropys), step=epoch)
-        log_value(train_log, "policy/explore", mean(explore), step=epoch)
+        log_value(train_log, "train/policy_loss", loss, step=epoch)
+        log_value(train_log, "train/kl_div", mean(kl_divs), step=epoch)
+        log_value(train_log, "train/actual_value", mean(actual_value), step=epoch)
+        log_value(train_log, "train/estimated_value", mean(estimated_value), step=epoch)
+        log_value(train_log, "train/estimated_advantage", mean(estimated_advantage), step=epoch)
+        log_value(train_log, "train/entropy", mean(entropys), step=epoch)
+        log_value(train_log, "train/explore", mean(explore), step=epoch)
         Flux.Optimise.update!(agent.policy_opt, prms, grads)
         if smooth!(kl_div_smoother, mean(kl_divs)) > 0.01; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
@@ -178,7 +178,7 @@ function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
                 (predicted_q - actual_q)^2
             end
         end
-        log_value(train_log, "critic/loss", loss, step=epoch)
+        log_value(train_log, "train/critic_loss", loss, step=epoch)
         Flux.Optimise.update!(agent.critic_opt, prms, grads)
     end
     log_value(ra.tb_log, "CombatAgent/critic_loss", loss)
