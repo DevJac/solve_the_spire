@@ -1,72 +1,206 @@
 export CombatAgent, action, train!
 
 struct CombatAgent
-    player_encoder
+    potions_embedder
+    relics_embedder
     player_embedder
-
-    draw_discard_encoder
-    draw_discard_embedder
-
-    monsters_encoder
-    monsters_embedder
-
-    hand_card_encoder
-    single_hand_card_embedder
-    all_hand_cards_embedder
-
-    hand_card_selector
+    draw_embedder
+    discard_embedder
+    all_hand_embedder
+    all_monster_embedder
+    single_hand_embedder
+    single_monster_embedder
+    policy
     critic
     sars
 end
 
 function CombatAgent()
-    player_encoder = make_player_encoder(DefaultGameData)
-    player_embedder = VanillaNetwork(length(player_encoder), 10, [50])
-
-    draw_discard_encoder = make_draw_discard_encoder(DefaultGameData)
-    draw_discard_embedder = VanillaNetwork(length(draw_discard_encoder), 10, [50])
-
-    monsters_encoder = make_monsters_encoder(DefaultGameData)
-    monsters_embedder = VanillaNetwork(length(monsters_encoder), 10, [50])
-
-    hand_card_encoder = make_hand_card_encoder(DefaultGameData)
-    single_hand_card_embedder = VanillaNetwork(length(hand_card_encoder), 10, [50])
-    all_hand_cards_embedder = VanillaNetwork(length(hand_card_encoder), 10, [50])
-
-    hand_card_selector = VanillaNetwork(
+    potions_embedder = VanillaNetwork(length(potions_encoder), 20, [50])
+    relics_embedder = VanillaNetwork(length(relics_encoder), 20, [50])
+    player_embedder = VanillaNetwork(length(player_combat_encoder), 20, [50])
+    draw_embedder = PoolNetwork(length(card_encoder), 20, [50])
+    discard_embedder = PoolNetwork(length(card_encoder), 20, [50])
+    all_hand_embedder = PoolNetwork(length(card_encoder), 20, [50])
+    all_monster_embedder = PoolNetwork(length(monster_encoder), 20, [50])
+    single_hand_embedder = VanillaNetwork(length(card_encoder)+1, 20, [50]) # +1 for end turn
+    single_monster_embedder = VanillaNetwork(length(monster_encoder), 20, [50])
+    policy = VanillaNetwork(
         sum(length, [
+            potions_embedder,
+            relics_embedder,
             player_embedder,
-            draw_discard_embedder,
-            monsters_embedder,
-            single_hand_card_embedder,
-            all_hand_cards_embedder]),
-        1,
-        [50, 50, 50, 50, 50])
+            draw_embedder,
+            discard_embedder,
+            all_hand_embedder,
+            all_monster_embedder,
+            single_hand_embedder,
+            single_monster_embedder]),
+        1, [200, 50, 50])
     critic = VanillaNetwork(
         sum(length, [
+            potions_embedder,
+            relics_embedder,
             player_embedder,
-            draw_discard_embedder,
-            monsters_embedder,
-            all_hand_cards_embedder]),
-        1,
-        [40, 40, 40, 40, 40])
+            draw_embedder,
+            discard_embedder,
+            all_hand_embedder,
+            all_monster_embedder]),
+        1, [200, 50, 50])
     CombatAgent(
-        player_encoder,
+        potions_embedder,
+        relics_embedder,
         player_embedder,
-
-        draw_discard_encoder,
-        draw_discard_embedder,
-
-        monsters_encoder,
-        monsters_embedder,
-
-        hand_card_encoder,
-        single_hand_card_embedder,
-        all_hand_cards_embedder,
-
-        hand_card_selector,
+        draw_embedder,
+        discard_embedder,
+        all_hand_embedder,
+        all_monster_embedder,
+        single_hand_embedder,
+        single_monster_embedder,
+        policy,
         critic,
         SARS())
+end
+
+function action(agent::CombatAgent, ra::RootAgent, sts_state)
+    if "game_state" in keys(sts_state)
+        gs = sts_state["game_state"]
+        if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
+            win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
+            lose = gs["screen_type"] == "GAME_OVER"
+            @assert !(win && lose)
+            last_hp = agent.sars.states[end]["game_state"]["current_hp"]
+            current_hp = gs["current_hp"]
+            r = current_hp - last_hp
+            if win; r+= 10 end
+            add_reward(agent.sars, r, win || lose ? 0 : 1)
+        end
+        actions, probabilities = action_probabilities(agent, ra, sts_state)
+        action_i = sample(1:length(actions), Weights(probabilities))
+        add_state(agent.sars, sts_state)
+        add_action(agent.sars, action_i)
+        action = actions[action_i]
+        if length(action) == 0
+            return "end"
+        elseif length(action) == 1
+            return "play $(action[1])"
+        elseif length(action) == 2
+            return "play $(action[1]) $(action[2])"
+        else
+            @error "Unknown CombatAgent action" action
+            throw("Unknown CombatAgent action")
+        end
+    end
+end
+
+function train!(agent::CombatAgent, ra::RootAgent)
+    # TODO
+end
+
+function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
+    gs = sts_state["game_state"]
+    potions_e = agent.potions_embedder(potions_encoder(sts_state))
+    relics_e = agent.relics_embedder(relics_encoder(sts_state))
+    player_e = agent.player_embedder(player_combat_encoder(sts_state))
+    draw_e = agent.draw_embedder(card_encoder, gs["combat_state"]["draw_pile"])
+    discard_e = agent.draw_embedder(card_encoder, gs["combat_state"]["discard_pile"])
+    all_hand_e = agent.all_hand_embedder(card_encoder, gs["combat_state"]["hand"])
+    all_monster_e = agent.all_monster_embedder(monster_encoder, gs["combat_state"]["monsters"])
+    local playable_hand
+    local attackable_monsters
+    local actions
+    Zygote.ignore() do
+        @assert size(potions_e) == (20,)
+        @assert size(relics_e) == (20,)
+        @assert size(player_e) == (20,)
+        @assert size(draw_e) == (20,)
+        @assert size(discard_e) == (20,)
+        @assert size(all_hand_e) == (20,)
+        @assert size(all_monster_e) == (20,)
+        hand = collect(enumerate(gs["combat_state"]["hand"]))
+        playable_hand = filter(c -> c[2]["is_playable"], hand)
+        monsters = collect(zip(0:99, gs["combat_state"]["monsters"]))
+        attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
+        actions = Any[()]
+    end
+    action_es = Any[vcat(
+        agent.single_hand_embedder(zeros(length(card_encoder)+1)),
+        agent.single_monster_embedder(zeros(length(monster_encoder))))]
+    for card in playable_hand
+        if card[2]["has_target"]
+            for monster in attackable_monsters
+                push!(actions, (card[1], monster[1]))
+                push!(action_es, vcat(
+                    agent.single_hand_embedder([card_encoder(card);0]),
+                    agent.single_monster_embedder(monster_encoder(monster))))
+            end
+        else
+            push!(actions, (card[1],))
+            push!(action_es, vcat(
+                agent.single_hand_embedder([card_encoder(card);0]),
+                agent.single_monster_embedder(zeros(length(monster_encoder)))))
+        end
+    end
+    Zygote.@ignore @assert length(actions) == length(action_es)
+    action_e = reduce(hcat, action_es)
+    action_weights = agent.policy(vcat(
+        repeat(potions_e, 1, size(action_e)[2]),
+        repeat(relics_e, 1, size(action_e)[2]),
+        repeat(player_e, 1, size(action_e)[2]),
+        repeat(draw_e, 1, size(action_e)[2]),
+        repeat(discard_e, 1, size(action_e)[2]),
+        repeat(all_hand_e, 1, size(action_e)[2]),
+        repeat(all_monster_e, 1, size(action_e)[2]),
+        action_e))
+    probabilities = softmax(reshape(action_weights, length(action_weights)))
+    Zygote.ignore() do
+        @assert length(actions) == length(probabilities)
+        actions, probabilities
+    end
+end
+
+function state_value(agent::CombatAgent, ra::RootAgent, sts_state)
+    # TODO
+end
+
+
+
+
+
+
+
+
+
+
+
+
+function action(agent::CombatAgent, ra::RootAgent, sts_state)
+    if "game_state" in keys(sts_state)
+        gs = sts_state["game_state"]
+        if gs["screen_type"] in ("MAP", "COMBAT_REWARD", "GAME_OVER")
+            reward(agent, sts_state)
+        end
+        if gs["screen_type"] == "NONE"
+            cs = gs["combat_state"]
+            if !any(c -> c["is_playable"], cs["hand"]); return "end" end
+            reward(agent, sts_state)
+            add_state(agent.sars, sts_state)
+            aps, playable_hand = action_probabilities(agent, sts_state)
+            selected_card = sample(collect(enumerate(playable_hand)), Weights(aps))
+            add_action(agent.sars, selected_card[1])
+            card_to_play = selected_card[2]
+            card_to_play_index = card_to_play[1]
+            if card_to_play[2]["has_target"]
+                monsters = collect(enumerate(cs["monsters"]))
+                attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
+                min_hp = minimum(map(m -> m[2]["current_hp"], attackable_monsters))
+                min_hp_monsters = filter(m -> m[2]["current_hp"] == min_hp, attackable_monsters)
+                monster_to_attack_index = sample(min_hp_monsters)[1]-1
+                return "play $card_to_play_index $monster_to_attack_index"
+            end
+            return "play $card_to_play_index"
+        end
+    end
 end
 
 function action_value(agent::CombatAgent, sts_state)
@@ -117,35 +251,6 @@ function action_probabilities(agent::CombatAgent, sts_state)
     softmax(reshape(selection_weights, length(playable_hand))), playable_hand
 end
 
-function action(agent::CombatAgent, ra::RootAgent, sts_state)
-    if "game_state" in keys(sts_state)
-        gs = sts_state["game_state"]
-        if gs["screen_type"] in ("MAP", "COMBAT_REWARD", "GAME_OVER")
-            reward(agent, sts_state)
-        end
-        if gs["screen_type"] == "NONE"
-            cs = gs["combat_state"]
-            if !any(c -> c["is_playable"], cs["hand"]); return "end" end
-            reward(agent, sts_state)
-            add_state(agent.sars, sts_state)
-            aps, playable_hand = action_probabilities(agent, sts_state)
-            selected_card = sample(collect(enumerate(playable_hand)), Weights(aps))
-            add_action(agent.sars, selected_card[1])
-            card_to_play = selected_card[2]
-            card_to_play_index = card_to_play[1]
-            if card_to_play[2]["has_target"]
-                monsters = collect(enumerate(cs["monsters"]))
-                attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
-                min_hp = minimum(map(m -> m[2]["current_hp"], attackable_monsters))
-                min_hp_monsters = filter(m -> m[2]["current_hp"] == min_hp, attackable_monsters)
-                monster_to_attack_index = sample(min_hp_monsters)[1]-1
-                return "play $card_to_play_index $monster_to_attack_index"
-            end
-            return "play $card_to_play_index"
-        end
-    end
-end
-
 function reward(agent::CombatAgent, sts_state, continuity=1.0f0)
     if awaiting(agent.sars) == sar_reward
         win = sts_state["game_state"]["screen_type"] in ("MAP", "COMBAT_REWARD")
@@ -157,11 +262,6 @@ function reward(agent::CombatAgent, sts_state, continuity=1.0f0)
         if win; r+= 10 end
         add_reward(agent.sars, r, continuity)
     end
-end
-
-function valgrad(f, x...)
-    val, back = pullback(f, x...)
-    val, back(1)
 end
 
 const policy_opt = ADADelta()

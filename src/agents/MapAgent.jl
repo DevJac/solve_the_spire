@@ -95,9 +95,9 @@ function action_probabilities(agent::MapAgent, ra::RootAgent, sts_state)
         repeat(potions_e, 1, size(map_e)[2]),
         repeat(all_map_e, 1, size(map_e)[2]),
         single_map_e))
+    probabilities = softmax(reshape(action_weights, length(action_weights)))
     Zygote.ignore() do
         actions = collect(0:length(gs["screen_state"]["next_nodes"])-1)
-        probabilities = softmax(reshape(action_weights, length(action_weights)))
         @assert length(actions) == length(probabilities)
         actions, probabilities
     end
