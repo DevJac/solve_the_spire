@@ -87,7 +87,14 @@ function VanillaNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_uni
     VanillaNetwork(Chain(layers...))
 end
 
-(n::VanillaNetwork)(f, s) = n(reduce(hcat, map(f, s)))
+function (n::VanillaNetwork)(f, s)
+    if isempty(s)
+        in = size(n.network.layers[1].W)[2]
+        n(zeros(in))
+    else
+        n(reduce(hcat, map(f, s)))
+    end
+end
 
 (n::VanillaNetwork)(s) = n.network(s)
 
@@ -115,7 +122,14 @@ function PoolNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_unifor
     PoolNetwork(Chain(layers...), ones(Float32, out, 4))
 end
 
-(n::PoolNetwork)(f, s) = n(reduce(hcat, map(f, s)))
+function (n::PoolNetwork)(f, s)
+    if isempty(s)
+        in = size(n.network.layers[1].W)[2]
+        n(zeros(in))
+    else
+        n(reduce(hcat, map(f, s)))
+    end
+end
 
 function (n::PoolNetwork)(s)
     # network out

@@ -58,6 +58,9 @@ export make_monster_encoder, make_relics_encoder, make_potions_encoder, make_map
 function make_card_encoder(game_data)
     encoder = Encoder("Card")
     ae(f) = add_encoder(f, encoder)
+    ae() do j
+        1
+    end
     for card_id in game_data.card_ids
         ae() do j
             j["id"] == card_id

@@ -25,7 +25,7 @@ function CombatAgent()
     discard_embedder = PoolNetwork(length(card_encoder), 20, [50])
     all_hand_embedder = PoolNetwork(length(card_encoder), 20, [50])
     all_monster_embedder = PoolNetwork(length(monster_encoder), 20, [50])
-    single_hand_embedder = VanillaNetwork(length(card_encoder)+1, 20, [50]) # +1 for end turn
+    single_hand_embedder = VanillaNetwork(length(card_encoder), 20, [50])
     single_monster_embedder = VanillaNetwork(length(monster_encoder), 20, [50])
     policy = VanillaNetwork(
         sum(length, [
@@ -210,18 +210,18 @@ function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
         monsters = collect(zip(0:99, gs["combat_state"]["monsters"]))
         attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
         actions = Any[()]
-        action_cards_encoded = Any[[zeros(length(card_encoder));1]]
+        action_cards_encoded = Any[zeros(length(card_encoder))]
         action_monsters_encoded = Any[zeros(length(monster_encoder))]
         for card in playable_hand
             if card[2]["has_target"]
                 for monster in attackable_monsters
                     push!(actions, (card[1], monster[1]))
-                    push!(action_cards_encoded, [card_encoder(card);0])
-                    push!(action_monsters_encoded, monster_encoder(monster))
+                    push!(action_cards_encoded, card_encoder(card[2]))
+                    push!(action_monsters_encoded, monster_encoder(monster[2]))
                 end
             else
                 push!(actions, (card[1],))
-                push!(action_cards_encoded, [card_encoder(card);0])
+                push!(action_cards_encoded, card_encoder(card[2]))
                 push!(action_monsters_encoded, zeros(length(monster_encoder)))
             end
         end
