@@ -47,6 +47,13 @@ function max_file_number(directory, prefix)
     maximum(file_numbers)
 end
 
+function valgrad(f, x...)
+    val, back = pullback(f, x...)
+    val, back(1)
+end
+
+explore_odds(probs, ϵ=0.01) = sum(p -> maximum(probs) - ϵ > p ? p : 0, probs)
+
 export Smoother, smooth!
 
 mutable struct Smoother
@@ -64,7 +71,7 @@ export Batcher
 struct Batcher{T}
     data :: Vector{T}
     batchsize :: Int
-    Batcher(data; batchsize) = new{eltype(data)}(data, batchsize)
+    Batcher(data, batchsize) = new{eltype(data)}(data, batchsize)
 end
 
 function Base.iterate(b::Batcher)
@@ -85,12 +92,5 @@ function Base.iterate(b::Batcher, state)
         (b.data[state:state+b.batchsize-1], (state + b.batchsize) % length(b.data))
     end
 end
-
-function valgrad(f, x...)
-    val, back = pullback(f, x...)
-    val, back(1)
-end
-
-explore_odds(probs, ϵ=0.01) = sum(p -> maximum(probs) - ϵ > p ? p : 0, probs)
 
 end # module

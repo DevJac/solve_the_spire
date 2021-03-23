@@ -52,7 +52,7 @@ end
 
 @testset "Batcher" begin
     data = collect(1:10)
-    b = Batcher(data, batchsize=4)
+    b = Batcher(data, 4)
     total = 0
     for (i, batch) in enumerate(b)
         @test length(batch) == 4
@@ -60,11 +60,11 @@ end
         if i >= 10; break end
     end
     @test total == sum(data) * 4
-    b = Batcher(data, batchsize=20)
+    b = Batcher(data, 20)
     batch, _ = iterate(b)
     @test length(batch) == 10
     @test sum(batch) == sum(data)
-    b = Batcher(data, batchsize=10)
+    b = Batcher(data, 10)
     batch, _ = iterate(b)
     @test length(batch) == 10
     @test sum(batch) == sum(data)
