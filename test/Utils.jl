@@ -72,3 +72,9 @@ end
     @test length(batch) == 10
     @test sum(batch) == sum(data)
 end
+
+@testset "explore_odds" begin
+    @test explore_odds([0.333, 0.333, 0.333]) == 0
+    @test explore_odds([0.4, 0.3, 0.3]) == 0.6
+    @test explore_odds([0.2, 0.2, 0.3, 0.3]) == 0.4
+end

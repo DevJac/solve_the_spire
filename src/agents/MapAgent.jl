@@ -60,8 +60,9 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] == "MAP"
-            log_value(ra.tb_log, "MapAgent/state_value", state_value(agent, ra, sts_state))
             actions, probabilities = action_probabilities(agent, ra, sts_state)
+            log_value(ra.tb_log, "MapAgent/state_value", state_value(agent, ra, sts_state))
+            log_value(ra.tb_log, "MapAgent/explore", explore_odds(probabilities))
             action_i = sample(1:length(actions), Weights(probabilities))
             add_state(agent.sars, sts_state)
             add_action(agent.sars, action_i)
@@ -112,7 +113,7 @@ function train!(agent::MapAgent, ra::RootAgent, epochs=1000)
                     push!(estimated_value, online_ap * state_value(target_agent, ra, sar.state))
                     push!(estimated_advantage, online_ap * advantage)
                     push!(entropys, entropy(online_aps))
-                    push!(explore, (maximum(online_aps) - 0.01) > online_ap ? 1 : 0)
+                    push!(explore, explore_odds(online_aps))
                 end
                 min(
                     (online_ap / target_ap) * advantage,
