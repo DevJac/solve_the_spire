@@ -234,15 +234,15 @@ function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
     action_e = vcat(
         agent.single_hand_embedder(reduce(hcat, action_cards_encoded)),
         agent.single_monster_embedder(reduce(hcat, action_monsters_encoded)))
-    Zygote.@ignore @assert size(action_e)[2] == expected_action_length
+    Zygote.@ignore @assert size(action_e, 2) == expected_action_length
     action_weights = agent.policy(vcat(
-        repeat(potions_e, 1, size(action_e)[2]),
-        repeat(relics_e, 1, size(action_e)[2]),
-        repeat(player_e, 1, size(action_e)[2]),
-        repeat(draw_e, 1, size(action_e)[2]),
-        repeat(discard_e, 1, size(action_e)[2]),
-        repeat(all_hand_e, 1, size(action_e)[2]),
-        repeat(all_monster_e, 1, size(action_e)[2]),
+        repeat(potions_e, 1, size(action_e, 2)),
+        repeat(relics_e, 1, size(action_e, 2)),
+        repeat(player_e, 1, size(action_e, 2)),
+        repeat(draw_e, 1, size(action_e, 2)),
+        repeat(discard_e, 1, size(action_e, 2)),
+        repeat(all_hand_e, 1, size(action_e, 2)),
+        repeat(all_monster_e, 1, size(action_e, 2)),
         action_e))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
     Zygote.ignore() do

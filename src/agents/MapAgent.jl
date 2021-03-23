@@ -172,11 +172,11 @@ function action_probabilities(agent::MapAgent, ra::RootAgent, sts_state)
         @assert size(single_map_e) == (20, length(gs["screen_state"]["next_nodes"]))
     end
     action_weights = agent.policy(vcat(
-        repeat(player_e, 1, size(single_map_e)[2]),
-        repeat(deck_e, 1, size(single_map_e)[2]),
-        repeat(relics_e, 1, size(single_map_e)[2]),
-        repeat(potions_e, 1, size(single_map_e)[2]),
-        repeat(all_map_e, 1, size(single_map_e)[2]),
+        repeat(player_e, 1, size(single_map_e, 2)),
+        repeat(deck_e, 1, size(single_map_e, 2)),
+        repeat(relics_e, 1, size(single_map_e, 2)),
+        repeat(potions_e, 1, size(single_map_e, 2)),
+        repeat(all_map_e, 1, size(single_map_e, 2)),
         single_map_e))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
     Zygote.ignore() do

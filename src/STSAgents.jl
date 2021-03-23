@@ -38,6 +38,8 @@ end
 
 function agent_command(root_agent::RootAgent, sts_state)
     increment_step!(root_agent.tb_log, 1)
+    log_value(root_agent.tb_log, "agent/games", root_agent.games)
+    log_value(root_agent.tb_log, "agent/generation", root_agent.generation)
     overridden_commands = []
     resulting_command = nothing
     for agent in root_agent.agents

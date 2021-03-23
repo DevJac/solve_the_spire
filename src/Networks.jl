@@ -89,7 +89,7 @@ end
 
 function (n::VanillaNetwork)(f, s)
     if isempty(s)
-        in = size(n.network.layers[1].W)[2]
+        in = size(n.network.layers[1].W, 2)
         n(zeros(in))
     else
         n(reduce(hcat, map(f, s)))
@@ -124,7 +124,7 @@ end
 
 function (n::PoolNetwork)(f, s)
     if isempty(s)
-        in = size(n.network.layers[1].W)[2]
+        in = size(n.network.layers[1].W, 2)
         n(zeros(in))
     else
         n(reduce(hcat, map(f, s)))
