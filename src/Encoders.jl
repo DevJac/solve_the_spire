@@ -129,6 +129,9 @@ function make_player_combat_encoder(game_data)
         player(j)["energy"]
     end
     ae() do j
+        j["game_state"]["combat_state"]["cards_discarded_this_turn"]
+    end
+    ae() do j
         player(j)["block"]
     end
     ae() do j

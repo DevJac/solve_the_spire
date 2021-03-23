@@ -41,12 +41,13 @@ end
     gd = GameData([], [], [], [], [], [], ["power_1", "power_2"], [], [])
     encoder = make_player_combat_encoder(gd)
     # 2 encoded vectors for each power (2*2)
-    # Current HP, max HP, HP ratio, energy, block, surplus block (6)
-    @test length(encoder) == 2*2 + 6
+    # Current HP, max HP, HP ratio, energy, block, surplus block, cards discarded this turn (7)
+    @test length(encoder) == 2*2 + 7
     j1 = JSON.parse("""
         {
             "game_state": {
                 "combat_state": {
+                    "cards_discarded_this_turn": 2,
                     "player": {
                         "powers": [
                             {"id": "power_1", "amount": -1},
@@ -70,6 +71,7 @@ end
         {
             "game_state": {
                 "combat_state": {
+                    "cards_discarded_this_turn": 0,
                     "player": {
                         "powers": [
                             {"id": "power_2", "amount": 3}
@@ -88,8 +90,8 @@ end
             }
         }
     """)
-    @test encoder(j1) == Float32.([1, -1, 1, 1, 30, 70, 30 / 70, 3, 6, 6 - 15])
-    @test encoder(j2) == Float32.([0, 0, 1, 3, 20, 77, 20 / 77, 0, 0, -25])
+    @test encoder(j1) == Float32.([1, -1, 1, 1, 30, 70, 30 / 70, 3, 2, 6, 6 - 15])
+    @test encoder(j2) == Float32.([0, 0, 1, 3, 20, 77, 20 / 77, 0, 0, 0, -25])
 end
 
 @testset "make_monster_encoder" begin
