@@ -60,19 +60,18 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] == "MAP"
+            if awaiting(agent.sars) == sar_reward
+                add_reward(agent.sars, 0, 0)
+                log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
+            end
             actions, probabilities = action_probabilities(agent, ra, sts_state)
             log_value(ra.tb_log, "MapAgent/state_value", state_value(agent, ra, sts_state))
-            log_value(ra.tb_log, "MapAgent/explore", explore_odds(probabilities))
+            log_value(ra.tb_log, "MapAgent/step_explore", explore_odds(probabilities))
             action_i = sample(1:length(actions), Weights(probabilities))
             add_state(agent.sars, sts_state)
             add_action(agent.sars, action_i)
             action = actions[action_i]
             return "choose $action"
-        else
-            if awaiting(agent.sars) == sar_reward
-                add_reward(agent.sars, 0, 0)
-                log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
-            end
         end
     end
 end

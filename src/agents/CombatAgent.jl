@@ -83,7 +83,7 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
         if gs["screen_type"] == "NONE"
             actions, probabilities = action_probabilities(agent, ra, sts_state)
             log_value(ra.tb_log, "CombatAgent/state_value", state_value(agent, ra, sts_state))
-            log_value(ra.tb_log, "CombatAgent/explore", explore_odds(probabilities))
+            log_value(ra.tb_log, "CombatAgent/step_explore", explore_odds(probabilities))
             action_i = sample(1:length(actions), Weights(probabilities))
             add_state(agent.sars, sts_state)
             add_action(agent.sars, action_i)
@@ -233,8 +233,8 @@ function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
         @assert length(actions) == expected_action_length
     end
     action_e = vcat(
-        agent.single_hand_embedder(reduce(hcat, action_cards_encoded)),
-        agent.single_monster_embedder(reduce(hcat, action_monsters_encoded)))
+        agent.single_hand_embedder(Zygote.@ignore reduce(hcat, action_cards_encoded)),
+        agent.single_monster_embedder(Zygote.@ignore reduce(hcat, action_monsters_encoded)))
     Zygote.@ignore @assert size(action_e, 2) == expected_action_length
     action_weights = agent.policy(vcat(
         repeat(potions_e, 1, size(action_e, 2)),
