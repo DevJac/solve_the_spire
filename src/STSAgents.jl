@@ -36,6 +36,12 @@ function RootAgent()
     RootAgent(0, 0, false, tb_log, agents)
 end
 
+function RootAgent(ra::RootAgent)
+    tb_log = TBLogger("tb_logs/agent", tb_append)
+    set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
+    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.agents)
+end
+
 function agent_command(root_agent::RootAgent, sts_state)
     increment_step!(root_agent.tb_log, 1)
     log_value(root_agent.tb_log, "agent/games", root_agent.games)

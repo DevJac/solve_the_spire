@@ -101,7 +101,13 @@ function agent_main(root_agent)
         while true
             if root_agent.ready_to_train
                 root_agent.ready_to_train = false
-                train!(root_agent)
+                Profile.init(10_000_000, 0.1)
+                Profile.clear()
+                @profile train!(root_agent)
+                open("profile.txt", "w") do f
+                    show(f, owntime(stackframe_filter=filecontains(pwd())))
+                    show(f, totaltime(stackframe_filter=filecontains(pwd())))
+                end
                 root_agent.generation += 1
                 BSON.bson(
                     @sprintf("models/agent.t.%04d.bson", max_file_number("models", "agent")+1),
@@ -149,7 +155,7 @@ function load_root_agent()
         for marker in ("t", "s")
             f = @sprintf("agent.%s.%04d.bson", marker, mfn)
             if f in readdir("models")
-                return BSON.load("models/" * f)[:model]
+                return RootAgent(BSON.load("models/" * f)[:model])
             end
         end
     end

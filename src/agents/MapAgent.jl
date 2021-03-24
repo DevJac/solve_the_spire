@@ -159,7 +159,7 @@ end
 
 function action_probabilities(agent::MapAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
-    next_nodes = isempty(gs["screen_state"]["next_nodes"]) ? [Dict("x" => 3, "y" => 15)] : gs["screen_state"]["next_nodes"]
+    next_nodes = isempty(gs["screen_state"]["next_nodes"]) ? [Dict("x" => 3, "y" => 16)] : gs["screen_state"]["next_nodes"]
     player_e = agent.player_embedder(player_basic_encoder(sts_state))
     deck_e = agent.deck_embedder(card_encoder, gs["deck"])
     relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
@@ -189,7 +189,7 @@ end
 
 function state_value(agent::MapAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
-    next_nodes = isempty(gs["screen_state"]["next_nodes"]) ? [Dict("x" => 3, "y" => 15)] : gs["screen_state"]["next_nodes"]
+    next_nodes = isempty(gs["screen_state"]["next_nodes"]) ? [Dict("x" => 3, "y" => 16)] : gs["screen_state"]["next_nodes"]
     player_e = agent.player_embedder(player_basic_encoder(sts_state))
     deck_e = agent.deck_embedder(card_encoder, gs["deck"])
     relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))

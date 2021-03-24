@@ -271,20 +271,34 @@ function map_path_counts(map_paths)
     end
 end
 
-function map_paths(map_state, x, y, all_paths=Vector{Char}[], path=Char[])
-    leaf_node = true
-    for map_node in map_state
-        if map_node["x"] == x && map_node["y"] == y
-            push!(path, only(map_node["symbol"]))
-            for child_node in map_node["children"]
-                leaf_node = false
-                map_paths(map_state, child_node["x"], child_node["y"], all_paths, deepcopy(path))
-            end
-            break
+function map_paths(map_state, x, y)
+    symbol_map = Dict{Tuple{Int8,Int8},Char}()
+    child_map = Dict{Tuple{Int8,Int8},Vector{Tuple{Int8,Int8}}}()
+    for node in map_state
+        coord = (node["x"], node["y"])
+        symbol_map[coord] = only(node["symbol"])
+        for child in node["children"]
+            child_map[coord] = push!(get(child_map, coord, []), (child["x"], child["y"]))
         end
     end
+    map_paths′(symbol_map, child_map, Int8(x), Int8(y), Vector{Char}[], Char[])
+end
+
+function map_paths′(
+        symbol_map::Dict{Tuple{Int8,Int8},Char},
+        child_map::Dict{Tuple{Int8,Int8},Vector{Tuple{Int8,Int8}}},
+        x::Int8,
+        y::Int8,
+        all_paths::Vector{Vector{Char}},
+        path::Vector{Char})
+    leaf_node = true
+    if (x, y) in keys(symbol_map); push!(path, symbol_map[(x, y)]) end
+    for child_node in get(child_map, (x, y), [])
+        leaf_node = false
+        map_paths′(symbol_map, child_map, child_node[1], child_node[2], all_paths, copy(path))
+    end
     if leaf_node
-        push!(all_paths, deepcopy(path))
+        push!(all_paths, copy(path))
     end
     all_paths
 end
