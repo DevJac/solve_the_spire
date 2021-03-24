@@ -131,11 +131,11 @@ function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
             agent.policy)
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
-                target_aps = Zygote.@ignore action_probabilities(target_agent, ra, sar.state)[2]
+                target_aps = action_probabilities(target_agent, ra, sar.state)[2]
                 target_ap = target_aps[sar.action]
                 online_aps = action_probabilities(agent, ra, sar.state)[2]
                 online_ap = online_aps[sar.action]
-                advantage = sar.q - Zygote.ignore(() -> state_value(target_agent, ra, sar.state))
+                advantage = sar.q - state_value(target_agent, ra, sar.state)
                 Zygote.ignore() do
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
                     push!(actual_value, online_ap * sar.q)
@@ -233,8 +233,8 @@ function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
         @assert length(actions) == expected_action_length
     end
     action_e = vcat(
-        agent.single_hand_embedder(Zygote.ignore(() -> reduce(hcat, action_cards_encoded))),
-        agent.single_monster_embedder(Zygote.ignore(() -> reduce(hcat, action_monsters_encoded))))
+        agent.single_hand_embedder(reduce(hcat, action_cards_encoded)),
+        agent.single_monster_embedder(reduce(hcat, action_monsters_encoded)))
     Zygote.@ignore @assert size(action_e, 2) == expected_action_length
     action_weights = agent.policy(vcat(
         repeat(potions_e, 1, size(action_e, 2)),
@@ -246,10 +246,8 @@ function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
         repeat(all_monster_e, 1, size(action_e, 2)),
         action_e))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
-    Zygote.ignore() do
-        @assert length(actions) == length(probabilities) == expected_action_length
-        actions, probabilities
-    end
+    Zygote.@ignore @assert length(actions) == length(probabilities) == expected_action_length
+    actions, probabilities
 end
 
 function state_value(agent::CombatAgent, ra::RootAgent, sts_state)
