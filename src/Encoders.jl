@@ -258,6 +258,9 @@ function make_map_encoder(game_data)
             d[1]["game_state"]["act_boss"] == boss_id
         end
     end
+    ae() do d
+        d[1]["game_state"]["floor"]
+    end
     encoder
 end
 

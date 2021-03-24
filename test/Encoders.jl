@@ -154,7 +154,8 @@ end
     # Min/max encoded next two rooms (2*6)
     # Min/max encoded remaining rooms (2*6)
     # One-hot encoded act boss (5 currently)
-    @test length(map_encoder) == 6*5 + 5
+    # Floor (1)
+    @test length(map_encoder) == 6*5 + 5 + 1
     j = JSON.parse(read("test/map.json", String))
     @test map_encoder(j, 0, 0) == Float32.([
         0, 0, 0, 1, 1,
@@ -163,5 +164,5 @@ end
         1, 2, 2, 4, 7,
         0, 0, 0, 0, 1,
         0, 0, 0, 3, 5,
-        0, 0, 0, 1, 0])
+        0, 0, 0, 1, 0, 3])
 end
