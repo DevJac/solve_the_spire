@@ -78,6 +78,7 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             r = current_hp - last_hp
             if win; r+= 10 end
             add_reward(agent.sars, r, win || lose ? 0 : 1)
+            log_value(ra.tb_log, "CombatAgent/reward", r)
             log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
         end
         if gs["screen_type"] == "NONE"

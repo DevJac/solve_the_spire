@@ -57,11 +57,13 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
         if gs["screen_type"] == "GAME_OVER"
             if awaiting(agent.sars) == sar_reward
                 add_reward(agent.sars, gs["floor"], 0)
+                log_value(ra.tb_log, "MapAgent/reward", gs["floor"])
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] == "MAP"
             if awaiting(agent.sars) == sar_reward
-                add_reward(agent.sars, 0, 0)
+                add_reward(agent.sars, 0)
+                log_value(ra.tb_log, "MapAgent/reward", 0)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
             actions, probabilities = action_probabilities(agent, ra, sts_state)
