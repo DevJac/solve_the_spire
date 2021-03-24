@@ -158,19 +158,20 @@ end
 
 function action_probabilities(agent::MapAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
+    next_nodes = isempty(gs["screen_state"]["next_nodes"]) ? [Dict("x" => 3, "y" => 15)] : gs["screen_state"]["next_nodes"]
     player_e = agent.player_embedder(player_basic_encoder(sts_state))
     deck_e = agent.deck_embedder(card_encoder, gs["deck"])
     relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
     potions_e = agent.potions_embedder(potions_encoder(gs["potions"]))
-    all_map_e = agent.all_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), gs["screen_state"]["next_nodes"])
-    single_map_e = agent.single_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), gs["screen_state"]["next_nodes"])
+    all_map_e = agent.all_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), next_nodes)
+    single_map_e = agent.single_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), next_nodes)
     Zygote.ignore() do
         @assert size(player_e) == (length(player_basic_encoder),)
         @assert size(deck_e) == (20,)
         @assert size(relics_e) == (20,)
         @assert size(potions_e) == (20,)
         @assert size(all_map_e) == (20,)
-        @assert size(single_map_e) == (20, length(gs["screen_state"]["next_nodes"]))
+        @assert size(single_map_e) == (20, length(next_nodes))
     end
     action_weights = agent.policy(vcat(
         repeat(player_e, 1, size(single_map_e, 2)),
@@ -180,18 +181,19 @@ function action_probabilities(agent::MapAgent, ra::RootAgent, sts_state)
         repeat(all_map_e, 1, size(single_map_e, 2)),
         single_map_e))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
-    actions = collect(0:length(gs["screen_state"]["next_nodes"])-1)
+    actions = collect(0:length(next_nodes)-1)
     Zygote.@ignore @assert length(actions) == length(probabilities)
     actions, probabilities
 end
 
 function state_value(agent::MapAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
+    next_nodes = isempty(gs["screen_state"]["next_nodes"]) ? [Dict("x" => 3, "y" => 15)] : gs["screen_state"]["next_nodes"]
     player_e = agent.player_embedder(player_basic_encoder(sts_state))
     deck_e = agent.deck_embedder(card_encoder, gs["deck"])
     relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
     potions_e = agent.potions_embedder(potions_encoder(gs["potions"]))
-    all_map_e = agent.all_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), gs["screen_state"]["next_nodes"])
+    all_map_e = agent.all_map_embedder(node -> map_encoder(sts_state, node["x"], node["y"]), next_nodes)
     only(agent.critic(vcat(
         player_e,
         deck_e,
