@@ -1,4 +1,6 @@
 module Encoders
+using LRUCache
+using Memoize
 using StatsBase
 using Zygote
 
@@ -35,13 +37,13 @@ end
 Encoder(name) = Encoder(name, identity, [])
 Encoder(name, precoder) = Encoder(name, precoder, [])
 
-function (encoder::Encoder)(sts_state_json, args...; kwargs...)
-    Zygote.ignore() do
-        encoded = map(encoder.encoders) do e
-            e(encoder.precoder(sts_state_json, args...; kwargs...))
-        end
-        Float32.(encoded)
+(encoder::Encoder)(sts_state_json, args...; kwargs...) = Zygote.@ignore encode(encoder, sts_state_json, args...; kwargs...)
+
+@memoize LRU(maxsize=10_000) function encode(encoder::Encoder, sts_state_json, args...; kwargs...)
+    encoded = map(encoder.encoders) do e
+        e(encoder.precoder(sts_state_json, args...; kwargs...))
     end
+    Float32.(encoded)
 end
 
 Base.show(io::IO, encoder::Encoder) = println(io, "<Encoder: $(encoder.name) $(length(encoder))>")
@@ -285,12 +287,13 @@ function map_paths(map_state, x, y)
 end
 
 function map_paths′(
-        symbol_map::Dict{Tuple{Int8,Int8},Char},
-        child_map::Dict{Tuple{Int8,Int8},Vector{Tuple{Int8,Int8}}},
-        x::Int8,
-        y::Int8,
-        all_paths::Vector{Vector{Char}},
-        path::Vector{Char})
+    symbol_map::Dict{Tuple{Int8,Int8},Char},
+    child_map::Dict{Tuple{Int8,Int8},Vector{Tuple{Int8,Int8}}},
+    x::Int8,
+    y::Int8,
+    all_paths::Vector{Vector{Char}},
+    path::Vector{Char}
+)
     leaf_node = true
     if (x, y) in keys(symbol_map); push!(path, symbol_map[(x, y)]) end
     for child_node in get(child_map, (x, y), [])

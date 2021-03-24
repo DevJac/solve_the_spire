@@ -59,9 +59,9 @@ version = "0.7.54"
 
 [[ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
-git-tree-sha1 = "de4f08843c332d355852721adb1592bce7924da3"
+git-tree-sha1 = "a8a75576d509f1996fe3046ce62e5685b0a8bd3a"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "0.9.29"
+version = "0.9.31"
 
 [[CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -232,6 +232,11 @@ git-tree-sha1 = "b616937c31337576360cb9fb872ec7633af7b194"
 uuid = "929cbde3-209d-540e-8aea-75f648917ca0"
 version = "3.6.0"
 
+[[LRUCache]]
+git-tree-sha1 = "5a9338dce0811619e42c9e9aa9ae044c3c82a58f"
+uuid = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
+version = "1.2.0"
+
 [[LibGit2]]
 deps = ["Printf"]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
@@ -267,6 +272,12 @@ deps = ["MacroTools", "Test"]
 git-tree-sha1 = "75a54abd10709c01f1b86b84ec225d26e840ed58"
 uuid = "e89f7d12-3494-54d1-8411-f7d8b9ae1f27"
 version = "0.5.0"
+
+[[Memoize]]
+deps = ["MacroTools"]
+git-tree-sha1 = "2b1dfcba103de714d31c033b5dacc2e4a12c7caa"
+uuid = "c03570c3-d221-55d1-a50c-7939bbd78826"
+version = "0.4.4"
 
 [[Missings]]
 deps = ["DataAPI"]
@@ -460,9 +471,9 @@ version = "1.2.11+18"
 
 [[Zygote]]
 deps = ["AbstractFFTs", "ChainRules", "DiffRules", "Distributed", "FillArrays", "ForwardDiff", "IRTools", "InteractiveUtils", "LinearAlgebra", "MacroTools", "NaNMath", "Random", "Requires", "SpecialFunctions", "Statistics", "ZygoteRules"]
-git-tree-sha1 = "47dd50e831959f8785f8a9854783a2eebac8e1bd"
+git-tree-sha1 = "639a3554de807c56920ac4f7b262b0d4035b3c45"
 uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"
-version = "0.6.4"
+version = "0.6.5"
 
 [[ZygoteRules]]
 deps = ["MacroTools"]
