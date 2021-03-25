@@ -98,7 +98,7 @@ Is this agent too broad?
 - Potion
 - Map
 * Grid Actions
-Upgrade, purge, transform
+Upgrade, purge, transform, (draft)
 Any number, fixed number
 * Actions
 ** DamageAction
