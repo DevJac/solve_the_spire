@@ -97,6 +97,9 @@ Is this agent too broad?
 - Relic
 - Potion
 - Map
+* Grid Actions
+Upgrade, purge, transform
+Any number, fixed number
 * Actions
 ** DamageAction
 Game over

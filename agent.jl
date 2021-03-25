@@ -101,6 +101,7 @@ function agent_main(root_agent)
         while true
             if root_agent.ready_to_train
                 root_agent.ready_to_train = false
+                println("Training")
                 Profile.init(10_000_000, 0.1)
                 Profile.clear()
                 @profile train!(root_agent)
@@ -136,6 +137,7 @@ function agent_main(root_agent)
             end
             if is_game_over(sts_state)
                 root_agent.games += 1
+                println("Games played: $(root_agent.games)")
                 root_agent.ready_to_train = root_agent.games % 20 == 0
                 if root_agent.games % 5 == 0 || root_agent.ready_to_train
                     BSON.bson(
