@@ -110,7 +110,7 @@ function agent_main(root_agent)
                 end
                 root_agent.generation += 1
                 BSON.bson(
-                    @sprintf("models/agent.t.%04d.bson", max_file_number("models", "agent")+1),
+                    @sprintf("models/agent.%04d.t.bson", max_file_number("models", "agent")+1),
                     model=root_agent)
             end
             local sts_state
@@ -139,7 +139,7 @@ function agent_main(root_agent)
                 root_agent.ready_to_train = root_agent.games % 20 == 0
                 if root_agent.games % 5 == 0 || root_agent.ready_to_train
                     BSON.bson(
-                        @sprintf("models/agent.s.%04d.bson", max_file_number("models", "agent")+1),
+                        @sprintf("models/agent.%04d.s.bson", max_file_number("models", "agent")+1),
                         model=root_agent)
                 end
             end
@@ -153,7 +153,7 @@ function load_root_agent()
         return RootAgent()
     else
         for marker in ("t", "s")
-            f = @sprintf("agent.%s.%04d.bson", marker, mfn)
+            f = @sprintf("agent.%04d.%s.bson", mfn, marker)
             if f in readdir("models")
                 return RootAgent(BSON.load("models/" * f)[:model])
             end

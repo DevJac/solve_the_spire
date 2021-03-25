@@ -128,10 +128,10 @@ Put a card from your hand on top of your draw pile. It costs 0 until played.
 - [X] │   ├── Utils.jl
 - [ ] │   ├── agents
 - [ ] │   │   ├── CampfireAgent.jl
-- [ ] │   │   ├── CombatAgent.jl
+- [X] │   │   ├── CombatAgent.jl
 - [ ] │   │   ├── DeckAgent.jl
 - [ ] │   │   ├── EventAgent.jl
-- [ ] │   │   ├── MapAgent.jl
+- [X] │   │   ├── MapAgent.jl
 - [X] │   │   ├── MenuAgent.jl
 - [ ] │   │   ├── PotionAgent.jl
 - [ ] │   │   ├── RewardAgent.jl
