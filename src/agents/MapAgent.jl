@@ -1,6 +1,6 @@
 export MapAgent, action, train!
 
-struct MapAgent
+mutable struct MapAgent
     player_embedder
     deck_embedder
     relics_embedder
@@ -12,6 +12,7 @@ struct MapAgent
     policy_opt
     critic_opt
     sars
+    last_rewarded_floor
 end
 function MapAgent()
     player_embedder = VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50])
@@ -48,7 +49,8 @@ function MapAgent()
         critic,
         ADADelta(),
         ADADelta(),
-        SARS())
+        SARS(),
+        0)
 end
 
 function action(agent::MapAgent, ra::RootAgent, sts_state)
@@ -56,14 +58,18 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
             if awaiting(agent.sars) == sar_reward
-                add_reward(agent.sars, gs["floor"], 0)
-                log_value(ra.tb_log, "MapAgent/reward", gs["floor"])
+                r = 0
+                last_rewarded_floor = 0
+                add_reward(agent.sars, r, 0)
+                log_value(ra.tb_log, "MapAgent/reward", r)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] == "MAP"
             if awaiting(agent.sars) == sar_reward
-                add_reward(agent.sars, 0)
-                log_value(ra.tb_log, "MapAgent/reward", 0)
+                r = gs["floor"] - last_rewarded_floor
+                last_rewarded_floor = gs["floor"]
+                add_reward(agent.sars, r)
+                log_value(ra.tb_log, "MapAgent/reward", r)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
             actions, probabilities = action_probabilities(agent, ra, sts_state)
