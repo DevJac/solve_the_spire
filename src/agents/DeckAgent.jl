@@ -1,6 +1,6 @@
 export DeckAgent, action, train!
 
-struct DeckAgent
+mutable struct DeckAgent
     relics_embedder
     map_embedder
     deck_embedder
@@ -101,8 +101,8 @@ function train!(agent::DeckAgent, ra::RootAgent)
         batch = sars
         prms = params(
             agent.relics_embedder,
-            agent.deck_embedder,
             agent.map_embedder,
+            agent.deck_embedder,
             agent.all_card_embedder,
             agent.single_card_embedder,
             agent.policy)
@@ -188,25 +188,25 @@ function action_probabilities(agent::DeckAgent, ra::RootAgent, sts_state)
 
     end
     relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
-    deck_e = agent.deck_embedder(card_encoder, gs["deck"])
     map_e = agent.map_embedder(map_encoder(sts_state, ra.map_agent.map_node[1], ra.map_agent.map_node[2]))
+    deck_e = agent.deck_embedder(card_encoder, gs["deck"])
     all_cards_e = agent.all_card_embedder(card_encoder, unselected_screen_cards)
-    bowl_e = Float32(bowl_available)
     single_cards_e = hcat(agent.single_card_embedder(card_encoder, unselected_screen_cards),
                           zeros(Float32, length(agent.single_card_embedder)))
+    bowl_e = Float32(bowl_available)
     skip_e = Float32[zeros(1, size(single_cards_e, 2)-1) 1]
     if !skip_available
-        single_cards_e = single_cards_e[1:end-1]
-        skip_e = skip_e[1:end-1]
+        single_cards_e = single_cards_e[:,1:end-1]
+        skip_e = skip_e[:,1:end-1]
     end
     action_weights = agent.policy(vcat(
-        repeat(relics_e, 1, size(single_cards_e, 2)),
-        repeat(deck_e, 1, size(single_cards_e, 2)),
-        repeat(map_e, 1, size(single_cards_e, 2)),
-        repeat(all_cards_e, 1, size(single_cards_e, 2)),
         repeat(choice_e, 1, size(single_cards_e, 2)),
-        fill(bowl_e, 1, size(single_cards_e, 2)),
+        repeat(relics_e, 1, size(single_cards_e, 2)),
+        repeat(map_e, 1, size(single_cards_e, 2)),
+        repeat(deck_e, 1, size(single_cards_e, 2)),
+        repeat(all_cards_e, 1, size(single_cards_e, 2)),
         single_cards_e,
+        fill(bowl_e, 1, size(single_cards_e, 2)),
         skip_e))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
     actions = collect(Union{Int,String}, 0:size(single_cards_e, 2)-1)
