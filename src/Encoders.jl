@@ -101,6 +101,9 @@ function make_player_basic_encoder()
     ae() do j
         j["game_state"]["current_hp"] / j["game_state"]["max_hp"]
     end
+    ae() do j
+        j["game_state"]["gold"]
+    end
     encoder
 end
 

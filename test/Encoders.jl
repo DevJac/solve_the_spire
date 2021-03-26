@@ -27,15 +27,16 @@ using Encoders
 end
 
 @testset "player_basic_encoder" begin
-    # Current HP, max HP, HP ratio (3)
-    @test length(player_basic_encoder) == 3
+    # Current HP, max HP, HP ratio, gold (4)
+    @test length(player_basic_encoder) == 4
     j = JSON.parse("""
         {"game_state": {
             "current_hp": 20,
-            "max_hp": 40
+            "max_hp": 40,
+            "gold": 99
         }}
     """)
-    @test player_basic_encoder(j) == Float32.([20, 40, 0.5])
+    @test player_basic_encoder(j) == Float32.([20, 40, 0.5, 99])
 end
 
 @testset "make_player_combat_encoder" begin
