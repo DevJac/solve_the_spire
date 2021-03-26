@@ -13,6 +13,7 @@ mutable struct MapAgent
     critic_opt
     sars
     last_rewarded_floor
+    map_node :: Tuple{Int8,Int8}
 end
 function MapAgent()
     player_embedder = VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50])
@@ -50,7 +51,7 @@ function MapAgent()
         ADADelta(),
         ADADelta(),
         SARS(),
-        0)
+        0, (0, 0))
 end
 
 function action(agent::MapAgent, ra::RootAgent, sts_state)
@@ -79,6 +80,9 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
             add_state(agent.sars, sts_state)
             add_action(agent.sars, action_i)
             action = actions[action_i]
+            next_nodes = gs["screen_state"]["next_nodes"]
+            @assert length(next_nodes) == length(actions) == length(probabilities)
+            agent.map_node = (next_nodes[action_i][1], next_nodex[action_i][2])
             return "choose $action"
         end
     end

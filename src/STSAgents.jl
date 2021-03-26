@@ -16,30 +16,32 @@ mutable struct RootAgent
     generation     :: Int
     ready_to_train :: Bool
     tb_log
+    map_agent
     agents
 end
 
 function RootAgent()
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
+    map_agent = MapAgent()
     agents = [
         CampfireAgent(),
         CombatAgent(),
         DeckAgent(),
         EventAgent(),
-        MapAgent(),
+        map_agent,
         MenuAgent(),
         RewardAgent(),
         ShopAgent(),
         SpecialActionAgent(),
         PotionAgent()]
-    RootAgent(0, 0, false, tb_log, agents)
+    RootAgent(0, 0, false, tb_log, map_agent, agents)
 end
 
 function RootAgent(ra::RootAgent)
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
-    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.agents)
+    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.map_agent, ra.agents)
 end
 
 function agent_command(root_agent::RootAgent, sts_state)
