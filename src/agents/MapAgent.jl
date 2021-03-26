@@ -12,8 +12,8 @@ mutable struct MapAgent
     policy_opt
     critic_opt
     sars
-    last_rewarded_floor
-    map_node :: Tuple{Int8,Int8}
+    last_rewarded_floor :: Int8
+    map_node            :: Tuple{Int8,Int8}
 end
 function MapAgent()
     player_embedder = VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50])
