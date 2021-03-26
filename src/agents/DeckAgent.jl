@@ -8,6 +8,8 @@ mutable struct DeckAgent
     single_card_embedder
     policy
     critic
+    policy_opt
+    critic_opt
     sars
     last_rewarded_floor :: Int
 end
@@ -42,6 +44,8 @@ function DeckAgent()
         single_card_embedder,
         policy,
         critic,
+        ADADelta(),
+        ADADelta(),
         SARS(),
         0)
 end
@@ -83,7 +87,7 @@ function action(agent::DeckAgent, ra::RootAgent, sts_state)
     end
 end
 
-function train!(agent::DeckAgent, ra::RootAgent)
+function train!(agent::DeckAgent, ra::RootAgent, epochs=1000)
     train_log = TBLogger("tb_logs/train_DeckAgent")
     sars = fill_q(agent.sars)
     log_histogram(ra.tb_log, "DeckAgent/rewards", map(sar -> sar.reward, sars))
@@ -194,7 +198,7 @@ function action_probabilities(agent::DeckAgent, ra::RootAgent, sts_state)
     single_cards_e = hcat(agent.single_card_embedder(card_encoder, unselected_screen_cards),
                           zeros(Float32, length(agent.single_card_embedder)))
     bowl_e = Float32(bowl_available)
-    skip_e = Float32[zeros(1, size(single_cards_e, 2)-1) 1]
+    skip_e = [zeros(Float32, 1, size(single_cards_e, 2)-1) 1]
     if !skip_available
         single_cards_e = single_cards_e[:,1:end-1]
         skip_e = skip_e[:,1:end-1]
@@ -209,9 +213,12 @@ function action_probabilities(agent::DeckAgent, ra::RootAgent, sts_state)
         fill(bowl_e, 1, size(single_cards_e, 2)),
         skip_e))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
-    actions = collect(Union{Int,String}, 0:size(single_cards_e, 2)-1)
-    if skip_available && !bowl_available
-        actions[end] = "skip"
+    actions = Zygote.ignore() do
+        actions = collect(Union{Int,String}, 0:size(single_cards_e, 2)-1)
+        if skip_available && !bowl_available
+            actions[end] = "skip"
+        end
+        actions
     end
     Zygote.@ignore @assert length(actions) == length(probabilities)
     actions, probabilities

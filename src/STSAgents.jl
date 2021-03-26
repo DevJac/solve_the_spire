@@ -72,7 +72,7 @@ function train!(root_agent::RootAgent)
     for agent in root_agent.agents
         train!(agent, root_agent)
     end
-    empty!(memoize_cache(Encoder.encode))
+    empty!(memoize_cache(Encoders.encode))
 end
 
 include("agents/CampfireAgent.jl")
