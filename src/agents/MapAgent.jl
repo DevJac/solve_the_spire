@@ -80,7 +80,7 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
             add_state(agent.sars, sts_state)
             add_action(agent.sars, action_i)
             action = actions[action_i]
-            next_nodes = gs["screen_state"]["next_nodes"]
+            next_nodes = isempty(gs["screen_state"]["next_nodes"]) ? [Dict("x" => 3, "y" => 16)] : gs["screen_state"]["next_nodes"]
             @assert length(next_nodes) == length(actions) == length(probabilities)
             agent.map_node = (next_nodes[action_i]["x"], next_nodes[action_i]["y"])
             return "choose $action"
