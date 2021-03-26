@@ -197,7 +197,6 @@ function action_probabilities(agent::DeckAgent, ra::RootAgent, sts_state)
     all_cards_e = agent.all_card_embedder(card_encoder, unselected_screen_cards)
     single_cards_e = hcat(agent.single_card_embedder(card_encoder, unselected_screen_cards),
                           zeros(Float32, length(agent.single_card_embedder)))
-    bowl_e = Float32(bowl_available)
     skip_e = [zeros(Float32, 1, size(single_cards_e, 2)-1) 1]
     if !skip_available
         single_cards_e = single_cards_e[:,1:end-1]
@@ -210,8 +209,8 @@ function action_probabilities(agent::DeckAgent, ra::RootAgent, sts_state)
         repeat(deck_e, 1, size(single_cards_e, 2)),
         repeat(all_cards_e, 1, size(single_cards_e, 2)),
         single_cards_e,
-        fill(bowl_e, 1, size(single_cards_e, 2)),
-        skip_e))
+        skip_e,
+        fill(Float32(bowl_available), 1, size(single_cards_e, 2))))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
     actions = Zygote.ignore() do
         actions = collect(Union{Int,String}, 0:size(single_cards_e, 2)-1)
@@ -250,16 +249,15 @@ function state_value(agent::DeckAgent, ra::RootAgent, sts_state)
 
     end
     relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
-    deck_e = agent.deck_embedder(card_encoder, gs["deck"])
     map_e = agent.map_embedder(map_encoder(sts_state, ra.map_agent.map_node[1], ra.map_agent.map_node[2]))
+    deck_e = agent.deck_embedder(card_encoder, gs["deck"])
     all_cards_e = agent.all_card_embedder(card_encoder, unselected_screen_cards)
-    bowl_e = Float32(bowl_available)
     only(agent.critic(vcat(
-        relics_e,
-        deck_e,
-        map_e,
-        all_cards_e,
         choice_e,
-        bowl_e,
-        Float32(skip_available))))
+        relics_e,
+        map_e,
+        deck_e,
+        all_cards_e,
+        Float32(skip_available),
+        Float32(bowl_available))))
 end
