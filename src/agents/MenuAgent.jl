@@ -1,11 +1,12 @@
 export MenuAgent, action, train!
 
-struct MenuAgent
+mutable struct MenuAgent
     gen_floor_reached :: Vector{Float32}
     gen_score         :: Vector{Float32}
     gen_victory       :: Vector{Float32}
+    sts_state_error_count :: Int
 end
-MenuAgent() = MenuAgent([], [], [])
+MenuAgent() = MenuAgent([], [], [], 0)
 
 function action(agent::MenuAgent, ra::RootAgent, sts_state)
     if "in_game" in keys(sts_state) && !sts_state["in_game"]
@@ -22,6 +23,11 @@ function action(agent::MenuAgent, ra::RootAgent, sts_state)
             log_value(ra.tb_log, "MenuAgent/victory", Float32(gs["screen_state"]["victory"]))
             return "proceed"
         end
+    end
+    if "error" in keys(sts_state)
+        agent.sts_state_error_count += 1
+        log_value(ra.tb_log, "MenuAgent/sts_state_error_count", agent.sts_state_error_count)
+        return "state"
     end
 end
 
