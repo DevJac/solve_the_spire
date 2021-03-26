@@ -174,7 +174,7 @@ function action_probabilities(agent::DeckAgent, ra::RootAgent, sts_state)
         if gs["screen_type"] == "GRID" && gs["screen_state"]["for_upgrade"]; choice_e[2] = 1 end
         if gs["screen_type"] == "GRID" && gs["screen_state"]["for_transform"]; choice_e[3] = 1 end
         if gs["screen_type"] == "GRID" && gs["screen_state"]["for_purge"]; choice_e[4] = 1 end
-        @assert sum(choice_e) == 1
+        @assert sum(choice_e) in (0, 1)
         if gs["screen_type"] == "GRID"
             screen_cards = gs["screen_state"]["cards"]
             selected_screen_cards = gs["screen_state"]["selected_cards"]
@@ -229,7 +229,7 @@ function state_value(agent::DeckAgent, ra::RootAgent, sts_state)
         if gs["screen_type"] == "GRID" && gs["screen_state"]["for_upgrade"]; choice_e[2] = 1 end
         if gs["screen_type"] == "GRID" && gs["screen_state"]["for_transform"]; choice_e[3] = 1 end
         if gs["screen_type"] == "GRID" && gs["screen_state"]["for_purge"]; choice_e[4] = 1 end
-        @assert sum(choice_e) == 1
+        @assert sum(choice_e) in (0, 1)
         if gs["screen_type"] == "GRID"
             screen_cards = gs["screen_state"]["cards"]
             selected_screen_cards = gs["screen_state"]["selected_cards"]
