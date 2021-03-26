@@ -127,12 +127,12 @@ Put a card from your hand on top of your draw pile. It costs 0 until played.
 - [X] │   ├── Encoders.jl
 - [X] │   ├── Networks.jl
 - [X] │   ├── SARSM.jl
-- [ ] │   ├── STSAgents.jl
+- [X] │   ├── STSAgents.jl
 - [X] │   ├── Utils.jl
 - [ ] │   ├── agents
 - [ ] │   │   ├── CampfireAgent.jl
 - [X] │   │   ├── CombatAgent.jl
-- [ ] │   │   ├── DeckAgent.jl
+- [X] │   │   ├── DeckAgent.jl
 - [ ] │   │   ├── EventAgent.jl
 - [X] │   │   ├── MapAgent.jl
 - [X] │   │   ├── MenuAgent.jl
