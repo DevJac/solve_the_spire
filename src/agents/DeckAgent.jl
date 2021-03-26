@@ -9,12 +9,12 @@ struct DeckAgent
     policy
     critic
     sars
-    last_rewarded_floor :: Int8
+    last_rewarded_floor :: Int
 end
 function DeckAgent()
     relics_embedder = VanillaNetwork(length(relics_encoder), 20, [50])
     map_embedder = VanillaNetwork(length(map_encoder), 20, [50])
-    deck_embedder = PoolNetwork(length(card_encoder), 50, [100])
+    deck_embedder = PoolNetwork(length(card_encoder), 40, [100])
     all_card_embedder = PoolNetwork(length(card_encoder), 20, [50])
     single_card_embedder = VanillaNetwork(length(card_encoder), 20, [50])
     policy = VanillaNetwork(
@@ -25,7 +25,7 @@ function DeckAgent()
             all_card_embedder,
             single_card_embedder
         ]) + 4 + 2,
-        2, [200, 50, 50])
+        1, [200, 50, 50])
     critic = VanillaNetwork(
         sum(length, [
             relics_embedder,
@@ -33,7 +33,7 @@ function DeckAgent()
             deck_embedder,
             all_card_embedder
         ]) + 4 + 2,
-        2, [200, 50, 50])
+        1, [200, 50, 50])
     DeckAgent(
         relics_embedder,
         map_embedder,
@@ -51,8 +51,8 @@ function action(agent::DeckAgent, ra::RootAgent, sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
             if awaiting(agent.sars) == sar_reward
-                r = 0
-                last_rewarded_floor = 0
+                r = gs["floor"] - agent.last_rewarded_floor
+                agent.last_rewarded_floor = 0
                 add_reward(agent.sars, r, 0)
                 log_value(ra.tb_log, "DeckAgent/reward", r)
                 log_value(ra.tb_log, "DeckAgent/length_sars", length(agent.sars.rewards))
@@ -62,8 +62,8 @@ function action(agent::DeckAgent, ra::RootAgent, sts_state)
                 return "confirm"
             end
             if awaiting(agent.sars) == sar_reward
-                r = gs["floor"] - last_rewarded_floor
-                last_rewarded_floor = gs["floor"]
+                r = gs["floor"] - agent.last_rewarded_floor
+                agent.last_rewarded_floor = gs["floor"]
                 add_reward(agent.sars, r)
                 log_value(ra.tb_log, "DeckAgent/reward", r)
                 log_value(ra.tb_log, "DeckAgent/length_sars", length(agent.sars.rewards))
@@ -192,9 +192,9 @@ function action_probabilities(agent::DeckAgent, ra::RootAgent, sts_state)
     map_e = agent.map_embedder(map_encoder(sts_state, ra.map_agent.map_node[1], ra.map_agent.map_node[2]))
     all_cards_e = agent.all_card_embedder(card_encoder, unselected_screen_cards)
     bowl_e = Float32(bowl_available)
-    single_cards_e = Float32[agent.single_card_embedder(card_encoder, unselected_screen_cards)
-                             zeros(length(agent.single_card_embedder))]
-    skip_e = Float32[zeros(1, length(single_cards_e)-1) 1]
+    single_cards_e = hcat(agent.single_card_embedder(card_encoder, unselected_screen_cards),
+                          zeros(Float32, length(agent.single_card_embedder)))
+    skip_e = Float32[zeros(1, size(single_cards_e, 2)-1) 1]
     if !skip_available
         single_cards_e = single_cards_e[1:end-1]
         skip_e = skip_e[1:end-1]
@@ -205,17 +205,13 @@ function action_probabilities(agent::DeckAgent, ra::RootAgent, sts_state)
         repeat(map_e, 1, size(single_cards_e, 2)),
         repeat(all_cards_e, 1, size(single_cards_e, 2)),
         repeat(choice_e, 1, size(single_cards_e, 2)),
-        repeat(bowl_e, 1, size(single_cards_e, 2)),
+        fill(bowl_e, 1, size(single_cards_e, 2)),
         single_cards_e,
         skip_e))
     probabilities = softmax(reshape(action_weights, length(action_weights)))
-    actions = collect(Union{String,Int8}, 0:length(single_cards_e)-1)
-    if skip_available
-        if bowl_available
-            push!(actions, length(single_cards_e))
-        else
-            push!(actions, "skip")
-        end
+    actions = collect(Union{Int,String}, 0:size(single_cards_e, 2)-1)
+    if skip_available && !bowl_available
+        actions[end] = "skip"
     end
     Zygote.@ignore @assert length(actions) == length(probabilities)
     actions, probabilities

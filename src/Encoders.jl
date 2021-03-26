@@ -1,5 +1,4 @@
 module Encoders
-using LRUCache
 using Memoize
 using StatsBase
 using Zygote
@@ -39,7 +38,7 @@ Encoder(name, precoder) = Encoder(name, precoder, [])
 
 (encoder::Encoder)(sts_state_json, args...; kwargs...) = Zygote.@ignore encode(encoder, sts_state_json, args...; kwargs...)
 
-@memoize LRU(maxsize=10_000) function encode(encoder::Encoder, sts_state_json, args...; kwargs...)
+@memoize function encode(encoder::Encoder, sts_state_json, args...; kwargs...)
     encoded = map(encoder.encoders) do e
         e(encoder.precoder(sts_state_json, args...; kwargs...))
     end

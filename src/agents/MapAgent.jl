@@ -12,8 +12,8 @@ mutable struct MapAgent
     policy_opt
     critic_opt
     sars
-    last_rewarded_floor :: Int8
-    map_node            :: Tuple{Int8,Int8}
+    last_rewarded_floor :: Int
+    map_node            :: Tuple{Int,Int}
 end
 function MapAgent()
     player_embedder = VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50])
@@ -59,16 +59,16 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
             if awaiting(agent.sars) == sar_reward
-                r = 0
-                last_rewarded_floor = 0
+                r = gs["floor"] - agent.last_rewarded_floor
+                agent.last_rewarded_floor = 0
                 add_reward(agent.sars, r, 0)
                 log_value(ra.tb_log, "MapAgent/reward", r)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] == "MAP"
             if awaiting(agent.sars) == sar_reward
-                r = gs["floor"] - last_rewarded_floor
-                last_rewarded_floor = gs["floor"]
+                r = gs["floor"] - agent.last_rewarded_floor
+                agent.last_rewarded_floor = gs["floor"]
                 add_reward(agent.sars, r)
                 log_value(ra.tb_log, "MapAgent/reward", r)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
@@ -82,7 +82,7 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
             action = actions[action_i]
             next_nodes = gs["screen_state"]["next_nodes"]
             @assert length(next_nodes) == length(actions) == length(probabilities)
-            agent.map_node = (next_nodes[action_i][1], next_nodex[action_i][2])
+            agent.map_node = (next_nodes[action_i]["x"], next_nodes[action_i]["y"])
             return "choose $action"
         end
     end

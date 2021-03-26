@@ -2,6 +2,7 @@ module STSAgents
 using AgentCommands
 using Encoders
 using Flux
+using Memoize
 using Networks
 using SARSM
 using StatsBase
@@ -48,7 +49,7 @@ function agent_command(root_agent::RootAgent, sts_state)
     increment_step!(root_agent.tb_log, 1)
     log_value(root_agent.tb_log, "agent/games", root_agent.games)
     log_value(root_agent.tb_log, "agent/generation", root_agent.generation)
-    log_value(root_agent.tb_log, "agent/encoder_cache_length", length(memoize_cache(encode)))
+    log_value(root_agent.tb_log, "agent/encoder_cache_length", length(memoize_cache(Encoders.encode)))
     overridden_commands = []
     resulting_command = nothing
     for agent in root_agent.agents
@@ -71,6 +72,7 @@ function train!(root_agent::RootAgent)
     for agent in root_agent.agents
         train!(agent, root_agent)
     end
+    empty!(memoize_cache(Encoder.encode))
 end
 
 include("agents/CampfireAgent.jl")
