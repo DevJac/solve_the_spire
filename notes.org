@@ -167,3 +167,12 @@ Put a card from your hand on top of your draw pile. It costs 0 until played.
 - "cancel"
 * Learning from JSON
 Can we learn from JSON directly? I think I can encode the raw JSON.
+
+Encode JSON paths (composed of object keys/attributes) into points in high dimensional space (like embeddings).
+Encode array indexes as integer characters, but when feeding the recurrent neural network used for these path encodings, give it these integers as numerical values rather than one-hot encoded letters or whatever.
+
+Maybe identify the words (object keys/attributes) that form the paths, and one-hot encode these words. Thus, we one-hot encode words instead of characters before feeding the RNN.
+
+At this point we've encoded all paths to basic values into unordered points in high dimensional space.
+
+The remaining values are strings, integers, and booleans. Integers and booleans are trivial to encode. Encode the remaining strings with, yet another, recurrent neural network.
