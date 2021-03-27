@@ -91,7 +91,7 @@ end
 
 function (n::VanillaNetwork)(f, s)
     if isempty(s)
-        zero(n)
+        null(n)
     else
         n(reduce(hcat, map(f, s)))
     end
@@ -99,7 +99,7 @@ end
 
 (n::VanillaNetwork)(s) = n.network([1; s])
 
-zero(n::VanillaNetwork) = n.network(zeros(size(n.network.layers[1].W, 2)))
+null(n::VanillaNetwork) = n.network(zeros(size(n.network.layers[1].W, 2)))
 
 Base.length(n::VanillaNetwork) = length(n.network.layers[end].b)
 
@@ -127,7 +127,7 @@ end
 
 function (n::PoolNetwork)(f, s)
     if isempty(s)
-        zero(n)
+        null(n)
     else
         n(reduce(hcat, map(f, s)))
     end
@@ -142,7 +142,7 @@ function (n::PoolNetwork)(s)
     reshape(pooled, length(pooled))
 end
 
-zero(n::VanillaNetwork) = n.network(zeros(size(n.network.layers[1].W, 2)))
+null(n::PoolNetwork) = n.network(zeros(size(n.network.layers[1].W, 2)))
 
 Base.length(n::PoolNetwork) = length(n.network.layers[end].b)
 
@@ -178,11 +178,11 @@ function (n::PoolEachNetwork)(s)
         repeat(n.pool_network(s), 1, size(each, 2)))
 end
 
-function zero(n::PoolEachNetwork)
-    each = zero(n.each_network)
+function null(n::PoolEachNetwork)
+    each = null(n.each_network)
     vcat(
         each,
-        repeat(zero(n.pool_network), 1, size(each, 2)))
+        repeat(null(n.pool_network), 1, size(each, 2)))
 end
 
 Base.length(n::PoolEachNetwork) = length(n.each_network) * 2
