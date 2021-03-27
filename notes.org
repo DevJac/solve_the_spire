@@ -147,17 +147,17 @@ Put a card from your hand on top of your draw pile. It costs 0 until played.
 - [X]     ├── SARSM.jl
 - [X]     └── Utils.jl
 * Available Commands
-- "choose"
-- "end"
 - "play"
+- "end"
 - "potion"
+- "choose"
+-
+- "proceed"
+- "return"
 -
 - "confirm"
 - "leave"
 - "skip"
--
-- "proceed"
-- "return"
 -
 - "key"
 - "click"
