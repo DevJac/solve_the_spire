@@ -146,3 +146,24 @@ Put a card from your hand on top of your draw pile. It costs 0 until played.
 - [X]     ├── runtests.jl
 - [X]     ├── SARSM.jl
 - [X]     └── Utils.jl
+* Available Commands
+- "choose"
+- "end"
+- "play"
+- "potion"
+-
+- "confirm"
+- "leave"
+- "skip"
+-
+- "proceed"
+- "return"
+-
+- "key"
+- "click"
+- "start"
+- "state"
+- "wait"
+- "cancel"
+* Learning from JSON
+Can we learn from JSON directly? I think I can encode the raw JSON.
