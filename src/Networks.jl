@@ -91,14 +91,15 @@ end
 
 function (n::VanillaNetwork)(f, s)
     if isempty(s)
-        in = size(n.network.layers[1].W, 2)
-        n.network(zeros(in))
+        zero(n)
     else
         n(reduce(hcat, map(f, s)))
     end
 end
 
 (n::VanillaNetwork)(s) = n.network([1; s])
+
+zero(n::VanillaNetwork) = n.network(zeros(size(n.network.layers[1].W, 2)))
 
 Base.length(n::VanillaNetwork) = length(n.network.layers[end].b)
 
@@ -126,8 +127,7 @@ end
 
 function (n::PoolNetwork)(f, s)
     if isempty(s)
-        in = size(n.network.layers[1].W, 2)
-        n.network(zeros(in))
+        zero(n)
     else
         n(reduce(hcat, map(f, s)))
     end
@@ -141,6 +141,8 @@ function (n::PoolNetwork)(s)
     pooled = sum(applied_oif .* n.oif_weights, dims=2)
     reshape(pooled, length(pooled))
 end
+
+zero(n::VanillaNetwork) = n.network(zeros(size(n.network.layers[1].W, 2)))
 
 Base.length(n::PoolNetwork) = length(n.network.layers[end].b)
 
@@ -174,6 +176,13 @@ function (n::PoolEachNetwork)(s)
     vcat(
         each,
         repeat(n.pool_network(s), 1, size(each, 2)))
+end
+
+function zero(n::PoolEachNetwork)
+    each = zero(n.each_network)
+    vcat(
+        each,
+        repeat(zero(n.pool_network), 1, size(each, 2)))
 end
 
 Base.length(n::PoolEachNetwork) = length(n.each_network) * 2
