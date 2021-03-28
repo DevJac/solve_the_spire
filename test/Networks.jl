@@ -89,7 +89,7 @@ end
 end
 
 @testset "PoolEachNetwork" begin
-    n = PoolEachNetwork(5, 3, [8, 9])
+    n = PoolEachNetwork(5, 2, [8, 9])
     @test length(n) == 4
     @test params(n) .|> length == [48, 8, 72, 9, 18, 2, 48, 8, 72, 9, 18, 2, 8]
     out = n(rand(5, 10))

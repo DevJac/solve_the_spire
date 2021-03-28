@@ -157,8 +157,9 @@ end
 
 Flux.@functor PoolEachNetwork
 
+pool(n::PoolEachNetwork) = n.pool_network
+
 function PoolEachNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_uniform)
-    out = Int(ceil(out/2))
     PoolEachNetwork(
         VanillaNetwork(in, out, hidden, activation, initW),
         PoolNetwork(in, out, hidden, activation, initW))
