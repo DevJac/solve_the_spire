@@ -81,21 +81,23 @@ end
 end
 
 @testset "diagcat" begin
+    w = 9
     x = [1 2; 3 4]
     y = [5]
     z = [6 7 8; 6 7 8]
-    @test diagcat(x, y, z) == [1 2 0 0 0 0
-                               3 4 0 0 0 0
-                               0 0 5 0 0 0
-                               0 0 0 6 7 8
-                               0 0 0 6 7 8]
+    @test diagcat(w, x, y, z) == [9 0 0 0 0 0 0
+                                  0 1 2 0 0 0 0
+                                  0 3 4 0 0 0 0
+                                  0 0 0 5 0 0 0
+                                  0 0 0 0 6 7 8
+                                  0 0 0 0 6 7 8]
     val, grad = valgrad(params(x, y, z)) do
         a = prod(x) + 2*sum(y) + sum(z.^2)
-        b = diagcat(x, y, z)
+        b = diagcat(w, x, y, z)
         c = sum(b.^2)
         a + c
     end
-    @test val == prod([1, 2, 3, 4]) + 2*5 + sum([6 7 8; 6 7 8].^2)*2 + 25 + 16 + 9 + 4 + 1
+    @test val == 9^2 + prod([1, 2, 3, 4]) + 2*5 + sum([6 7 8; 6 7 8].^2)*2 + 25 + 16 + 9 + 4 + 1
     @test grad[x] == [24 12; 8 6] .+ [2 4; 6 8]
     @test grad[y] == reshape([12], 1, 1)
     @test grad[z] == [24 28 32; 24 28 32]

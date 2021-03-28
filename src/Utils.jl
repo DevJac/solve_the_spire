@@ -57,6 +57,7 @@ explore_odds(probs, ϵ=0.01) = sum(p -> maximum(probs) - ϵ > p ? p : 0, probs)
 
 function diagcat(args...)
     x = map(args) do arg
+        if size(arg) == (); arg = [arg] end
         reshape(arg, size(arg,1), size(arg,2))
     end
     collect(blockdiag(sparse.(x)...))
