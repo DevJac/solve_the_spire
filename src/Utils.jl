@@ -76,6 +76,8 @@ Zygote.@adjoint function diagcat(args...)
     val, adj
 end
 
+function nearest(n, ns) = minimum(x -> (abs(n - x), x), ns)[2]
+
 export Smoother, smooth!
 
 mutable struct Smoother

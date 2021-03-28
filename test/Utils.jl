@@ -102,3 +102,10 @@ end
     @test grad[y] == reshape([12], 1, 1)
     @test grad[z] == [24 28 32; 24 28 32]
 end
+
+@testset "nearest" begin
+    @test nearest(3, [1, 2, 3, 4, 5]) == 3
+    @test nearest(0, [1, 2, 3, 4, 5]) == 1
+    @test nearest(30, [1, 2, 3, 4, 5]) == 5
+    @test nearest(2.2, [1, 2, 3, 4, 5]) == 2
+end
