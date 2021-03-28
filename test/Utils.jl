@@ -1,6 +1,7 @@
 using Test
-
+using Flux
 using Utils
+using Zygote
 
 @testset "mc_q" begin
     falses = [false false false false]
@@ -88,4 +89,14 @@ end
                                0 0 5 0 0 0
                                0 0 0 6 7 8
                                0 0 0 6 7 8]
+    val, grad = valgrad(params(x, y, z)) do
+        a = prod(x) + 2*sum(y) + sum(z.^2)
+        b = diagcat(x, y, z)
+        c = sum(b.^2)
+        a + c
+    end
+    @test val == prod([1, 2, 3, 4]) + 2*5 + sum([6 7 8; 6 7 8].^2)*2 + 25 + 16 + 9 + 4 + 1
+    @test grad[x] == [24 12; 8 6] .+ [2 4; 6 8]
+    @test grad[y] == reshape([12], 1, 1)
+    @test grad[z] == [24 28 32; 24 28 32]
 end
