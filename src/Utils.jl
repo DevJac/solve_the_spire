@@ -1,8 +1,9 @@
 module Utils
 using Random
+using SparseArrays
 using Zygote
 
-export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds
+export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds, diagcat
 
 function mc_q(r, f, γ=1f0)
     result = Float32.(similar(r))
@@ -53,6 +54,8 @@ function valgrad(f, x...)
 end
 
 explore_odds(probs, ϵ=0.01) = sum(p -> maximum(probs) - ϵ > p ? p : 0, probs)
+
+diagcat(x...) = collect(blockdiag(sparse.(x)...))
 
 export Smoother, smooth!
 
