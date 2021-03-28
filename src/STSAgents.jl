@@ -17,25 +17,13 @@ mutable struct RootAgent
     generation     :: Int
     ready_to_train :: Bool
     tb_log
-    map_agent
     agents
 end
 
 function RootAgent()
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
-    map_agent = MapAgent()
-    agents = [
-        CampfireAgent(),
-        CombatAgent(),
-        DeckAgent(),
-        EventAgent(),
-        map_agent,
-        MenuAgent(),
-        RewardAgent(),
-        ShopAgent(),
-        SpecialActionAgent(),
-        PotionAgent()]
+    agents = [SingleNNAgent()]
     RootAgent(0, 0, false, tb_log, map_agent, agents)
 end
 
@@ -75,15 +63,6 @@ function train!(root_agent::RootAgent)
     empty!(memoize_cache(Encoders.encode))
 end
 
-include("agents/CampfireAgent.jl")
-include("agents/CombatAgent.jl")
-include("agents/DeckAgent.jl")
-include("agents/EventAgent.jl")
-include("agents/MapAgent.jl")
-include("agents/MenuAgent.jl")
-include("agents/PotionAgent.jl")
-include("agents/RewardAgent.jl")
-include("agents/ShopAgent.jl")
-include("agents/SpecialActionAgent.jl")
+include("agents/SingleNNAgent.jl")
 
 end # module

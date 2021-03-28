@@ -2,7 +2,7 @@ module Networks
 using Flux
 using Statistics
 using Zygote
-export PolicyNetwork, QNetwork, VanillaNetwork, PoolNetwork, PoolEachNetwork, value, advantage
+export PolicyNetwork, QNetwork, VanillaNetwork, PoolNetwork, PoolEachNetwork, GRUNetwork, value, advantage
 
 #####################
 # Utility Functions #
@@ -68,9 +68,9 @@ function (q::QNetwork)(s)
     v .+ a .- mean(a, dims=1)
 end
 
-##################
+###################
 # Vanilla Network #
-##################
+###################
 
 struct VanillaNetwork{N}
     network :: N
@@ -187,5 +187,40 @@ function null(n::PoolEachNetwork)
 end
 
 Base.length(n::PoolEachNetwork) = length(n.each_network) * 2
+
+###############
+# GRU Network #
+###############
+
+struct GRUNetwork{N}
+    network :: N
+end
+
+Flux.@functor GRUNetwork
+
+function GRUNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_uniform)
+    in += 1
+    hidden = vcat(in, hidden)
+    layers = Any[]
+    for i in 1:length(hidden)-1
+        push!(layers, GRU(hidden[i], hidden[i+1], activation, initW=initW))
+    end
+    push!(layers, Dense(hidden[end], out, identity))
+    GRUNetwork(Chain(layers...))
+end
+
+function (n::GRUNetwork)(f, s)
+    if isempty(s)
+        null(n)
+    else
+        n(reduce(hcat, map(f, s)))
+    end
+end
+
+(n::GRUNetwork)(s) = n.network([1; s])
+
+null(n::GRUNetwork) = n.network(zeros(size(n.network.layers[1].W, 2)))
+
+Base.length(n::GRUNetwork) = length(n.network.layers[end].b)
 
 end # module
