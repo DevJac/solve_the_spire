@@ -3,7 +3,7 @@ using Random
 using SparseArrays
 using Zygote
 
-export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds, diagcat
+export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds, diagcat, nearest
 
 function mc_q(r, f, γ=1f0)
     result = Float32.(similar(r))
@@ -76,7 +76,7 @@ Zygote.@adjoint function diagcat(args...)
     val, adj
 end
 
-function nearest(n, ns) = minimum(x -> (abs(n - x), x), ns)[2]
+nearest(n, ns) = minimum(x -> (abs(n - x), x), ns)[2]
 
 export Smoother, smooth!
 
