@@ -65,20 +65,21 @@ end
 
 function action_probabilities(agent::ShopAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
+    local actions = []
+    local purge_cost = 0
+    local purge_offered = false
     local cards_offered = []
     local relics_offered = []
     local potions_offered = []
-    local purge_offered = false
-    local purge_cost = 0
     local chest_available = false
     local saphire_key = false
     Zygote.ignore() do
         if gs["screen_type"] == "SHOP_SCREEN"
-            cards_offered = gs["screen_state"]["cards"]
-            relics_offered = gs["screen_state"]["relics"]
-            potions_offered = gs["screen_state"]["potions"]
-            purge_offered = gs["screen_state"]["purge_available"]
             purge_cost = gs["screen_state"]["purge_cost"]
+            purge_offered = gs["screen_state"]["purge_available"] && gs["gold"] >= purge_cost
+            cards_offered = filter(c -> c["cost"] <= gs["gold"], gs["screen_state"]["cards"])
+            relics_offered = filter(r -> r["cost"] <= gs["gold"], gs["screen_state"]["relics"])
+            potions_offered = filter(p -> p["cost"] <= gs["gold"], gs["screen_state"]["potions"])
         end
         if gs["screen_type"] == "BOSS_REWARD"
             relics_offered = gs["screen_state"]["relics"]
@@ -105,8 +106,15 @@ function action_probabilities(agent::ShopAgent, ra::RootAgent, sts_state)
     relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
     card_choice_e = agent.card_choice_embedder(c -> [card_encoder(c); c["cost"]], cards_offered)
     relic_choice_e = agent.relic_choice_embedder(r -> [relics_encoder([r]); r["cost"]], relics_offered)
-    potion_choice_e = agent.potion_choice_embedder(p -> [potions_encoder([p]); r["cost"]], potions_offered)
-    policy
+    potion_choice_e = agent.potion_choice_embedder(p -> [potions_encoder([p]); p["cost"]], potions_offered)
+    choices_e = diagcat(
+        card_choice_e,
+        relic_choice_e,
+        potion_choice_e,
+        
+    )
+    action_weights = agent.policy(vcat(
+    ))
 end
 
 
