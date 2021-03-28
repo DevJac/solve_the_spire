@@ -1,5 +1,6 @@
 module Utils
 using Random
+using SparseArrays
 using Zygote
 
 export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds, diagcat
@@ -54,13 +55,20 @@ end
 
 explore_odds(probs, ϵ=0.01) = sum(p -> maximum(probs) - ϵ > p ? p : 0, probs)
 
-function diagcat′(a, b)
-    vcat(
-        hcat(a, zeros(size(a, 1), size(b, 2))),
-        hcat(zeros(size(b, 1), size(a, 2)),b))
-end
+diagcat(args...) = collect(blockdiag(sparse.(args)...))
 
-diagcat(x...) = reduce(diagcat′, x)
+Zygote.@adjoint function diagcat(args...)
+    val = diagcat(args...)
+    adj = x -> begin
+        i = (1, 1)
+        tuple_parts = map(args) do arg
+            part = x[i[1]:i[1]-1+size(arg,1),i[2]:i[2]-1+size(arg,2)]
+            i = i .+ (size(arg,1),size(arg,2))
+            part
+        end
+    end
+    val, adj
+end
 
 export Smoother, smooth!
 
