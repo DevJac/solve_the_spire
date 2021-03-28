@@ -55,7 +55,12 @@ end
 
 explore_odds(probs, ϵ=0.01) = sum(p -> maximum(probs) - ϵ > p ? p : 0, probs)
 
-diagcat(args...) = collect(blockdiag(sparse.(args)...))
+function diagcat(args...)
+    x = map(args) do arg
+        reshape(arg, size(arg,1), size(arg,2))
+    end
+    collect(blockdiag(sparse.(x)...))
+end
 
 Zygote.@adjoint function diagcat(args...)
     val = diagcat(args...)

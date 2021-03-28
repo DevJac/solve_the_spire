@@ -82,7 +82,7 @@ end
 
 @testset "diagcat" begin
     x = [1 2; 3 4]
-    y = reshape([5], 1, 1)
+    y = [5]
     z = [6 7 8; 6 7 8]
     @test diagcat(x, y, z) == [1 2 0 0 0 0
                                3 4 0 0 0 0
