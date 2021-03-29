@@ -118,7 +118,8 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
         end
         action_mask
     end
-    probabilities = softmax(softmax(action_weights/100) .* action_mask)
+    action_weights_p = softmax(action_weights/100) .* action_mask
+    probabilities = action_weights_p / sum(action_weights_p)
     Zygote.@ignore @assert length(agent.actions) == length(probabilities)
     agent.actions, probabilities
 end
