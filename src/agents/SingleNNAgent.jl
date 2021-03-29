@@ -37,6 +37,9 @@ function SingleNNAgent()
 end
 
 function action(agent::SingleNNAgent, ra::RootAgent, sts_state)
+    if "confirm" in sts_state["available_commands"]
+        return "confirm"
+    end
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
