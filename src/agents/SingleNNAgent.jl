@@ -44,20 +44,20 @@ function action(agent::SingleNNAgent, ra::RootAgent, sts_state)
                 r = gs["floor"] - agent.last_floor_rewarded
                 agent.last_floor_rewarded = 0
                 add_reward(agent.sars, r, 0)
-                log_value(ra.tb_log, "DeckAgent/reward", r)
-                log_value(ra.tb_log, "DeckAgent/length_sars", length(agent.sars.rewards))
+                log_value(ra.tb_log, "SingleNNAgent/reward", r)
+                log_value(ra.tb_log, "SingleNNAgent/length_sars", length(agent.sars.rewards))
             end
         else
             if awaiting(agent.sars) == sar_reward
                 r = gs["floor"] - agent.last_floor_rewarded
                 agent.last_floor_rewarded = gs["floor"]
                 add_reward(agent.sars, r)
-                log_value(ra.tb_log, "DeckAgent/reward", r)
-                log_value(ra.tb_log, "DeckAgent/length_sars", length(agent.sars.rewards))
+                log_value(ra.tb_log, "SingleNNAgent/reward", r)
+                log_value(ra.tb_log, "SingleNNAgent/length_sars", length(agent.sars.rewards))
             end
             actions, probabilities = action_probabilities(agent, ra, sts_state)
-            log_value(ra.tb_log, "DeckAgent/state_value", state_value(agent, ra, sts_state))
-            log_value(ra.tb_log, "DeckAgent/step_explore", explore_odds(probabilities))
+            log_value(ra.tb_log, "SingleNNAgent/state_value", state_value(agent, ra, sts_state))
+            log_value(ra.tb_log, "SingleNNAgent/step_explore", explore_odds(probabilities))
             action_i = sample(1:length(actions), Weights(probabilities))
             add_state(agent.sars, sts_state)
             add_action(agent.sars, action_i)
