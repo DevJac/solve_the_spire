@@ -63,7 +63,7 @@ function action(agent::SingleNNAgent, ra::RootAgent, sts_state)
             add_action(agent.sars, action_i)
             action = join(actions[action_i], " ")
             @assert isa(action, String)
-            return action
+            action
         end
     end
 end
@@ -93,7 +93,32 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
     end
     pool = agent.pooler(reduce(hcat, hyperpoints))
     action_weights = agent.policy(pool)
-    probabilities = softmax(action_weights)
+    action_mask = Zygote.ignore() do
+        actions = collect(enumerate(agent.actions))
+        action_mask = zeros(length(actions))
+        actions = filter(a -> a[2][1] in sts_state["available_commands"], actions)
+        actions = filter(a -> (a[2][1] != "choose" ||
+                               a[2][2] < length(gs["choice_list"])), actions)
+        actions = filter(a -> (a[2][1] != "potion" || a[2][2] != "use" ||
+                               a[2][3] < length(gs["potions"]) &&
+                               gs["potions"][a[2][3]+1]["can_use"]), actions)
+        actions = filter(a -> (a[2][1] != "potion" || a[2][2] != "discard" ||
+                               a[2][3] < length(gs["potions"]) &&
+                               gs["potions"][a[2][3]+1]["can_discard"]), actions)
+        actions = filter(a -> (a[2][1] != "play" || length(a[2]) != 2 ||
+                               a[2][2] <= length(gs["combat_state"]["hand"]) &&
+                               !gs["combat_state"]["hand"][a[2][2]]["has_target"]), actions)
+        actions = filter(a -> (a[2][1] != "play" || length(a[2]) != 3 ||
+                               a[2][2] <= length(gs["combat_state"]["hand"]) &&
+                               a[2][3] < length(gs["combat_state"]["monsters"]) &&
+                               gs["combat_state"]["hand"][a[2][2]]["has_target"] &&
+                               !gs["combat_state"]["monsters"][a[2][3]+1]["is_gone"]), actions)
+        for a in actions
+            action_mask[a[1]] = 1
+        end
+        action_mask
+    end
+    probabilities = softmax(action_weights .* action_mask)
     Zygote.@ignore @assert length(agent.actions) == length(probabilities)
     agent.actions, probabilities
 end
