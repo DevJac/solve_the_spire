@@ -24,13 +24,13 @@ function RootAgent()
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
     agents = [MenuAgent(), SingleNNAgent()]
-    RootAgent(0, 0, false, tb_log, map_agent, agents)
+    RootAgent(0, 0, false, tb_log, agents)
 end
 
 function RootAgent(ra::RootAgent)
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
-    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.map_agent, ra.agents)
+    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.agents)
 end
 
 function agent_command(root_agent::RootAgent, sts_state)

@@ -203,7 +203,8 @@ function GRUNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_uniform
     hidden = vcat(in, hidden)
     layers = Any[]
     for i in 1:length(hidden)-1
-        push!(layers, GRU(hidden[i], hidden[i+1], activation, initW=initW))
+        push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
+        push!(layers, GRU(hidden[i+1], hidden[i+1]))
     end
     push!(layers, Dense(hidden[end], out, identity))
     GRUNetwork(Chain(layers...))

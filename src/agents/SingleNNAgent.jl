@@ -1,6 +1,6 @@
 export SingleNNAgent, action, train!
 
-Base.@kwdef mutable struct SingleNNAgent
+mutable struct SingleNNAgent
     json_words
     actions
     path_embedder
@@ -8,6 +8,8 @@ Base.@kwdef mutable struct SingleNNAgent
     pooler
     policy
     critic
+    policy_opt
+    critic_opt
     sars
     last_floor_rewarded
 end
@@ -16,21 +18,22 @@ function SingleNNAgent()
     @assert length(json_words) == 108
     actions = make_actions()
     path_embedder = GRUNetwork(108+1, 300, [300])
-    value_embedder = GRUNetwork(95+1, 300, [300])
+    value_embedder = GRUNetwork(95+2, 300, [300])
     pooler = PoolNetwork(600, 600, [600])
     policy = VanillaNetwork(600, length(actions), [600])
     critic = VanillaNetwork(600, 1, [600])
-    sars = SARS()
     SingleNNAgent(
-        json_words=json_words,
-        actions=actions,
-        path_embedder=path_embedder,
-        value_embedder=value_embedder,
-        pooler=pooler,
-        policy=policy,
-        critic=critic,
-        sars=sars,
-        last_floor_rewarded=0)
+        json_words,
+        actions,
+        path_embedder,
+        value_embedder,
+        pooler,
+        policy,
+        critic,
+        ADADelta(),
+        ADADelta(),
+        SARS(),
+        0)
 end
 
 function action(agent::SingleNNAgent, ra::RootAgent, sts_state)
@@ -66,7 +69,7 @@ function action(agent::SingleNNAgent, ra::RootAgent, sts_state)
 end
 
 function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
-    gs = sts_["gamse_state"]
+    gs = sts_state["game_state"]
     flat_gs = Zygote.@ignore flatten_json(gs)
     hyperpoints = []
     for (path, value) in flat_gs
@@ -75,7 +78,6 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
         Zygote.ignore() do
             p_e = [encode_path_word(agent, word) for word in path]
             v_e = encode_path_value(value)
-            @info "encoded" typeof(k_e) typeof(v_e) k_e v_e
         end
         local hyperpoint_top
         local hyperpoint_bot
@@ -97,7 +99,7 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
 end
 
 function state_value(agent::SingleNNAgent, ra::RootAgent, sts_state)
-    gs = sts_["gamse_state"]
+    gs = sts_state["game_state"]
     flat_gs = Zygote.@ignore flatten_json(gs)
     hyperpoints = []
     for (path, value) in flat_gs
@@ -106,7 +108,6 @@ function state_value(agent::SingleNNAgent, ra::RootAgent, sts_state)
         Zygote.ignore() do
             p_e = [encode_path_word(agent, word) for word in path]
             v_e = encode_path_value(value)
-            @info "encoded" typeof(k_e) typeof(v_e) k_e v_e
         end
         local hyperpoint_top
         local hyperpoint_bot
@@ -253,17 +254,21 @@ function encode_path_word(agent::SingleNNAgent, word)
 end
 
 function encode_path_value(value)
-    if isa(value, String)
+    if isa(value, String) && length(value) > 0
         [encode_char(c) for c in value]
+    elseif isa(value, String) && length(value) == 0
+        r = zeros(95+2)
+        r[end-1] = 1
+        [r]
     else
-        r = zeros(95+1)
+        r = zeros(95+2)
         r[end] = Float32(value)
-        r
+        [r]
     end
 end
 
 function encode_char(c)
-    r = zeros(95+1)
+    r = zeros(95+2)
     r[Int(c) - 31] = 1
     @assert sum(r) == 1
     r
