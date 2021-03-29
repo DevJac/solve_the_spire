@@ -95,7 +95,7 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
     action_weights = agent.policy(pool)
     action_mask = Zygote.ignore() do
         actions = collect(enumerate(agent.actions))
-        action_mask = zeros(length(actions))
+        action_mask = zeros(Float32, length(actions))
         actions = filter(a -> a[2][1] in sts_state["available_commands"], actions)
         actions = filter(a -> (a[2][1] != "choose" ||
                                a[2][2] < length(gs["choice_list"])), actions)
@@ -118,7 +118,7 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
         end
         action_mask
     end
-    probabilities = softmax(action_weights .* action_mask)
+    probabilities = softmax(softmax(action_weights/100) .* action_mask)
     Zygote.@ignore @assert length(agent.actions) == length(probabilities)
     agent.actions, probabilities
 end
@@ -267,7 +267,7 @@ function make_actions()
 end
 
 function encode_path_word(agent::SingleNNAgent, word)
-    r = zeros(length(agent.json_words)+1)
+    r = zeros(Float32, length(agent.json_words)+1)
     if isa(word, Integer)
         r[end] = word+1
         @assert sum(r) == word+1
@@ -282,18 +282,18 @@ function encode_path_value(value)
     if isa(value, String) && length(value) > 0
         [encode_char(c) for c in value]
     elseif isa(value, String) && length(value) == 0
-        r = zeros(95+2)
+        r = zeros(Float32, 95+2)
         r[end-1] = 1
         [r]
     else
-        r = zeros(95+2)
+        r = zeros(Float32, 95+2)
         r[end] = (Float32(value) - 0.5) * 2
         [r]
     end
 end
 
 function encode_char(c)
-    r = zeros(95+2)
+    r = zeros(Float32, 95+2)
     r[Int(c) - 31] = 1
     @assert sum(r) == 1
     r
