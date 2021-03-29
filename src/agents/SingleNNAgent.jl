@@ -71,7 +71,7 @@ end
 function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
     flat_gs = Zygote.@ignore flatten_json(gs)
-    hyperpoints = []
+    hyperpoints = Vector{Float32}[]
     for (path, value) in flat_gs
         local p_e
         local v_e
@@ -269,8 +269,8 @@ end
 function encode_path_word(agent::SingleNNAgent, word)
     r = zeros(length(agent.json_words)+1)
     if isa(word, Integer)
-        r[end] = word
-        @assert sum(r) == word
+        r[end] = word+1
+        @assert sum(r) == word+1
     else
         r[find(word, agent.json_words)] = 1
         @assert sum(r) == 1
@@ -287,7 +287,7 @@ function encode_path_value(value)
         [r]
     else
         r = zeros(95+2)
-        r[end] = Float32(value)
+        r[end] = (Float32(value) - 0.5) * 2
         [r]
     end
 end
