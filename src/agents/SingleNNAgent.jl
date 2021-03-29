@@ -38,9 +38,6 @@ end
 
 function action(agent::SingleNNAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
-        if "confirm" in sts_state["available_commands"]
-            return "confirm"
-        end
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
             if awaiting(agent.sars) == sar_reward
@@ -268,6 +265,9 @@ function make_actions()
     push!(actions, ("end",))
     push!(actions, ("proceed",))
     push!(actions, ("return",))
+    push!(actions, ("confirm",))
+    push!(actions, ("leave",))
+    push!(actions, ("skip",))
 end
 
 function encode_path_word(agent::SingleNNAgent, word)
