@@ -107,10 +107,12 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
                                gs["potions"][a[2][3]+1]["can_discard"]), actions)
         actions = filter(a -> (a[2][1] != "play" || length(a[2]) != 2 ||
                                a[2][2] <= length(gs["combat_state"]["hand"]) &&
+                               gs["combat_state"]["hand"][a[2][2]]["is_playable"] &&
                                !gs["combat_state"]["hand"][a[2][2]]["has_target"]), actions)
         actions = filter(a -> (a[2][1] != "play" || length(a[2]) != 3 ||
                                a[2][2] <= length(gs["combat_state"]["hand"]) &&
                                a[2][3] < length(gs["combat_state"]["monsters"]) &&
+                               gs["combat_state"]["hand"][a[2][2]]["is_playable"] &&
                                gs["combat_state"]["hand"][a[2][2]]["has_target"] &&
                                !gs["combat_state"]["monsters"][a[2][3]+1]["is_gone"]), actions)
         for a in actions
