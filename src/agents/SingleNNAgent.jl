@@ -1,4 +1,6 @@
 export SingleNNAgent, action, train!
+using ProgressMeter
+using BenchmarkTools: @btime
 
 mutable struct SingleNNAgent
     json_words
@@ -17,11 +19,13 @@ function SingleNNAgent()
     json_words = readlines("game_data/json_path_words.txt")
     @assert length(json_words) == 108
     actions = make_actions()
-    path_embedder = GRUNetwork(108+1, 300, [300])
-    value_embedder = GRUNetwork(95+2, 300, [300])
-    pooler = PoolNetwork(600, 600, [600])
-    policy = VanillaNetwork(600, length(actions), [600])
-    critic = VanillaNetwork(600, 1, [600])
+    path_embedder = GRUNetwork(108+1, 30, [30])
+    value_embedder = GRUNetwork(95+2, 30, [30])
+    pooler = PoolNetwork(length(path_embedder) + length(value_embedder), 200, [200])
+    policy = VanillaNetwork(length(pooler), length(actions), [200])
+    critic = VanillaNetwork(length(pooler), 1, [200])
+    @show params(path_embedder, value_embedder, pooler, policy, critic) .|> length
+    @show params(path_embedder, value_embedder, pooler, policy, critic) .|> length |> sum
     SingleNNAgent(
         json_words,
         actions,
@@ -68,30 +72,44 @@ function action(agent::SingleNNAgent, ra::RootAgent, sts_state)
     end
 end
 
-function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
+function embed(encodings::Vector{Tuple{Int,Matrix{Float32}}}, embedder)
+    embeddings = Zygote.Buffer(encodings, Tuple{Int,Vector{Float32}})
+    for encoding_length in 1:maximum(e -> size(e[2], 2), encodings)
+        of_length = filter(e -> size(e[2], 2) == encoding_length, encodings)
+        if isempty(of_length); continue end
+        Flux.reset!(embedder)
+        local embedded
+        for i in 1:encoding_length
+            embedded = embedder(reduce(hcat, map(e -> e[2][:,i], of_length)))
+            Zygote.@ignore @assert size(embedded, 1) == length(embedder)
+            Zygote.@ignore @assert size(embedded, 2) == length(of_length)
+        end
+        for (i_embedded, i0) in enumerate(map(e -> e[1], of_length))
+            embeddings[i0] = (i0, embedded[:,i_embedded])
+        end
+    end
+    copy(embeddings)
+end
+
+function embed_state(agent::SingleNNAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
     flat_gs = Zygote.@ignore flatten_json(gs)
-    hyperpoints = Vector{Float32}[]
-    for (path, value) in flat_gs
-        local p_e
-        local v_e
-        Zygote.ignore() do
-            p_e = [encode_path_word(agent, word) for word in path]
-            v_e = encode_path_value(value)
+    path_encodings = Tuple{Int,Matrix{Float32}}[]
+    value_encodings = Tuple{Int,Matrix{Float32}}[]
+    Zygote.ignore() do
+        for (i, (path, value)) in enumerate(flat_gs)
+            push!(path_encodings, (i, reduce(hcat, [encode_path_word(agent, word) for word in path])))
+            push!(value_encodings, (i, reduce(hcat, encode_path_value(value))))
         end
-        local hyperpoint_top
-        local hyperpoint_bot
-        Flux.reset!(agent.path_embedder)
-        for e in p_e
-            hyperpoint_top = agent.path_embedder(e)
-        end
-        Flux.reset!(agent.value_embedder)
-        for e in v_e
-            hyperpoint_bot = agent.value_embedder(e)
-        end
-        push!(hyperpoints, [hyperpoint_top; hyperpoint_bot])
     end
-    pool = agent.pooler(reduce(hcat, hyperpoints))
+    tops = reduce(hcat, map(e -> e[2], embed(path_encodings, agent.path_embedder)))
+    bots = reduce(hcat, map(e -> e[2], embed(value_encodings, agent.value_embedder)))
+    agent.pooler([tops; bots])
+end
+
+function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
+    gs = sts_state["game_state"]
+    pool = embed_state(agent, ra, sts_state)
     action_weights = agent.policy(pool)
     action_mask = Zygote.ignore() do
         actions = collect(enumerate(agent.actions))
@@ -127,29 +145,7 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
 end
 
 function state_value(agent::SingleNNAgent, ra::RootAgent, sts_state)
-    gs = sts_state["game_state"]
-    flat_gs = Zygote.@ignore flatten_json(gs)
-    hyperpoints = []
-    for (path, value) in flat_gs
-        local p_e
-        local v_e
-        Zygote.ignore() do
-            p_e = [encode_path_word(agent, word) for word in path]
-            v_e = encode_path_value(value)
-        end
-        local hyperpoint_top
-        local hyperpoint_bot
-        Flux.reset!(agent.path_embedder)
-        for e in p_e
-            hyperpoint_top = agent.path_embedder(e)
-        end
-        Flux.reset!(agent.value_embedder)
-        for e in v_e
-            hyperpoint_bot = agent.value_embedder(e)
-        end
-        push!(hyperpoints, [hyperpoint_top; hyperpoint_bot])
-    end
-    pool = agent.pooler(reduce(hcat, hyperpoints))
+    pool = embed_state(agent, ra, sts_state)
     only(agent.critic(pool))
 end
 
@@ -174,20 +170,23 @@ function train!(agent::SingleNNAgent, ra::RootAgent, epochs=1000)
             agent.value_embedder,
             agent.pooler,
             agent.policy)
+        progress = Progress(length(batch))
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
                 target_aps = action_probabilities(target_agent, ra, sar.state)[2]
                 target_ap = target_aps[sar.action]
                 online_aps = action_probabilities(agent, ra, sar.state)[2]
                 online_ap = online_aps[sar.action]
-                advantage = sar.q - state_value(target_agent, ra, sar.state)
+                sv = state_value(target_agent, ra, sar.state)
+                advantage = sar.q - sv
                 Zygote.ignore() do
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
                     push!(actual_value, online_ap * sar.q)
-                    push!(estimated_value, online_ap * state_value(target_agent, ra, sar.state))
+                    push!(estimated_value, online_ap * sv)
                     push!(estimated_advantage, online_ap * advantage)
                     push!(entropys, entropy(online_aps))
                     push!(explore, explore_odds(online_aps))
+                    next!(progress)
                 end
                 min(
                     (online_ap / target_ap) * advantage,
