@@ -19,8 +19,8 @@ function SingleNNAgent()
     json_words = readlines("game_data/json_path_words.txt")
     @assert length(json_words) == 108
     actions = make_actions()
-    path_embedder = GRUNetwork(108+1, 30, [30])
-    value_embedder = GRUNetwork(95+2, 30, [30])
+    path_embedder = GRUNetwork(108+1, 10, [10])
+    value_embedder = GRUNetwork(95+2, 10, [10])
     pooler = PoolNetwork(length(path_embedder) + length(value_embedder), 200, [200])
     policy = VanillaNetwork(length(pooler), length(actions), [200])
     critic = VanillaNetwork(length(pooler), 1, [200])
@@ -74,26 +74,15 @@ end
 
 function embed(encodings::Vector{Tuple{Int,Vector{Vector{Float32}}}}, embedder)
     embeddings = Zygote.Buffer(encodings, Tuple{Int,Vector{Float32}})
-    for encoding_length in 1:maximum(e -> length(e[2]), encodings)
-        of_length = filter(e -> length(e[2]) == encoding_length, encodings)
-        if isempty(of_length); continue end
-        Flux.reset!(embedder)
-        local embedded
-        for i in 1:encoding_length
-            embedded = embedder(reduce(hcat, map(e -> e[2][i], of_length)))
-            Zygote.@ignore @assert size(embedded, 1) == length(embedder)
-            Zygote.@ignore @assert size(embedded, 2) == length(of_length)
-        end
-        for (i_embedded, i0) in enumerate(map(e -> e[1], of_length))
-            embeddings[i0] = (i0, embedded[:,i_embedded])
-        end
+    for (i, e) in encodings
+        embeddings[i] = (i, embedder.(e)[end])
     end
     embeddings_vector = copy(embeddings)
     Zygote.@ignore @assert embeddings_vector == sort(embeddings_vector)
     embeddings_vector
 end
 
-function embed_state(agent::SingleNNAgent, ra::RootAgent, sts_state)
+function embed_state(agent::SingleNNAgent, ra::RootAgent, sts_state; embed_gradient=true)
     gs = sts_state["game_state"]
     flat_gs = Zygote.@ignore flatten_json(gs)
     path_encodings = Tuple{Int,Vector{Vector{Float32}}}[]
@@ -104,8 +93,15 @@ function embed_state(agent::SingleNNAgent, ra::RootAgent, sts_state)
             push!(value_encodings, (i, encode_path_value(value)))
         end
     end
-    tops = reduce(hcat, map(e -> e[2], embed(path_encodings, agent.path_embedder)))
-    bots = reduce(hcat, map(e -> e[2], embed(value_encodings, agent.value_embedder)))
+    local tops
+    local bots
+    if embed_gradient
+        tops = reduce(hcat, map(e -> e[2], embed(path_encodings, agent.path_embedder)))
+        bots = reduce(hcat, map(e -> e[2], embed(value_encodings, agent.value_embedder)))
+    else
+        tops = reduce(hcat, map(e -> e[2], Zygote.@ignore embed(path_encodings, agent.path_embedder)))
+        bots = reduce(hcat, map(e -> e[2], Zygote.@ignore embed(value_encodings, agent.value_embedder)))
+    end
     agent.pooler([tops; bots])
 end
 
@@ -140,18 +136,20 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
         end
         action_mask
     end
-    action_weights_p = softmax(action_weights/100) .* action_mask
-    probabilities = action_weights_p / sum(action_weights_p)
+    action_weights′ = softmax(action_weights/100)
+    Zygote.@ignore @assert !any(w -> w == 0, action_weights′)
+    action_weights′ = action_weights′ .* action_mask
+    probabilities = action_weights′ / sum(action_weights′)
     Zygote.@ignore @assert length(agent.actions) == length(probabilities)
     agent.actions, probabilities
 end
 
 function state_value(agent::SingleNNAgent, ra::RootAgent, sts_state)
-    pool = embed_state(agent, ra, sts_state)
+    pool = embed_state(agent, ra, sts_state, embed_gradient=false)
     only(agent.critic(pool))
 end
 
-function train!(agent::SingleNNAgent, ra::RootAgent, epochs=1000)
+function train!(agent::SingleNNAgent, ra::RootAgent, epochs=10)
     train_log = TBLogger("tb_logs/train_SingleNNAgent")
     sars = fill_q(agent.sars, 0.5^(1/1000))
     log_histogram(ra.tb_log, "SingleNNAgent/rewards", map(sar -> sar.reward, sars))
@@ -165,8 +163,8 @@ function train!(agent::SingleNNAgent, ra::RootAgent, epochs=1000)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for epoch in 1:epochs
-        batch = sars
+    for (epoch, batch) in enumerate(Batcher(sars, 10))
+        if epoch > epochs; break end
         prms = params(
             agent.path_embedder,
             agent.value_embedder,
@@ -217,10 +215,12 @@ function train!(agent::SingleNNAgent, ra::RootAgent, epochs=1000)
     for (epoch, batch) in enumerate(Batcher(sars, 100))
         if epoch > epochs; break end
         prms = params(agent.critic)
+        progress = Progress(length(batch))
         loss, grads = valgrad(prms) do
             mean(batch) do sar
                 predicted_q = state_value(agent, ra, sar.state)
                 actual_q = sar.q
+                Zygote.@ignore next!(progress)
                 (predicted_q - actual_q)^2
             end
         end
