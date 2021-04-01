@@ -198,15 +198,14 @@ end
 
 Flux.@functor GRUNetwork
 
-function GRUNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_uniform)
+function GRUNetwork(in, out, hidden)
     in += 1
     hidden = vcat(in, hidden)
     layers = Any[]
     for i in 1:length(hidden)-1
-        push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
-        push!(layers, GRU(hidden[i+1], hidden[i+1]))
+        push!(layers, GRU(hidden[i], hidden[i+1]))
     end
-    push!(layers, Dense(hidden[end], out, identity))
+    push!(layers, GRU(hidden[end], out))
     GRUNetwork(Chain(layers...))
 end
 
@@ -222,6 +221,6 @@ end
 
 null(n::GRUNetwork) = n.network(zeros(size(n.network.layers[1].W, 2)))
 
-Base.length(n::GRUNetwork) = length(n.network.layers[end].b)
+Base.length(n::GRUNetwork) = length(n.network.layers[end].cell.h)
 
 end # module
