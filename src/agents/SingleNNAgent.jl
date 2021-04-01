@@ -72,15 +72,15 @@ function action(agent::SingleNNAgent, ra::RootAgent, sts_state)
     end
 end
 
-function embed(encodings::Vector{Tuple{Int,Matrix{Float32}}}, embedder)
+function embed(encodings::Vector{Tuple{Int,Vector{Vector{Float32}}}}, embedder)
     embeddings = Zygote.Buffer(encodings, Tuple{Int,Vector{Float32}})
-    for encoding_length in 1:maximum(e -> size(e[2], 2), encodings)
-        of_length = filter(e -> size(e[2], 2) == encoding_length, encodings)
+    for encoding_length in 1:maximum(e -> length(e[2]), encodings)
+        of_length = filter(e -> length(e[2]) == encoding_length, encodings)
         if isempty(of_length); continue end
         Flux.reset!(embedder)
         local embedded
         for i in 1:encoding_length
-            embedded = embedder(reduce(hcat, map(e -> e[2][:,i], of_length)))
+            embedded = embedder(reduce(hcat, map(e -> e[2][i], of_length)))
             Zygote.@ignore @assert size(embedded, 1) == length(embedder)
             Zygote.@ignore @assert size(embedded, 2) == length(of_length)
         end
@@ -88,18 +88,20 @@ function embed(encodings::Vector{Tuple{Int,Matrix{Float32}}}, embedder)
             embeddings[i0] = (i0, embedded[:,i_embedded])
         end
     end
-    copy(embeddings)
+    embeddings_vector = copy(embeddings)
+    Zygote.@ignore @assert embeddings_vector == sort(embeddings_vector)
+    embeddings_vector
 end
 
 function embed_state(agent::SingleNNAgent, ra::RootAgent, sts_state)
     gs = sts_state["game_state"]
     flat_gs = Zygote.@ignore flatten_json(gs)
-    path_encodings = Tuple{Int,Matrix{Float32}}[]
-    value_encodings = Tuple{Int,Matrix{Float32}}[]
+    path_encodings = Tuple{Int,Vector{Vector{Float32}}}[]
+    value_encodings = Tuple{Int,Vector{Vector{Float32}}}[]
     Zygote.ignore() do
         for (i, (path, value)) in enumerate(flat_gs)
-            push!(path_encodings, (i, reduce(hcat, [encode_path_word(agent, word) for word in path])))
-            push!(value_encodings, (i, reduce(hcat, encode_path_value(value))))
+            push!(path_encodings, (i, [encode_path_word(agent, word) for word in path]))
+            push!(value_encodings, (i, encode_path_value(value)))
         end
     end
     tops = reduce(hcat, map(e -> e[2], embed(path_encodings, agent.path_embedder)))
