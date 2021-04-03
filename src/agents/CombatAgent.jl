@@ -65,8 +65,8 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
 end
 
 function setup_choice_encoder(agent::CombatAgent, ra::RootAgent, sts_state)
-    gs = sts_state["gamse_state"]
-    reset!(agent.choice_encoder)
+    gs = sts_state["game_state"]
+    ChoiceEncoders.reset!(agent.choice_encoder)
     add_encoded_state(agent.choice_encoder, :potions, potions_encoder(gs["potions"]))
     add_encoded_state(agent.choice_encoder, :relics, relics_encoder(gs["relics"]))
     add_encoded_state(agent.choice_encoder, :player, player_combat_encoder(sts_state))

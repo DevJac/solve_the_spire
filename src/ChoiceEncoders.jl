@@ -4,9 +4,9 @@ using Networks
 using Utils
 using Zygote
 
-export ChoiceEncoder, add_encoded_state, add_encoded_choice, encode_choices, encode_state, state_length, reset!
+export ChoiceEncoder, add_encoded_state, add_encoded_choice, encode_choices, encode_state, state_length
 
-struct ChoiceEncoder
+mutable struct ChoiceEncoder
     state_embedders  :: Dict{Symbol, Any}
     choice_embedders :: Dict{Symbol, Any}
     pooler           :: Any
@@ -39,7 +39,7 @@ end
 function reset!(ce::ChoiceEncoder)
     ce.states_encoded = Dict(k => nothing for k in keys(ce.state_embedders))
     ce.choices_encoded = Dict(k => [] for k in keys(ce.choice_embedders))
-    ce.choie_actions = Dict(k => [] for k in keys(ce.choice_embedders))
+    ce.choice_actions = Dict(k => [] for k in keys(ce.choice_embedders))
 end
 
 function Flux.trainable(ce::ChoiceEncoder)

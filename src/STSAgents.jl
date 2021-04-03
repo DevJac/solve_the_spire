@@ -1,5 +1,6 @@
 module STSAgents
 using AgentCommands
+using ChoiceEncoders
 using Encoders
 using Flux
 using Memoize
