@@ -51,37 +51,6 @@ Base.length(n::MockNetwork) = n.out
                             0 0 4
                             0 0 4
                             0 0 4])
-    ChoiceEncoders.reset!(ce)
-    add_encoded_state(ce, :state_a, rand(3))
-    add_encoded_state(ce, :state_b, rand(4))
-    add_encoded_choice(ce, :choice_a, rand(5), 1)
-    add_encoded_choice(ce, :choice_a, rand(5), 2)
-    add_encoded_choice(ce, :choice_b, rand(6), 3)
-    r = encode_choices(ce)
-    @test r[2] == [1, 2, 3]
-    @test r[1] == Float32.([1 1 1
-                            1 1 1
-                            2 2 2
-                            2 2 2
-                            2 2 2
-                            5 5 5
-                            5 5 5
-                            5 5 5
-                            5 5 5
-                            5 5 5
-                            5 5 5
-                            5 5 5
-                            1 1 0
-                            3 3 0
-                            3 3 0
-                            3 3 0
-                            3 3 0
-                            0 0 1
-                            0 0 4
-                            0 0 4
-                            0 0 4
-                            0 0 4
-                            0 0 4])
 end
 
 @testset "happy_path_with_real_networks" begin
@@ -175,7 +144,7 @@ end
         Dict(:choice_a => VanillaNetwork(4, 3, [8]), :choice_b => NullNetwork()),
         3, [8])
     @test length(params(ce)) == 17
-    @test length.(params(ce)) == [40, 8, 24, 3, 40, 8, 24, 3, 40, 8, 24, 3, 48, 8, 24, 3, 12]
+    @test length.(params(ce)) == [32, 8, 24, 3, 32, 8, 24, 3, 32, 8, 24, 3, 40, 8, 24, 3, 12]
 end
 
 @testset "encode_state" begin
