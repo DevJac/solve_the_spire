@@ -90,26 +90,25 @@ include("agents/SpecialActionAgent.jl")
 function all_valid_actions(sts_state)
     gs = sts_state["game_state"]
     actions = all_possible_actions()
-    actions = collect(enumerate(agent.actions))
-    actions = filter(a -> a[2][1] in sts_state["available_commands"], actions)
-    actions = filter(a -> (a[2][1] != "choose" ||
-                           a[2][2] < length(gs["choice_list"])), actions)
-    actions = filter(a -> (a[2][1] != "potion" || a[2][2] != "use" ||
-                           a[2][3] < length(gs["potions"]) &&
-                           gs["potions"][a[2][3]+1]["can_use"]), actions)
-    actions = filter(a -> (a[2][1] != "potion" || a[2][2] != "discard" ||
-                           a[2][3] < length(gs["potions"]) &&
-                           gs["potions"][a[2][3]+1]["can_discard"]), actions)
-    actions = filter(a -> (a[2][1] != "play" || length(a[2]) != 2 ||
-                           a[2][2] <= length(gs["combat_state"]["hand"]) &&
-                           gs["combat_state"]["hand"][a[2][2]]["is_playable"] &&
-                           !gs["combat_state"]["hand"][a[2][2]]["has_target"]), actions)
-    actions = filter(a -> (a[2][1] != "play" || length(a[2]) != 3 ||
-                           a[2][2] <= length(gs["combat_state"]["hand"]) &&
-                           a[2][3] < length(gs["combat_state"]["monsters"]) &&
-                           gs["combat_state"]["hand"][a[2][2]]["is_playable"] &&
-                           gs["combat_state"]["hand"][a[2][2]]["has_target"] &&
-                           !gs["combat_state"]["monsters"][a[2][3]+1]["is_gone"]), actions)
+    actions = filter(a -> a[1] in sts_state["available_commands"], actions)
+    actions = filter(a -> (a[1] != "choose" ||
+                           a[2] < length(gs["choice_list"])), actions)
+    actions = filter(a -> (a[1] != "potion" || a[2] != "use" ||
+                           a[3] < length(gs["potions"]) &&
+                           gs["potions"][a[3]+1]["can_use"]), actions)
+    actions = filter(a -> (a[1] != "potion" || a[2] != "discard" ||
+                           a[3] < length(gs["potions"]) &&
+                           gs["potions"][a[3]+1]["can_discard"]), actions)
+    actions = filter(a -> (a[1] != "play" || length(a) != 2 ||
+                           a[2] <= length(gs["combat_state"]["hand"]) &&
+                           gs["combat_state"]["hand"][a[2]]["is_playable"] &&
+                           !gs["combat_state"]["hand"][a[2]]["has_target"]), actions)
+    actions = filter(a -> (a[1] != "play" || length(a) != 3 ||
+                           a[2] <= length(gs["combat_state"]["hand"]) &&
+                           a[3] < length(gs["combat_state"]["monsters"]) &&
+                           gs["combat_state"]["hand"][a[2]]["is_playable"] &&
+                           gs["combat_state"]["hand"][a[2]]["has_target"] &&
+                           !gs["combat_state"]["monsters"][a[3]+1]["is_gone"]), actions)
     actions
 end
 
@@ -134,6 +133,7 @@ function all_possible_actions()
     push!(actions, ("confirm",))
     push!(actions, ("leave",))
     push!(actions, ("skip",))
+    actions
 end
 
 function encode_seq(encoder, sequence)

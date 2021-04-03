@@ -24,8 +24,8 @@ function CombatAgent()
             :end          => NullNetwork()
         ),
         20, [50])
-    policy = VanillaNetwork(length(choice_encoder), 20, [50])
-    critic = VanillaNetwork(state_length(choice_encoder), 20, [50])
+    policy = VanillaNetwork(length(choice_encoder), 1, [50])
+    critic = VanillaNetwork(state_length(choice_encoder), 1, [50])
     CombatAgent(
         choice_encoder,
         policy,
@@ -87,7 +87,7 @@ function setup_choice_encoder(agent::CombatAgent, ra::RootAgent, sts_state)
         end
         if action[1] == "play" && length(action) == 3
             card_i = action[2]
-            monster_i = action[3]
+            monster_i = action[3]+1
             add_encoded_choice(
                 agent.choice_encoder,
                 :card_monster,
