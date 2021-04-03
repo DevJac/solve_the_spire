@@ -16,10 +16,11 @@ struct ChoiceEncoder
 end
 
 function ChoiceEncoder(state_embedders, choice_embedders, pool_out, pool_hidden)
+    presence_indicators = length(choice_embedders) > 1 ? length(choice_embedders) : 0
     ChoiceEncoder(
         state_embedders,
         choice_embedders,
-        PoolNetwork(sum(length, values(choice_embedders)), pool_out, pool_hidden),
+        PoolNetwork(sum(length, values(choice_embedders)) + presence_indicators, pool_out, pool_hidden),
         Dict(k => nothing for k in keys(state_embedders)),
         Dict(k => [] for k in keys(choice_embedders)),
         Dict(k => [] for k in keys(choice_embedders)))

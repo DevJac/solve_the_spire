@@ -2,7 +2,7 @@ module Networks
 using Flux
 using Statistics
 using Zygote
-export VanillaNetwork, PoolNetwork
+export VanillaNetwork, PoolNetwork, NullNetwork
 
 ###################
 # Vanilla Network #
@@ -59,5 +59,15 @@ function (n::PoolNetwork)(s)
 end
 
 Base.length(n::PoolNetwork) = length(n.network.layers[end].b)
+
+################
+# Null Network #
+################
+
+struct NullNetwork; end
+
+(n::NullNetwork)(s) = Float32[]
+
+Base.length(n::NullNetwork) = 0
 
 end # module
