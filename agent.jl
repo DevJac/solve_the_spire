@@ -1,5 +1,6 @@
 using AgentCommands
 using BSON
+using ChoiceEncoders
 using Dates
 using Encoders
 using Flux

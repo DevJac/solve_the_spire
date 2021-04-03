@@ -92,10 +92,10 @@ function encode_choices(ce::ChoiceEncoder)
     else
         choices_embedded = reduce(diagcat, choice_categories_embedded)
     end
-    choice_actions = reduce(vcat, [ce.choice_actions[sym] for sym in choice_keys])
+    choice_actions = Zygote.@ignore reduce(vcat, [ce.choice_actions[sym] for sym in choice_keys])
     Zygote.@ignore @assert size(choices_embedded, 2) == length(choice_actions)
     choices_embedded = choices_embedded[:, findall(a -> !isa(a, MaskAction), choice_actions)]
-    choice_actions = choice_actions[findall(a -> !isa(a, MaskAction), choice_actions)]
+    choice_actions = Zygote.@ignore choice_actions[findall(a -> !isa(a, MaskAction), choice_actions)]
     pool = ce.pooler(choices_embedded)
     final_encoding = vcat(
         repeat(state_embedded, 1, size(choices_embedded, 2)),
@@ -124,10 +124,10 @@ function encode_state(ce::ChoiceEncoder)
     else
         choices_embedded = reduce(diagcat, choice_categories_embedded)
     end
-    choice_actions = reduce(vcat, [ce.choice_actions[sym] for sym in choice_keys])
+    choice_actions = Zygote.@ignore reduce(vcat, [ce.choice_actions[sym] for sym in choice_keys])
     Zygote.@ignore @assert size(choices_embedded, 2) == length(choice_actions)
     choices_embedded = choices_embedded[:, findall(a -> !isa(a, MaskAction), choice_actions)]
-    choice_actions = choice_actions[findall(a -> !isa(a, MaskAction), choice_actions)]
+    choice_actions = Zygote.@ignore choice_actions[findall(a -> !isa(a, MaskAction), choice_actions)]
     pool = ce.pooler(choices_embedded)
     vcat(state_embedded, pool)
 end
