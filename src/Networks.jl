@@ -2,7 +2,7 @@ module Networks
 using Flux
 using Statistics
 using Zygote
-export PolicyNetwork, QNetwork, VanillaNetwork, PoolNetwork, PoolEachNetwork, GRUNetwork, value, advantage
+export VanillaNetwork, PoolNetwork
 
 ###################
 # Vanilla Network #
