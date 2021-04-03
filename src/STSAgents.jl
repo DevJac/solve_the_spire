@@ -17,20 +17,32 @@ mutable struct RootAgent
     generation     :: Int
     ready_to_train :: Bool
     tb_log
+    map_agent
     agents
 end
 
 function RootAgent()
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
-    agents = [MenuAgent(), SingleNNAgent()]
-    RootAgent(0, 0, false, tb_log, agents)
+    map_agent = MapAgent()
+    agents = [
+        CampfireAgent(),
+        CombatAgent(),
+        DeckAgent(),
+        EventAgent(),
+        map_agent,
+        MenuAgent(),
+        RewardAgent(),
+        ShopAgent(),
+        SpecialActionAgent(),
+        PotionAgent()]
+    RootAgent(0, 0, false, tb_log, map_agent, agents)
 end
 
 function RootAgent(ra::RootAgent)
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
-    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.agents)
+    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.map_agent, ra.agents)
 end
 
 function agent_command(root_agent::RootAgent, sts_state)
@@ -38,7 +50,6 @@ function agent_command(root_agent::RootAgent, sts_state)
     log_value(root_agent.tb_log, "agent/games", root_agent.games)
     log_value(root_agent.tb_log, "agent/generation", root_agent.generation)
     log_value(root_agent.tb_log, "agent/encoder_cache_length", length(memoize_cache(Encoders.encode)))
-    log_value(root_agent.tb_log, "agent/flatten_json_cache_length", length(memoize_cache(flatten_json)))
     overridden_commands = []
     resulting_command = nothing
     for agent in root_agent.agents
@@ -62,10 +73,17 @@ function train!(root_agent::RootAgent)
         train!(agent, root_agent)
     end
     empty!(memoize_cache(Encoders.encode))
-    empty!(memoize_cache(flatten_json))
 end
 
+include("agents/CampfireAgent.jl")
+include("agents/CombatAgent.jl")
+include("agents/DeckAgent.jl")
+include("agents/EventAgent.jl")
+include("agents/MapAgent.jl")
 include("agents/MenuAgent.jl")
-include("agents/SingleNNAgent.jl")
+include("agents/PotionAgent.jl")
+include("agents/RewardAgent.jl")
+include("agents/ShopAgent.jl")
+include("agents/SpecialActionAgent.jl")
 
 end # module
