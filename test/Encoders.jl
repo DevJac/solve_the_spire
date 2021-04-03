@@ -6,14 +6,13 @@ using Encoders
 @testset "make_card_encoder" begin
     gd = GameData([], ["card_1", "card_2"], ["COMMON", "RARE"], ["ATTACK", "DEFEND"], [], [], [], [], [])
     encoder = make_card_encoder(gd)
-    # 1 to indicate presence of card (1)
     # One-hot encoding for each card (2)
     # One-hot encoding for each rarity (2)
     # One-hot encoding for each type (2)
     # Has targets (1)
     # Card cost (1)
     # Card upgrades (1)
-    @test length(encoder) == 1 + 2 + 2 + 2 + 1 + 1 + 1
+    @test length(encoder) == 2 + 2 + 2 + 1 + 1 + 1
     j = JSON.parse("""
         [
             {"id": "card_1", "upgrades": 1, "cost": 3, "rarity": "RARE", "type": "ATTACK", "has_target": true},
@@ -21,9 +20,9 @@ using Encoders
             {"id": "card_2", "upgrades": 0, "cost": 1, "rarity": "COMMON", "type": "DEFEND", "has_target": false}
         ]
     """)
-    @test encoder(j[1]) == Float32.([1, 1, 0, 0, 1, 1, 0, 1, 3, 1])
-    @test encoder(j[2]) == Float32.([1, 1, 0, 1, 0, 1, 0, 0, 0, 0])
-    @test encoder(j[3]) == Float32.([1, 0, 1, 1, 0, 0, 1, 0, 1, 0])
+    @test encoder(j[1]) == Float32.([1, 0, 0, 1, 1, 0, 1, 3, 1])
+    @test encoder(j[2]) == Float32.([1, 0, 1, 0, 1, 0, 0, 0, 0])
+    @test encoder(j[3]) == Float32.([0, 1, 1, 0, 0, 1, 0, 1, 0])
 end
 
 @testset "player_basic_encoder" begin
@@ -99,11 +98,10 @@ end
 @testset "make_monster_encoder" begin
     gd = GameData([], [], [], [], ["monster_1", "monster_2"], ["m_power_1", "m_power_2"], [], [], [])
     encoder = make_monster_encoder(gd)
-    # 1 to indicate presence of monster (1)
     # One-hot encoded monster (2)
     # 2 encoded vectors for each power (2*2)
     # Current HP, max HP, HP ratio, block, move damage, move hits, total damage (7)
-    @test length(encoder) == 1 + 2 + 2*2 + 7
+    @test length(encoder) == 2 + 2*2 + 7
     j1 = JSON.parse("""
         {
                 "powers": [
@@ -118,7 +116,7 @@ end
                 "move_adjusted_damage": 3
         }
     """)
-    @test encoder(j1) == Float32.([1, 1, 0, 1, 2, 0, 0, 4, 8, 1/2, 9, 3, 4, 3*4])
+    @test encoder(j1) == Float32.([1, 0, 1, 2, 0, 0, 4, 8, 1/2, 9, 3, 4, 3*4])
 end
 
 @testset "make_relics_encoder" begin
