@@ -21,11 +21,11 @@ Base.length(n::MockNetwork) = n.out
         Dict(:state_a => MockNetwork(3, 2, 1), :state_b => MockNetwork(4, 3, 2)),
         Dict(:choice_a => MockNetwork(5, 4, 3), :choice_b => MockNetwork(6, 5, 4)),
         MockNetwork(11, 7, 5, true))
-    add_state(ce, :state_a, rand(3))
-    add_state(ce, :state_b, rand(4))
-    add_choice(ce, :choice_a, rand(5), 1)
-    add_choice(ce, :choice_a, rand(5), 2)
-    add_choice(ce, :choice_b, rand(6), 3)
+    add_encoded_state(ce, :state_a, rand(3))
+    add_encoded_state(ce, :state_b, rand(4))
+    add_encoded_choice(ce, :choice_a, rand(5), 1)
+    add_encoded_choice(ce, :choice_a, rand(5), 2)
+    add_encoded_choice(ce, :choice_b, rand(6), 3)
     r = encode_choices(ce)
     @test r[2] == [1, 2, 3]
     @test r[1] == Float32.([1 1 1
@@ -58,10 +58,10 @@ end
         Dict(:state_a => MockNetwork(3, 2, 1), :state_b => MockNetwork(4, 3, 2)),
         Dict(:choice_a => MockNetwork(5, 4, 3), :choice_b => MockNetwork(6, 5, 4)),
         MockNetwork(11, 7, 5, true))
-    add_state(ce, :state_a, rand(3))
-    add_state(ce, :state_b, rand(4))
-    add_choice(ce, :choice_a, rand(5), 1)
-    add_choice(ce, :choice_a, rand(5), 2)
+    add_encoded_state(ce, :state_a, rand(3))
+    add_encoded_state(ce, :state_b, rand(4))
+    add_encoded_choice(ce, :choice_a, rand(5), 1)
+    add_encoded_choice(ce, :choice_a, rand(5), 2)
     r = encode_choices(ce)
     @test r[2] == [1, 2]
     @test r[1] == Float32.([1 1
@@ -91,9 +91,9 @@ end
         Dict(:state_a => MockNetwork(3, 2, 1), :state_b => MockNetwork(4, 3, 2)),
         Dict(:choice_a => MockNetwork(5, 4, 3), :choice_b => MockNetwork(6, 5, 4)),
         MockNetwork(11, 7, 5, true))
-    add_state(ce, :state_a, rand(3))
-    add_state(ce, :state_b, rand(4))
-    add_choice(ce, :choice_b, rand(6), 3)
+    add_encoded_state(ce, :state_a, rand(3))
+    add_encoded_state(ce, :state_b, rand(4))
+    add_encoded_choice(ce, :choice_b, rand(6), 3)
     r = encode_choices(ce)
     @test r[2] == [3]
     @test r[1] == reshape(Float32.([1
@@ -128,7 +128,7 @@ end
         Dict(:choice_a => VanillaNetwork(4, 3, [8]), :choice_b => VanillaNetwork(4, 3, [8])),
         3, [8])
     @test length(params(ce)) == 21
-    @test length.(params(ce)) = [32, 8, 24, 3, 32, 8, 24, 3, 32, 8, 24, 3, 32, 8, 24, 3, 32, 8, 24, 3, 12]
+    @test length.(params(ce)) == [32, 8, 24, 3, 32, 8, 24, 3, 32, 8, 24, 3, 32, 8, 24, 3, 48, 8, 24, 3, 12]
 end
 
 @testset "encode_state" begin
@@ -136,22 +136,22 @@ end
         Dict(:state_a => MockNetwork(3, 2, 1), :state_b => MockNetwork(4, 3, 2)),
         Dict(:choice_a => MockNetwork(5, 4, 3), :choice_b => MockNetwork(6, 5, 4)),
         MockNetwork(11, 7, 5, true))
-    add_state(ce, :state_a, rand(3))
-    add_state(ce, :state_b, rand(4))
-    add_choice(ce, :choice_a, rand(5), 1)
-    add_choice(ce, :choice_a, rand(5), 2)
-    add_choice(ce, :choice_b, rand(6), 3)
+    add_encoded_state(ce, :state_a, rand(3))
+    add_encoded_state(ce, :state_b, rand(4))
+    add_encoded_choice(ce, :choice_a, rand(5), 1)
+    add_encoded_choice(ce, :choice_a, rand(5), 2)
+    add_encoded_choice(ce, :choice_b, rand(6), 3)
     r = encode_state(ce)
-    @test r == Float32.([1
-                         1
-                         2
-                         2
-                         2
-                         5
-                         5
-                         5
-                         5
-                         5
-                         5
-                         5])
+    @test r == reshape(Float32.([1
+                                 1
+                                 2
+                                 2
+                                 2
+                                 5
+                                 5
+                                 5
+                                 5
+                                 5
+                                 5
+                                 5]), 12, 1)
 end

@@ -4,7 +4,7 @@ using Networks
 using Utils
 using Zygote
 
-export ChoiceEncoder, add_state, add_choice, encode_choices
+export ChoiceEncoder, add_encoded_state, add_encoded_choice, encode_choices, encode_state
 
 struct ChoiceEncoder
     state_embedders  :: Dict{Symbol, Any}
@@ -57,11 +57,11 @@ function Base.length(ce::ChoiceEncoder)
     state_embedders_total_length + choice_embedders_total_length + presence_indicators
 end
 
-function add_state(ce::ChoiceEncoder, state_symbol, state_encoded)
+function add_encoded_state(ce::ChoiceEncoder, state_symbol, state_encoded)
     ce.states_encoded[state_symbol] = state_encoded
 end
 
-function add_choice(ce::ChoiceEncoder, choice_symbol, choice_encoded, choice_action)
+function add_encoded_choice(ce::ChoiceEncoder, choice_symbol, choice_encoded, choice_action)
     push!(ce.choices_encoded[choice_symbol], choice_encoded)
     push!(ce.choice_actions[choice_symbol], choice_action)
 end

@@ -15,3 +15,7 @@ end
 @testset "Networks" begin
     include("Networks.jl")
 end
+
+@testset "ChoiceEncoders" begin
+    include("ChoiceEncoders.jl")
+end
