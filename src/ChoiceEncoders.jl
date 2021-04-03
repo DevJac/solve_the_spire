@@ -4,7 +4,7 @@ using Networks
 using Utils
 using Zygote
 
-export ChoiceEncoder, add_encoded_state, add_encoded_choice, encode_choices, encode_state, state_length
+export ChoiceEncoder, add_encoded_state, add_encoded_choice, encode_choices, encode_state, state_length, reset!
 
 struct ChoiceEncoder
     state_embedders  :: Dict{Symbol, Any}

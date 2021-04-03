@@ -26,16 +26,16 @@ function RootAgent()
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
     map_agent = MapAgent()
     agents = [
-        CampfireAgent(),
-        CombatAgent(),
-        DeckAgent(),
-        EventAgent(),
-        map_agent,
+        CampfireAgent(),       # TODO
+        CombatAgent(),         # TODO
+        DeckAgent(),           # TODO
+        EventAgent(),          # TODO
+        map_agent,             # TODO
         MenuAgent(),
-        RewardAgent(),
-        ShopAgent(),
-        SpecialActionAgent(),
-        PotionAgent()]
+        RewardAgent(),         # TODO
+        ShopAgent(),           # TODO
+        SpecialActionAgent(),  # TODO
+        PotionAgent()]         # TODO
     RootAgent(0, 0, false, tb_log, map_agent, agents)
 end
 
@@ -85,5 +85,54 @@ include("agents/PotionAgent.jl")
 include("agents/RewardAgent.jl")
 include("agents/ShopAgent.jl")
 include("agents/SpecialActionAgent.jl")
+
+function all_valid_actions(sts_state)
+    gs = sts_state["game_state"]
+    actions = all_possible_actions()
+    actions = collect(enumerate(agent.actions))
+    actions = filter(a -> a[2][1] in sts_state["available_commands"], actions)
+    actions = filter(a -> (a[2][1] != "choose" ||
+                           a[2][2] < length(gs["choice_list"])), actions)
+    actions = filter(a -> (a[2][1] != "potion" || a[2][2] != "use" ||
+                           a[2][3] < length(gs["potions"]) &&
+                           gs["potions"][a[2][3]+1]["can_use"]), actions)
+    actions = filter(a -> (a[2][1] != "potion" || a[2][2] != "discard" ||
+                           a[2][3] < length(gs["potions"]) &&
+                           gs["potions"][a[2][3]+1]["can_discard"]), actions)
+    actions = filter(a -> (a[2][1] != "play" || length(a[2]) != 2 ||
+                           a[2][2] <= length(gs["combat_state"]["hand"]) &&
+                           gs["combat_state"]["hand"][a[2][2]]["is_playable"] &&
+                           !gs["combat_state"]["hand"][a[2][2]]["has_target"]), actions)
+    actions = filter(a -> (a[2][1] != "play" || length(a[2]) != 3 ||
+                           a[2][2] <= length(gs["combat_state"]["hand"]) &&
+                           a[2][3] < length(gs["combat_state"]["monsters"]) &&
+                           gs["combat_state"]["hand"][a[2][2]]["is_playable"] &&
+                           gs["combat_state"]["hand"][a[2][2]]["has_target"] &&
+                           !gs["combat_state"]["monsters"][a[2][3]+1]["is_gone"]), actions)
+    actions
+end
+
+function all_possible_actions()
+    actions = []
+    for card_i in 1:10
+        push!(actions, ("play", card_i))
+        for monster_i in 0:4
+            push!(actions, ("play", card_i, monster_i))
+        end
+    end
+    for potion_i in 0:4
+        push!(actions, ("potion", "use", potion_i))
+        push!(actions, ("potion", "discard", potion_i))
+    end
+    for choice_i in 0:29
+        push!(actions, ("choose", choice_i))
+    end
+    push!(actions, ("end",))
+    push!(actions, ("proceed",))
+    push!(actions, ("return",))
+    push!(actions, ("confirm",))
+    push!(actions, ("leave",))
+    push!(actions, ("skip",))
+end
 
 end # module

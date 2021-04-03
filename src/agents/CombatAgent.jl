@@ -1,15 +1,7 @@
 export CombatAgent, action, train!
 
 struct CombatAgent
-    potions_embedder
-    relics_embedder
-    player_embedder
-    draw_embedder
-    discard_embedder
-    all_hand_embedder
-    all_monster_embedder
-    single_hand_embedder
-    single_monster_embedder
+    choice_encoder
     policy
     critic
     policy_opt
@@ -18,47 +10,24 @@ struct CombatAgent
 end
 
 function CombatAgent()
-    potions_embedder = VanillaNetwork(length(potions_encoder), 20, [50])
-    relics_embedder = VanillaNetwork(length(relics_encoder), 20, [50])
-    player_embedder = VanillaNetwork(length(player_combat_encoder), 20, [50])
-    draw_embedder = PoolNetwork(length(card_encoder), 20, [50])
-    discard_embedder = PoolNetwork(length(card_encoder), 20, [50])
-    all_hand_embedder = PoolNetwork(length(card_encoder), 20, [50])
-    all_monster_embedder = PoolNetwork(length(monster_encoder), 20, [50])
-    single_hand_embedder = VanillaNetwork(length(card_encoder), 20, [50])
-    single_monster_embedder = VanillaNetwork(length(monster_encoder), 20, [50])
-    policy = VanillaNetwork(
-        sum(length, [
-            potions_embedder,
-            relics_embedder,
-            player_embedder,
-            draw_embedder,
-            discard_embedder,
-            all_hand_embedder,
-            all_monster_embedder,
-            single_hand_embedder,
-            single_monster_embedder]),
-        1, [200, 50, 50])
-    critic = VanillaNetwork(
-        sum(length, [
-            potions_embedder,
-            relics_embedder,
-            player_embedder,
-            draw_embedder,
-            discard_embedder,
-            all_hand_embedder,
-            all_monster_embedder]),
-        1, [200, 50, 50])
+    choice_encoder = ChoiceEncoder(
+        Dict(
+            :potions      => VanillaNetwork(length(potions_encoder), 20, [50]),
+            :relics       => VanillaNetwork(length(relics_encoder), 20, [50]),
+            :player       => VanillaNetwork(length(player_combat_encoder), 20, [50]),
+            :draw         => PoolNetwork(length(card_encoder), 20, [50]),
+            :discard      => PoolNetwork(length(card_encoder), 20, [50])
+        ),
+        Dict(
+            :card         => VanillaNetwork(length(card_encoder), 20, [50]),
+            :card_monster => VanillaNetwork(sum(length, [card_encoder, monster_encoder]), 20, [50]),
+            :end          => NullNetwork()
+        ),
+        20, [50])
+    policy = VanillaNetwork(length(choice_encoder), 20, [50])
+    critic = VanillaNetwork(state_length(choice_encoder), 20, [50])
     CombatAgent(
-        potions_embedder,
-        relics_embedder,
-        player_embedder,
-        draw_embedder,
-        discard_embedder,
-        all_hand_embedder,
-        all_monster_embedder,
-        single_hand_embedder,
-        single_monster_embedder,
+        choice_encoder,
         policy,
         critic,
         ADADelta(),
@@ -88,19 +57,62 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             action_i = sample(1:length(actions), Weights(probabilities))
             add_state(agent.sars, sts_state)
             add_action(agent.sars, action_i)
-            action = actions[action_i]
-            if length(action) == 0
-                return "end"
-            elseif length(action) == 1
-                return "play $(action[1])"
-            elseif length(action) == 2
-                return "play $(action[1]) $(action[2])"
-            else
-                @error "Unknown CombatAgent action" action
-                throw("Unknown CombatAgent action")
-            end
+            action = join(actions[action_i], " ")
+            @assert isa(action, String)
+            action
         end
     end
+end
+
+function setup_choice_encoder(agent::CombatAgent, ra::RootAgent, sts_state)
+    gs = sts_state["gamse_state"]
+    reset!(agent.choice_encoder)
+    add_encoded_state(agent.choice_encoder, :potions, potions_encoder(gs["potions"]))
+    add_encoded_state(agent.choice_encoder, :relics, relics_encoder(gs["relics"]))
+    add_encoded_state(agent.choice_encoder, :player, player_combat_encoder(sts_state))
+    add_encoded_state(agent.choice_encoder, :draw, reduce(hcat, map(card_encoder, gs["combat_state"]["draw_pile"])))
+    add_encoded_state(agent.choice_encoder, :discard, reduce(hcat, map(card_encoder, gs["combat_state"]["discard_pile"])))
+    for action in all_valid_actions(sts_state)
+        if action[1] == "potion"
+            continue
+        end
+        if action == ("end",)
+            add_encoded_choice(agent.choice_encoder, :end, nothing, action)
+            continue
+        end
+        if action[1] == "play" && length(action) == 2
+            card_i = action[2]
+            add_encoded_choice(agent.choice_encoder, :card, card_encoder(gs["combat_state"]["hand"][card_i]), action)
+            continue
+        end
+        if action[1] == "play" && length(action) == 3
+            card_i = action[2]
+            monster_i = action[3]
+            add_encoded_choice(
+                agent.choice_encoder,
+                :card_monster,
+                [card_encoder(gs["combat_state"]["hand"][card_i]); monster_encoder(gs["combat_state"]["monsters"][monster_i])]
+                action)
+            continue
+        end
+        @error "Unhandled action" action
+        throw("Unhandled action")
+    end
+end
+
+function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
+    Zygote.@ignore setup_choice_encoder(agent, ra, sts_state)
+    choices_encoded, actions = encode_choices(agent.choice_encoder)
+    action_weights = agent.policy(choices_encoded)
+    probabilities = softmax(reshape(action_weights, length(action_weights)))
+    Zygote.@ignore @assert length(actions) == length(probabilities)
+    actions, probabilities
+end
+
+function state_value(agent::CombatAgent, ra::RootAgent, sts_state)
+    Zygote.@ignore setup_choice_encoder(agent, ra, sts_state)
+    state_encoded = encode_state(agent.choice_encoder)
+    only(agent.critic(state_encoded))
 end
 
 function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
@@ -117,18 +129,10 @@ function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for epoch in 1:epochs
-        batch = sars
+    for (epoch, batch) in enumerate(Batcher(sars, 10_000))
+        if epoch > epochs; break end
         prms = params(
-            agent.potions_embedder,
-            agent.relics_embedder,
-            agent.player_embedder,
-            agent.draw_embedder,
-            agent.discard_embedder,
-            agent.all_hand_embedder,
-            agent.all_monster_embedder,
-            agent.single_hand_embedder,
-            agent.single_monster_embedder,
+            agent.choice_encoder,
             agent.policy)
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
@@ -184,88 +188,4 @@ function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
     end
     log_value(ra.tb_log, "CombatAgent/critic_loss", loss)
     empty!(agent.sars)
-end
-
-function action_probabilities(agent::CombatAgent, ra::RootAgent, sts_state)
-    gs = sts_state["game_state"]
-    potions_e = agent.potions_embedder(potions_encoder(gs["potions"]))
-    relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
-    player_e = agent.player_embedder(player_combat_encoder(sts_state))
-    draw_e = agent.draw_embedder(card_encoder, gs["combat_state"]["draw_pile"])
-    discard_e = agent.draw_embedder(card_encoder, gs["combat_state"]["discard_pile"])
-    all_hand_e = agent.all_hand_embedder(card_encoder, gs["combat_state"]["hand"])
-    all_monster_e = agent.all_monster_embedder(monster_encoder, gs["combat_state"]["monsters"])
-    local actions
-    local action_cards_encoded
-    local action_monsters_encoded
-    local expected_action_length
-    Zygote.ignore() do
-        @assert size(potions_e) == (20,)
-        @assert size(relics_e) == (20,)
-        @assert size(player_e) == (20,)
-        @assert size(draw_e) == (20,)
-        @assert size(discard_e) == (20,)
-        @assert size(all_hand_e) == (20,)
-        @assert size(all_monster_e) == (20,)
-        hand = collect(enumerate(gs["combat_state"]["hand"]))
-        playable_hand = filter(c -> c[2]["is_playable"], hand)
-        monsters = collect(zip(0:99, gs["combat_state"]["monsters"]))
-        attackable_monsters = filter(m -> !m[2]["is_gone"], monsters)
-        actions = Any[()]
-        action_cards_encoded = Any[zeros(length(card_encoder))]
-        action_monsters_encoded = Any[zeros(length(monster_encoder))]
-        for card in playable_hand
-            if card[2]["has_target"]
-                for monster in attackable_monsters
-                    push!(actions, (card[1], monster[1]))
-                    push!(action_cards_encoded, card_encoder(card[2]))
-                    push!(action_monsters_encoded, monster_encoder(monster[2]))
-                end
-            else
-                push!(actions, (card[1],))
-                push!(action_cards_encoded, card_encoder(card[2]))
-                push!(action_monsters_encoded, zeros(length(monster_encoder)))
-            end
-        end
-        @assert length(actions) == length(action_cards_encoded) == length(action_monsters_encoded)
-        expected_action_length = (
-            count(c -> c[2]["has_target"], playable_hand) * (length(attackable_monsters)-1) +
-            length(playable_hand) + 1)
-        @assert length(actions) == expected_action_length
-    end
-    action_e = vcat(
-        agent.single_hand_embedder(Zygote.@ignore reduce(hcat, action_cards_encoded)),
-        agent.single_monster_embedder(Zygote.@ignore reduce(hcat, action_monsters_encoded)))
-    Zygote.@ignore @assert size(action_e, 2) == expected_action_length
-    action_weights = agent.policy(vcat(
-        repeat(potions_e, 1, size(action_e, 2)),
-        repeat(relics_e, 1, size(action_e, 2)),
-        repeat(player_e, 1, size(action_e, 2)),
-        repeat(draw_e, 1, size(action_e, 2)),
-        repeat(discard_e, 1, size(action_e, 2)),
-        repeat(all_hand_e, 1, size(action_e, 2)),
-        repeat(all_monster_e, 1, size(action_e, 2)),
-        action_e))
-    probabilities = softmax(reshape(action_weights, length(action_weights)))
-    Zygote.@ignore @assert length(actions) == length(probabilities) == expected_action_length
-    actions, probabilities
-end
-
-function state_value(agent::CombatAgent, ra::RootAgent, sts_state)
-    gs = sts_state["game_state"]
-    potions_e = agent.potions_embedder(potions_encoder(gs["potions"]))
-    relics_e = agent.relics_embedder(relics_encoder(gs["relics"]))
-    player_e = agent.player_embedder(player_combat_encoder(sts_state))
-    draw_e = agent.draw_embedder(card_encoder, gs["combat_state"]["draw_pile"])
-    discard_e = agent.draw_embedder(card_encoder, gs["combat_state"]["discard_pile"])
-    all_hand_e = agent.all_hand_embedder(card_encoder, gs["combat_state"]["hand"])
-    all_monster_e = agent.all_monster_embedder(monster_encoder, gs["combat_state"]["monsters"])
-    only(agent.critic(vcat(
-        potions_e,
-        relics_e,
-        player_e,
-        draw_e,
-        discard_e,
-        all_hand_e,
-        all_monster_e)))
 end
