@@ -1,6 +1,4 @@
 export SingleNNAgent, action, train!
-using ProgressMeter
-using BenchmarkTools: @btime
 
 mutable struct SingleNNAgent
     json_words
@@ -75,6 +73,7 @@ end
 function embed(encodings::Vector{Tuple{Int,Vector{Vector{Float32}}}}, embedder)
     embeddings = Zygote.Buffer(encodings, Tuple{Int,Vector{Float32}})
     for (i, e) in encodings
+        Flux.reset!(embedder)
         embeddings[i] = (i, embedder.(e)[end])
     end
     embeddings_vector = copy(embeddings)
@@ -105,9 +104,9 @@ function embed_state(agent::SingleNNAgent, ra::RootAgent, sts_state; embed_gradi
     agent.pooler([tops; bots])
 end
 
-function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
+function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state; embed_gradient=true)
     gs = sts_state["game_state"]
-    pool = embed_state(agent, ra, sts_state)
+    pool = embed_state(agent, ra, sts_state, embed_gradient=embed_gradient)
     action_weights = agent.policy(pool)
     action_mask = Zygote.ignore() do
         actions = collect(enumerate(agent.actions))
@@ -144,12 +143,12 @@ function action_probabilities(agent::SingleNNAgent, ra::RootAgent, sts_state)
     agent.actions, probabilities
 end
 
-function state_value(agent::SingleNNAgent, ra::RootAgent, sts_state)
-    pool = embed_state(agent, ra, sts_state, embed_gradient=false)
+function state_value(agent::SingleNNAgent, ra::RootAgent, sts_state; embed_gradient=true)
+    pool = embed_state(agent, ra, sts_state, embed_gradient=embed_gradient)
     only(agent.critic(pool))
 end
 
-function train!(agent::SingleNNAgent, ra::RootAgent, epochs=10)
+function train!(agent::SingleNNAgent, ra::RootAgent, epochs=100)
     train_log = TBLogger("tb_logs/train_SingleNNAgent")
     sars = fill_q(agent.sars, 0.5^(1/1000))
     log_histogram(ra.tb_log, "SingleNNAgent/rewards", map(sar -> sar.reward, sars))
@@ -163,21 +162,20 @@ function train!(agent::SingleNNAgent, ra::RootAgent, epochs=10)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 10))
+    for (epoch, batch) in enumerate(Batcher(sars, 30))
         if epoch > epochs; break end
         prms = params(
             agent.path_embedder,
             agent.value_embedder,
             agent.pooler,
             agent.policy)
-        progress = Progress(length(batch))
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
-                target_aps = action_probabilities(target_agent, ra, sar.state)[2]
+                target_aps = Zygote.@ignore action_probabilities(target_agent, ra, sar.state)[2]
                 target_ap = target_aps[sar.action]
-                online_aps = action_probabilities(agent, ra, sar.state)[2]
+                online_aps = action_probabilities(agent, ra, sar.state, embed_gradient=epoch <= 10)[2]
                 online_ap = online_aps[sar.action]
-                sv = state_value(target_agent, ra, sar.state)
+                sv = state_value(target_agent, ra, sar.state, embed_gradient=epoch <= 10)
                 advantage = sar.q - sv
                 Zygote.ignore() do
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
@@ -186,7 +184,6 @@ function train!(agent::SingleNNAgent, ra::RootAgent, epochs=10)
                     push!(estimated_advantage, online_ap * advantage)
                     push!(entropys, entropy(online_aps))
                     push!(explore, explore_odds(online_aps))
-                    next!(progress)
                 end
                 min(
                     (online_ap / target_ap) * advantage,
@@ -215,12 +212,10 @@ function train!(agent::SingleNNAgent, ra::RootAgent, epochs=10)
     for (epoch, batch) in enumerate(Batcher(sars, 100))
         if epoch > epochs; break end
         prms = params(agent.critic)
-        progress = Progress(length(batch))
         loss, grads = valgrad(prms) do
             mean(batch) do sar
-                predicted_q = state_value(agent, ra, sar.state)
+                predicted_q = state_value(agent, ra, sar.state, embed_gradient=false)
                 actual_q = sar.q
-                Zygote.@ignore next!(progress)
                 (predicted_q - actual_q)^2
             end
         end
