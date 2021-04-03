@@ -64,6 +64,7 @@ end
     add_encoded_choice(ce, :choice_a, rand(5), 2)
     add_encoded_choice(ce, :choice_b, rand(6), 3)
     r = encode_choices(ce)
+    @test length(ce) == 23
     @test size(r[1]) == (23, 3)
     @test r[2] == [1, 2, 3]
 end
@@ -157,6 +158,7 @@ end
     add_encoded_choice(ce, :choice_a, rand(5), 2)
     add_encoded_choice(ce, :choice_b, rand(6), 3)
     r = encode_state(ce)
+    @test state_length(ce) == 12 == length(r)
     @test r == reshape(Float32.([1
                                  1
                                  2
