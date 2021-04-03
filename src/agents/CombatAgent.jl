@@ -15,8 +15,8 @@ function CombatAgent()
             :potions      => VanillaNetwork(length(potions_encoder), 20, [50]),
             :relics       => VanillaNetwork(length(relics_encoder), 20, [50]),
             :player       => VanillaNetwork(length(player_combat_encoder), 20, [50]),
-            :draw         => PoolNetwork(length(card_encoder), 20, [50]),
-            :discard      => PoolNetwork(length(card_encoder), 20, [50])
+            :draw         => PoolNetwork(length(card_encoder)+1, 20, [50]),
+            :discard      => PoolNetwork(length(card_encoder)+1, 20, [50])
         ),
         Dict(
             :card         => VanillaNetwork(length(card_encoder), 20, [50]),
@@ -70,8 +70,8 @@ function setup_choice_encoder(agent::CombatAgent, ra::RootAgent, sts_state)
     add_encoded_state(agent.choice_encoder, :potions, potions_encoder(gs["potions"]))
     add_encoded_state(agent.choice_encoder, :relics, relics_encoder(gs["relics"]))
     add_encoded_state(agent.choice_encoder, :player, player_combat_encoder(sts_state))
-    add_encoded_state(agent.choice_encoder, :draw, reduce(hcat, map(card_encoder, gs["combat_state"]["draw_pile"])))
-    add_encoded_state(agent.choice_encoder, :discard, reduce(hcat, map(card_encoder, gs["combat_state"]["discard_pile"])))
+    add_encoded_state(agent.choice_encoder, :draw, encode_seq(card_encoder, gs["combat_state"]["draw_pile"]))
+    add_encoded_state(agent.choice_encoder, :discard, encode_seq(card_encoder, gs["combat_state"]["discard_pile"]))
     for action in all_valid_actions(sts_state)
         if action[1] == "potion"
             continue

@@ -136,4 +136,13 @@ function all_possible_actions()
     push!(actions, ("skip",))
 end
 
+function encode_seq(encoder, sequence)
+    if !isempty(sequence)
+        e = reduce(hcat, map(encoder, sequence))
+        [zeros(1, size(e, 2)); e]
+    else
+        [1; zeros(length(encoder))]
+    end
+end
+
 end # module
