@@ -91,7 +91,7 @@ function setup_choice_encoder(agent::CombatAgent, ra::RootAgent, sts_state)
             add_encoded_choice(
                 agent.choice_encoder,
                 :card_monster,
-                [card_encoder(gs["combat_state"]["hand"][card_i]); monster_encoder(gs["combat_state"]["monsters"][monster_i])]
+                [card_encoder(gs["combat_state"]["hand"][card_i]); monster_encoder(gs["combat_state"]["monsters"][monster_i])],
                 action)
             continue
         end
