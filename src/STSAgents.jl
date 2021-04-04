@@ -28,10 +28,10 @@ function RootAgent()
     map_agent = MapAgent()
     agents = [
         CampfireAgent(),       # TODO
-        CombatAgent(),         # TODO
+        CombatAgent(),
         DeckAgent(),           # TODO
         EventAgent(),          # TODO
-        map_agent,             # TODO
+        map_agent,
         MenuAgent(),
         RewardAgent(),         # TODO
         ShopAgent(),           # TODO
@@ -143,6 +143,10 @@ function encode_seq(encoder, sequence)
     else
         [1; zeros(length(encoder))]
     end
+end
+
+function current_map_node(ra::RootAgent)
+    ra.map_agent.current_map_node
 end
 
 end # module
