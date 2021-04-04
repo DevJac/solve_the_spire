@@ -250,8 +250,8 @@ end
     ChoiceEncoders.reset!(ce)
     add_encoded_state(ce, :state_a, rand(3))
     add_encoded_state(ce, :state_b, rand(4))
-    add_encoded_choice(ce, :choice_a, rand(5), 1)
-    add_encoded_choice(ce, :choice_a, rand(5), 2)
+    add_encoded_choice(ce, :choice_b, nothing, 1)
+    add_encoded_choice(ce, :choice_b, nothing, 2)
     e, a = encode_choices(ce)
     @test a == [1, 2]
     encode_state(ce)
@@ -279,8 +279,8 @@ end
     ChoiceEncoders.reset!(ce)
     add_encoded_state(ce, :state_a, rand(3))
     add_encoded_state(ce, :state_b, rand(4))
-    add_encoded_choice(ce, :choice_a, rand(5), 1)
-    add_encoded_choice(ce, :choice_a, rand(5), 2)
+    add_encoded_choice(ce, :choice_b, nothing, 1)
+    add_encoded_choice(ce, :choice_b, nothing, 2)
     gradient(params(ce)) do
         e, a = encode_choices(ce)
         Zygote.@ignore @test a == [1, 2]

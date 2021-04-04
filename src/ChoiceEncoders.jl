@@ -81,13 +81,18 @@ function encode_choices(ce::ChoiceEncoder)
     choice_keys = Zygote.@ignore sort(collect(keys(ce.choice_embedders)))
     choice_actions = Zygote.@ignore deepcopy(ce.choice_actions)
     presence_indicators = length(ce.choice_embedders) > 1 ? length(ce.choice_embedders) : 0
-    state_embedded = reduce(
-        vcat,
-        [ce.state_embedders[sym](ce.states_encoded[sym]) for sym in state_keys])
+    individual_states_embedded = map(state_keys) do sym
+        ce.state_embedders[sym](ce.states_encoded[sym])
+    end
+    state_embedded = reduce(vcat, individual_states_embedded)
     Zygote.@ignore @assert length(state_embedded) == sum(length, values(ce.state_embedders))
-    choice_categories_embedded = [
-        length(ce.choices_encoded[sym]) >= 1 ? reduce(hcat, ce.choice_embedders[sym].(ce.choices_encoded[sym])) : mask(ce, choice_actions, sym)
-        for sym in choice_keys]
+    choice_categories_embedded = map(choice_keys) do sym
+        if length(ce.choices_encoded[sym]) >= 1
+            reduce(hcat, ce.choice_embedders[sym].(ce.choices_encoded[sym]))
+        else
+            mask(ce, choice_actions, sym)
+        end
+    end
     if presence_indicators > 0
         choices_embedded = reduce(diagcat, map(onetop, choice_categories_embedded))
     else
@@ -114,13 +119,18 @@ function encode_state(ce::ChoiceEncoder)
     choice_keys = Zygote.@ignore sort(collect(keys(ce.choice_embedders)))
     choice_actions = Zygote.@ignore deepcopy(ce.choice_actions)
     presence_indicators = length(ce.choice_embedders) > 1 ? length(ce.choice_embedders) : 0
-    state_embedded = reduce(
-        vcat,
-        [ce.state_embedders[sym](ce.states_encoded[sym]) for sym in state_keys])
+    individual_states_embedded = map(state_keys) do sym
+        ce.state_embedders[sym](ce.states_encoded[sym])
+    end
+    state_embedded = reduce(vcat, individual_states_embedded)
     Zygote.@ignore @assert length(state_embedded) == sum(length, values(ce.state_embedders))
-    choice_categories_embedded = [
-        length(ce.choices_encoded[sym]) >= 1 ? reduce(hcat, ce.choice_embedders[sym].(ce.choices_encoded[sym])) : mask(ce, choice_actions, sym)
-        for sym in choice_keys]
+    choice_categories_embedded = map(choice_keys) do sym
+        if length(ce.choices_encoded[sym]) >= 1
+            reduce(hcat, ce.choice_embedders[sym].(ce.choices_encoded[sym]))
+        else
+            mask(ce, choice_actions, sym)
+        end
+    end
     if presence_indicators > 0
         choices_embedded = reduce(diagcat, map(onetop, choice_categories_embedded))
     else
@@ -138,7 +148,7 @@ struct MaskAction; end
 
 function mask(ce::ChoiceEncoder, choice_actions, sym)
     Zygote.@ignore push!(choice_actions[sym], MaskAction())
-    zeros(length(ce.choice_embedders[sym]))
+    zeros(Float32, length(ce.choice_embedders[sym]))
 end
 
 onetop(x) = [ones(1, size(x, 2)); x]

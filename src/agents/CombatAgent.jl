@@ -136,11 +136,11 @@ function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
             agent.policy)
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
-                target_aps = action_probabilities(target_agent, ra, sar.state)[2]
-                target_ap = target_aps[sar.action]
+                target_aps = Zygote.@ignore action_probabilities(target_agent, ra, sar.state)[2]
+                target_ap = Zygote.@ignore target_aps[sar.action]
                 online_aps = action_probabilities(agent, ra, sar.state)[2]
                 online_ap = online_aps[sar.action]
-                advantage = sar.q - state_value(target_agent, ra, sar.state)
+                advantage = Zygote.@ignore sar.q - state_value(target_agent, ra, sar.state)
                 Zygote.ignore() do
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
                     push!(actual_value, online_ap * sar.q)
