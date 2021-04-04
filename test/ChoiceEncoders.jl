@@ -135,10 +135,7 @@ end
                             0 0
                             0 0
                             0 0])
-    ce = ChoiceEncoder(
-        Dict(:state_a => MockNetwork(3, 2, 1), :state_b => MockNetwork(4, 3, 2)),
-        Dict(:choice_a => MockNetwork(5, 4, 3), :choice_b => MockNetwork(6, 5, 4)),
-        MockNetwork(11, 7, 5, true))
+    ChoiceEncoders.reset!(ce)
     add_encoded_state(ce, :state_a, rand(3))
     add_encoded_state(ce, :state_b, rand(4))
     add_encoded_choice(ce, :choice_b, rand(6), 3)
@@ -237,6 +234,29 @@ end
                             0 0 1])
 end
 
+@testset "encode_choices_then_encode_state" begin
+    ce = ChoiceEncoder(
+        Dict(:state_a => VanillaNetwork(3, 2, [1]), :state_b => VanillaNetwork(4, 3, [2])),
+        Dict(:choice_a => VanillaNetwork(5, 4, [3]), :choice_b => NullNetwork()),
+        7, [5])
+    add_encoded_state(ce, :state_a, rand(3))
+    add_encoded_state(ce, :state_b, rand(4))
+    add_encoded_choice(ce, :choice_a, rand(5), 1)
+    add_encoded_choice(ce, :choice_a, rand(5), 2)
+    add_encoded_choice(ce, :choice_b, nothing, 3)
+    e, a = encode_choices(ce)
+    @test a == [1, 2, 3]
+    encode_state(ce)
+    ChoiceEncoders.reset!(ce)
+    add_encoded_state(ce, :state_a, rand(3))
+    add_encoded_state(ce, :state_b, rand(4))
+    add_encoded_choice(ce, :choice_a, rand(5), 1)
+    add_encoded_choice(ce, :choice_a, rand(5), 2)
+    e, a = encode_choices(ce)
+    @test a == [1, 2]
+    encode_state(ce)
+end
+
 @testset "gradient" begin
     ce = ChoiceEncoder(
         Dict(:state_a => VanillaNetwork(3, 2, [1]), :state_b => VanillaNetwork(4, 3, [2])),
@@ -251,5 +271,23 @@ end
         e, a = encode_choices(ce)
         Zygote.@ignore @test a == [1, 2, 3]
         sum(e)
+    end
+    gradient(params(ce)) do
+        s = encode_state(ce)
+        sum(s)
+    end
+    ChoiceEncoders.reset!(ce)
+    add_encoded_state(ce, :state_a, rand(3))
+    add_encoded_state(ce, :state_b, rand(4))
+    add_encoded_choice(ce, :choice_a, rand(5), 1)
+    add_encoded_choice(ce, :choice_a, rand(5), 2)
+    gradient(params(ce)) do
+        e, a = encode_choices(ce)
+        Zygote.@ignore @test a == [1, 2]
+        sum(e)
+    end
+    gradient(params(ce)) do
+        s = encode_state(ce)
+        sum(s)
     end
 end
