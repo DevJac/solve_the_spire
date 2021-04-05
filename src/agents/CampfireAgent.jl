@@ -52,15 +52,15 @@ function action(agent::CampfireAgent, ra::RootAgent, sts_state)
                 log_value(ra.tb_log, "CampfireAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] == "REST"
+            if "proceed" in sts_state["available_commands"]
+                return "proceed"
+            end
             if awaiting(agent.sars) == sar_reward
                 r = gs["floor"] - agent.last_floor_rewarded
                 agent.last_floor_rewarded = gs["floor"]
                 add_reward(agent.sars, r)
                 log_value(ra.tb_log, "CampfireAgent/reward", r)
                 log_value(ra.tb_log, "CampfireAgent/length_sars", length(agent.sars.rewards))
-            end
-            if "proceed" in sts_state["available_commands"]
-                return "proceed"
             end
             actions, probabilities = action_probabilities(agent, ra, sts_state)
             log_value(ra.tb_log, "CampfireAgent/state_value", state_value(agent, ra, sts_state))

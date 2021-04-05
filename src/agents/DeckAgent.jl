@@ -48,15 +48,15 @@ function action(agent::DeckAgent, ra::RootAgent, sts_state)
                 log_value(ra.tb_log, "DeckAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] in ("CARD_REWARD", "GRID")
+            if "confirm" in sts_state["available_commands"]
+                return "confirm"
+            end
             if awaiting(agent.sars) == sar_reward
                 r = gs["floor"] - agent.last_floor_rewarded
                 agent.last_floor_rewarded = gs["floor"]
                 add_reward(agent.sars, r)
                 log_value(ra.tb_log, "DeckAgent/reward", r)
                 log_value(ra.tb_log, "DeckAgent/length_sars", length(agent.sars.rewards))
-            end
-            if "confirm" in sts_state["available_commands"]
-                return "confirm"
             end
             actions, probabilities = action_probabilities(agent, ra, sts_state)
             log_value(ra.tb_log, "DeckAgent/state_value", state_value(agent, ra, sts_state))

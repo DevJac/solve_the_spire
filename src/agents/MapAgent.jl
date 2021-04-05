@@ -49,15 +49,15 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
                 agent.current_map_node = (0, -1)
             end
         elseif gs["screen_type"] == "MAP"
+            if length(gs["screen_state"]["next_nodes"]) <= 1
+                return "choose 0"
+            end
             if awaiting(agent.sars) == sar_reward
                 r = gs["floor"] - agent.last_floor_rewarded
                 agent.last_floor_rewarded = gs["floor"]
                 add_reward(agent.sars, r)
                 log_value(ra.tb_log, "MapAgent/reward", r)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
-            end
-            if length(gs["screen_state"]["next_nodes"]) <= 1
-                return "choose 0"
             end
             actions, probabilities = action_probabilities(agent, ra, sts_state)
             log_value(ra.tb_log, "MapAgent/state_value", state_value(agent, ra, sts_state))
