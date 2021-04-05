@@ -19,7 +19,7 @@ function DeckAgent()
             :map          => VanillaNetwork(length(map_encoder), 20, [50])
         ),
         Dict(
-            :draft_card   => VanillaNetwork(length(card_encoder)+4, 20, [50]),
+            :card         => VanillaNetwork(length(card_encoder)+4, 20, [50]),
             :skip         => NullNetwork(),
             :bowl         => NullNetwork()
         ),
@@ -80,7 +80,7 @@ function setup_choice_encoder(agent::DeckAgent, ra::RootAgent, sts_state)
     add_encoded_state(agent.choice_encoder, :map, map_encoder(sts_state, current_map_node(ra)...))
     draft_upgrade_etc = zeros(Float32, 4)  # Draft, upgrade, transform, purge
     for action in all_valid_actions(sts_state)
-        if action[a] == "potion"
+        if action[1] == "potion"
             continue
         end
         if action[1] == "choose" && gs["screen_type"] == "CARD_REWARD"
@@ -91,7 +91,7 @@ function setup_choice_encoder(agent::DeckAgent, ra::RootAgent, sts_state)
                 draft_upgrade_etc[1] = 1
                 add_encoded_choice(
                     agent.choice_encoder,
-                    :draft_card,
+                    :card,
                     [draft_upgrade_etc; card_encoder(gs["screen_state"]["cards"][choice_i])],
                     action)
             end
@@ -106,7 +106,7 @@ function setup_choice_encoder(agent::DeckAgent, ra::RootAgent, sts_state)
             choice_i = action[2]+1
             add_encoded_choice(
                 agent.choice_encoder,
-                :draft_card,
+                :card,
                 [draft_upgrade_etc; card_encoder(gs["screen_state"]["cards"][choice_i])],
                 action)
             continue
