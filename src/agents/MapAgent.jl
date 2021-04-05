@@ -40,7 +40,7 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
-            @assert awaiting(agent.sars) == sar_reward
+            @assert awaiting(agent.sars) == sar_reward || isempty(agent.sars.actions)
             r = gs["floor"] - agent.last_floor_rewarded
             agent.last_floor_rewarded = 0
             add_reward(agent.sars, r, 0)
