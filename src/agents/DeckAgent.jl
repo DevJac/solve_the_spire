@@ -40,13 +40,12 @@ function action(agent::DeckAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
-            if awaiting(agent.sars) == sar_reward
-                r = gs["floor"] - agent.last_floor_rewarded
-                agent.last_floor_rewarded = 0
-                add_reward(agent.sars, r, 0)
-                log_value(ra.tb_log, "DeckAgent/reward", r)
-                log_value(ra.tb_log, "DeckAgent/length_sars", length(agent.sars.rewards))
-            end
+            @assert awaiting(agent.sars) == sar_reward
+            r = gs["floor"] - agent.last_floor_rewarded
+            agent.last_floor_rewarded = 0
+            add_reward(agent.sars, r, 0)
+            log_value(ra.tb_log, "DeckAgent/reward", r)
+            log_value(ra.tb_log, "DeckAgent/length_sars", length(agent.sars.rewards))
         elseif gs["screen_type"] in ("CARD_REWARD", "GRID")
             if "confirm" in sts_state["available_commands"]
                 return "confirm"
