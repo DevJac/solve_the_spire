@@ -57,7 +57,7 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
                 return "choose 0"
             end
             if gs["screen_type"] == "COMBAT_REWARD"
-                for (i, reward) in gs["screen_state"]["rewards"]
+                for (i, reward) in enumerate(gs["screen_state"]["rewards"])
                     if reward["reward_type"] == "GOLD"
                         return "choose $(i-1)"
                     end
@@ -72,6 +72,12 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
                         !any(r -> r["reward_type"] == "SAPPHIRE_KEY", gs["screen_state"]["rewards"]))
                         return "choose $(i-1)"
                     end
+                end
+                if (!in("choose", sts_state["available_commands"]) ||
+                    (length(gs["choice_list"]) == 1 &&
+                     gs["choice_list"][1] == "card" &&
+                     agent.last_card_reward_floor == gs["floor"]))
+                    return "proceed"
                 end
             end
             if awaiting(agent.sars) == sar_reward
@@ -106,7 +112,7 @@ function setup_choice_encoder(agent::RewardAgent, ra::RootAgent, sts_state)
                             any(r -> r["reward_type"] == "SAPPHIRE_KEY", gs["screen_state"]["rewards"]))
     if sapphire_key_offered
         sk_choice_i = find("sapphire_key", gs["choice_list"])-1
-        @assert sk_choice_i >= 2
+        @assert sk_choice_i >= 1
         add_encoded_choice(agent.choice_encoder, :choose_sapphire_key, nothing, ("choose", sk_choice_i))
         linked_relic = gs["screen_state"]["rewards"][sk_choice_i-1]["relic"]
         add_encoded_choice(agent.choice_encoder, :choose_relic, relics_encoder([linked_relic]), ("choose", sk_choice_i-1))
@@ -119,12 +125,12 @@ function setup_choice_encoder(agent::RewardAgent, ra::RootAgent, sts_state)
         return
     end
     @assert !any(p -> p["id"] == "Potion Slot", gs["potions"])
-    @assert length(gs["choice_list"]) == 1
     @assert gs["screen_state"]["rewards"][0]["reward_type"] == "POTION"
     @assert gs["screen_type"] == "COMBAT_REWARD"
     @assert "proceed" in sts_state["available_commands"]
     for (i, potion) in enumerate(gs["potions"])
-        add_encoded_choice(agent.choice_encoder, :give_up_potion, potions_encoder([potion]), ("potion", "discard", i-1))
+        potion_action = potion["can_use"] ? "use" : "discard"
+        add_encoded_choice(agent.choice_encoder, :give_up_potion, potions_encoder([potion]), ("potion", potion_action, i-1))
     end
     potion_rewarded = gs["screen_state"]["rewards"][0]["potion"]
     add_encoded_choice(agent.choice_encoder, :give_up_potion, potions_encoder([potion_rewarded]), ("proceed",))
