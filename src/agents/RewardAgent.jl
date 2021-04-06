@@ -58,7 +58,7 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
             end
             if gs["screen_type"] == "COMBAT_REWARD"
                 for (i, reward) in enumerate(gs["screen_state"]["rewards"])
-                    if reward["reward_type"] == "GOLD"
+                    if reward["reward_type"] == ("GOLD", "STOLEN_GOLD")
                         return "choose $(i-1)"
                     end
                     if reward["reward_type"] == "CARD" && agent.last_card_reward_floor != gs["floor"]
