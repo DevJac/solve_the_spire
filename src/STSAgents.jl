@@ -33,7 +33,7 @@ function RootAgent()
         EventAgent(),          # TODO
         map_agent,
         MenuAgent(),
-        RewardAgent(),         # TODO
+        RewardAgent(),
         ShopAgent(),           # TODO
         SpecialActionAgent(),  # TODO
         PotionAgent()]         # TODO

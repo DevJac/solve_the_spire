@@ -114,7 +114,7 @@ function setup_choice_encoder(agent::RewardAgent, ra::RootAgent, sts_state)
         sk_choice_i = find("sapphire_key", gs["choice_list"])-1
         @assert sk_choice_i >= 1
         add_encoded_choice(agent.choice_encoder, :choose_sapphire_key, nothing, ("choose", sk_choice_i))
-        linked_relic = gs["screen_state"]["rewards"][sk_choice_i-1]["relic"]
+        linked_relic = gs["screen_state"]["rewards"][sk_choice_i]["relic"]
         add_encoded_choice(agent.choice_encoder, :choose_relic, relics_encoder([linked_relic]), ("choose", sk_choice_i-1))
         return
     end
