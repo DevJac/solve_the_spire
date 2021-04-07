@@ -36,7 +36,7 @@ function RootAgent()
         RewardAgent(),
         ShopAgent(),           # TODO
         SpecialActionAgent(),  # TODO
-        PotionAgent()]         # TODO
+        PotionAgent()]
     RootAgent(0, 0, false, tb_log, map_agent, agents)
 end
 

@@ -44,7 +44,6 @@ function action(agent::PotionAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
-            agent.current_map_node = (0, -1)
             @assert awaiting(agent.sars) == sar_reward || !any(s -> s["game_state"]["seed"] == gs["seed"], agent.sars.states)
             if awaiting(agent.sars) == sar_reward
                 r = gs["floor"] - agent.last_floor_rewarded
@@ -101,14 +100,17 @@ function setup_choice_encoder(agent::PotionAgent, ra::RootAgent, sts_state)
     add_encoded_state(
         agent.choice_encoder,
         :monsters,
-        encode_seq(card_encoder, "combat_state" in keys(gs) ? gs["combat_state"]["monsters"] : []))
+        encode_seq(monster_encoder, "combat_state" in keys(gs) ? gs["combat_state"]["monsters"] : []))
     add_encoded_choice(agent.choice_encoder, :no_potion, nothing, ())
     for action in all_valid_actions(sts_state)
         if action[1] != "potion"
             continue
         elseif action[1] == "potion" && action[2] == "use"
-            choice_i = action[3]-1
+            choice_i = action[3]+1
             add_encoded_choice(agent.choice_encoder, :potion, potions_encoder([gs["potions"][choice_i]]), action)
+            continue
+        elseif action[1] == "potion" && action[2] == "discard"
+            continue
         end
         @error "Unhandled action" action
         throw("Unhandled action")
@@ -133,6 +135,7 @@ end
 function train!(agent::PotionAgent, ra::RootAgent, epochs=1000)
     train_log = TBLogger("tb_logs/train_PotionAgent")
     sars = fill_q(agent.sars)
+    if isempty(sars); return end
     log_histogram(ra.tb_log, "PotionAgent/rewards", map(sar -> sar.reward, sars))
     log_histogram(ra.tb_log, "PotionAgent/q", map(sar -> sar.q, sars))
     target_agent = deepcopy(agent)

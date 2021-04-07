@@ -58,7 +58,7 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
             end
             if gs["screen_type"] == "COMBAT_REWARD"
                 for (i, reward) in enumerate(gs["screen_state"]["rewards"])
-                    if reward["reward_type"] == ("GOLD", "STOLEN_GOLD")
+                    if reward["reward_type"] in ("GOLD", "STOLEN_GOLD")
                         return "choose $(i-1)"
                     end
                     if reward["reward_type"] == "CARD" && agent.last_card_reward_floor != gs["floor"]
@@ -154,6 +154,7 @@ end
 function train!(agent::RewardAgent, ra::RootAgent, epochs=1000)
     train_log = TBLogger("tb_logs/train_RewardAgent")
     sars = fill_q(agent.sars)
+    if isempty(sars); return end
     log_histogram(ra.tb_log, "RewardAgent/rewards", map(sar -> sar.reward, sars))
     log_histogram(ra.tb_log, "RewardAgent/q", map(sar -> sar.q, sars))
     target_agent = deepcopy(agent)

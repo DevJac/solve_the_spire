@@ -139,6 +139,7 @@ end
 function train!(agent::CampfireAgent, ra::RootAgent, epochs=1000)
     train_log = TBLogger("tb_logs/train_CampfireAgent")
     sars = fill_q(agent.sars)
+    if isempty(sars); return end
     log_histogram(ra.tb_log, "CampfireAgent/rewards", map(sar -> sar.reward, sars))
     log_histogram(ra.tb_log, "CampfireAgent/q", map(sar -> sar.q, sars))
     target_agent = deepcopy(agent)

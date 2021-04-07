@@ -17,7 +17,7 @@ function CombatAgent()
             :player       => VanillaNetwork(length(player_combat_encoder), 20, [50]),
             :hand         => PoolNetwork(length(card_encoder)+1, 20, [50]),
             :draw         => PoolNetwork(length(card_encoder)+1, 20, [50]),
-            :discard      => PoolNetwork(length(card_encoder)+1, 20, [50])
+            :discard      => PoolNetwork(length(card_encoder)+1, 20, [50]),
             :monsters     => PoolNetwork(length(monster_encoder), 20, [50])
         ),
         Dict(
@@ -125,6 +125,7 @@ end
 function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
     train_log = TBLogger("tb_logs/train_CombatAgent")
     sars = fill_q(agent.sars)
+    if isempty(sars); return end
     log_histogram(ra.tb_log, "CombatAgent/rewards", map(sar -> sar.reward, sars))
     log_histogram(ra.tb_log, "CombatAgent/q", map(sar -> sar.q, sars))
     target_agent = deepcopy(agent)
