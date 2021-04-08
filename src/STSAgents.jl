@@ -93,9 +93,17 @@ function all_valid_actions(sts_state)
     actions = filter(a -> a[1] in sts_state["available_commands"], actions)
     actions = filter(a -> (a[1] != "choose" ||
                            a[2] < length(gs["choice_list"])), actions)
-    actions = filter(a -> (a[1] != "potion" || a[2] != "use" ||
+    actions = filter(a -> (a[1] != "potion" || a[2] != "use" || length(a) != 3 ||
                            a[3] < length(gs["potions"]) &&
-                           gs["potions"][a[3]+1]["can_use"]), actions)
+                           gs["potions"][a[3]+1]["can_use"] &&
+                           !gs["potions"][a[3]+1]["requires_target"]), actions)
+    actions = filter(a -> (a[1] != "potion" || a[2] != "use" || length(a) != 4 ||
+                           a[3] < length(gs["potions"]) &&
+                           gs["potions"][a[3]+1]["can_use"] &&
+                           gs["potions"][a[3]+1]["requires_target"] &&
+                           "combat_state" in keys(gs) &&
+                           a[4] < length(gs["combat_state"]["monsters"]) &&
+                           !gs["combat_state"]["monsters"][a[4]+1]["is_gone"]), actions)
     actions = filter(a -> (a[1] != "potion" || a[2] != "discard" ||
                            a[3] < length(gs["potions"]) &&
                            gs["potions"][a[3]+1]["can_discard"]), actions)
@@ -121,8 +129,11 @@ function all_possible_actions()
         end
     end
     for potion_i in 0:4
-        push!(actions, ("potion", "use", potion_i))
         push!(actions, ("potion", "discard", potion_i))
+        push!(actions, ("potion", "use", potion_i))
+        for monster_i in 0:4
+            push!(actions, ("potion", "use", potion_i, monster_i))
+        end
     end
     for choice_i in 0:29
         push!(actions, ("choose", choice_i))
