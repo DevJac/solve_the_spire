@@ -23,10 +23,9 @@ function SpecialActionAgent()
             :draw           => PoolNetwork(length(card_encoder)+1, 20, [50]),
             :discard        => PoolNetwork(length(card_encoder)+1, 20, [50]),
             :monsters       => PoolNetwork(length(monster_encoder)+1, 20, [50]),
-            :current_action => VanillaNetwork(5, 5, [50])
         ),
         Dict(
-            :choose_card    => VanillaNetwork(length(card_encoder), 20, [50]),
+            :choose_card    => VanillaNetwork(length(card_encoder) + length(agent.hand_select_actions), 20, [50]),
             :confirm        => NullNetwork()
         ),
         20, [50])
@@ -111,7 +110,6 @@ function setup_choice_encoder(agent::SpecialActionAgent, ra::RootAgent, sts_stat
     current_action_i = find(gs["current_action"], agent.hand_select_actions)
     if !isnothing(current_action_i); current_action_encoded[current_action_i] = 1 end
     @assert sum(current_action_encoded) in (0, 1)
-    add_encoded_state(agent.choice_encoder, :current_action, current_action_encoded)
     for action in all_valid_actions(sts_state)
         if action[1] == "potion"
             continue
@@ -125,7 +123,7 @@ function setup_choice_encoder(agent::SpecialActionAgent, ra::RootAgent, sts_stat
             add_encoded_choice(
                 agent.choice_encoder,
                 :choose_card,
-                card_encoder(gs["screen_state"]["hand"][choice_i]),
+                [current_action_encoded; card_encoder(gs["screen_state"]["hand"][choice_i])],
                 action)
             continue
         end
