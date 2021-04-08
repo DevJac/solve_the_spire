@@ -117,6 +117,12 @@ Choose a card to copy
 Cards to retain until next turn
 ** SetupAction
 Put a card from your hand on top of your draw pile. It costs 0 until played.
+* HAND_SELECT current_action
+DiscardAction
+GamblingChipAction
+NightmareAction
+RetainCardsAction
+SetupAction
 * Refactor
 - [ ] .
 - [X] ├── agent.jl
