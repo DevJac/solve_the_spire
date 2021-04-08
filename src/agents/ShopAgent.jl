@@ -54,7 +54,7 @@ function action(agent::ShopAgent, ra::RootAgent, sts_state)
             end
         elseif gs["screen_type"] in ("SHOP_ROOM", "SHOP_SCREEN")
             if gs["screen_type"] == "SHOP_ROOM"
-                if gs["floor"] == agent.last_visied_shop_floor
+                if gs["floor"] == agent.last_visited_shop_floor
                     return "proceed"
                 end
                 agent.last_visited_shop_floor = gs["floor"]
@@ -102,12 +102,13 @@ function setup_choice_encoder(agent::ShopAgent, ra::RootAgent, sts_state)
                 add_encoded_choice(agent.choice_encoder, :purge_card, [gs["screen_state"]["purge_cost"]], action)
                 continue
             end
-            matching_cards = filter(c -> lowercase(c["name"]) == choice_name, gs["screen_state"]["cards"])
-            matching_relics = filter(r -> lowercase(r["name"]) == choice_name, gs["screen_state"]["relics"])
-            matching_potions = filter(p -> lowercase(p["name"]) == choice_name, gs["screen_state"]["potions"])
-            @assert length(matching_cards) + length(matching_relics) + length(matching_potions) == 1
-            if length(matching_cards) == 1
-                matching_card = only(matching_cards)
+            sort_price(a) = sort(a, by=b -> b["price"])
+            matching_cards = sort_price(filter(c -> lowercase(c["name"]) == choice_name, gs["screen_state"]["cards"]))
+            matching_relics = sort_price(filter(r -> lowercase(r["name"]) == choice_name, gs["screen_state"]["relics"]))
+            matching_potions = sort_price(filter(p -> lowercase(p["name"]) == choice_name, gs["screen_state"]["potions"]))
+            @assert length(matching_potions) <= 1 || matching_potions[1]["price"] <= matching_potions[2]["price"]
+            if !isempty(matching_cards)
+                matching_card = matching_cards[1]
                 add_encoded_choice(
                     agent.choice_encoder,
                     :buy_card,
@@ -115,8 +116,9 @@ function setup_choice_encoder(agent::ShopAgent, ra::RootAgent, sts_state)
                     action)
                 continue
             end
-            if length(matching_relics) == 1
-                matching_relic = only(matching_relics)
+            if !isempty(matching_relics)
+                matching_relic = matching_relics[1]
+                if matching_relic["id"] == "PrismaticShard"; continue end
                 add_encoded_choice(
                     agent.choice_encoder,
                     :buy_relic,
@@ -124,12 +126,12 @@ function setup_choice_encoder(agent::ShopAgent, ra::RootAgent, sts_state)
                     action)
                 continue
             end
-            if length(matching_potions) == 1
-                matching_potion = only(matching_potions)
+            if !isempty(matching_potions)
+                matching_potion = matching_potions[1]
                 add_encoded_choice(
                     agent.choice_encoder,
                     :buy_potion,
-                    [matching_relic["price"], potions_encoder([matching_potions])],
+                    [matching_potion["price"]; potions_encoder([matching_potion])],
                     action)
                 continue
             end

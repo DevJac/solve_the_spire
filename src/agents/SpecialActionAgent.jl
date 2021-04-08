@@ -12,6 +12,7 @@ mutable struct SpecialActionAgent
 end
 
 function SpecialActionAgent()
+    hand_select_actions = readlines("game_data/hand_select_actions.txt")
     choice_encoder = ChoiceEncoder(
         Dict(
             :potions        => VanillaNetwork(length(potions_encoder), 20, [50]),
@@ -25,7 +26,7 @@ function SpecialActionAgent()
             :monsters       => PoolNetwork(length(monster_encoder)+1, 20, [50]),
         ),
         Dict(
-            :choose_card    => VanillaNetwork(length(card_encoder) + length(agent.hand_select_actions), 20, [50]),
+            :choose_card    => VanillaNetwork(length(card_encoder) + length(hand_select_actions), 20, [50]),
             :confirm        => NullNetwork()
         ),
         20, [50])
@@ -39,7 +40,7 @@ function SpecialActionAgent()
         ADADelta(),
         SARS(),
         0,
-        readlines("game_data/hand_select_actions.txt"))
+        hand_select_actions)
 end
 
 function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
