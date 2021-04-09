@@ -7,3 +7,4 @@
 ./jq_scripts/extract_player_powers.sh > game_data/player_power_ids.txt
 ./jq_scripts/extract_potions.sh > game_data/potion_ids.txt
 ./jq_scripts/extract_relics.sh > game_data/relic_ids.txt
+./jq_scripts/extract_hand_select_actions.sh > game_data/hand_select_actions.txt
