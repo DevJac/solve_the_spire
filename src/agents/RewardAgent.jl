@@ -132,7 +132,7 @@ function setup_choice_encoder(agent::RewardAgent, ra::RootAgent, sts_state)
         potion_action = potion["can_use"] ? "use" : "discard"
         add_encoded_choice(agent.choice_encoder, :give_up_potion, potions_encoder([potion]), ("potion", potion_action, i-1))
     end
-    potion_rewarded = gs["screen_state"]["rewards"][0]["potion"]
+    potion_rewarded = gs["screen_state"]["rewards"][1]["potion"]
     add_encoded_choice(agent.choice_encoder, :give_up_potion, potions_encoder([potion_rewarded]), ("proceed",))
 end
 
