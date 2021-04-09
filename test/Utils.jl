@@ -74,6 +74,19 @@ end
     @test sum(batch) == sum(data)
 end
 
+@testset "Batcher_fuzz" begin
+    for test in 1:1000
+        data_size = rand(1:20)
+        batch_size = rand(1:20)
+        data = collect(1:data_size)
+        b = Batcher(data, batch_size)
+        for (i, batch) in enumerate(b)
+            @test length(batch) in (batch_size, data_size)
+            if i >= 100; break end
+        end
+    end
+end
+
 @testset "explore_odds" begin
     @test explore_odds([0.333, 0.333, 0.333]) == 0
     @test explore_odds([0.4, 0.3, 0.3]) == 0.6

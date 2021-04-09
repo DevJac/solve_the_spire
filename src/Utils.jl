@@ -100,20 +100,20 @@ end
 
 function Base.iterate(b::Batcher)
     shuffle!(b.data)
-    iterate(b, 1)
+    iterate(b, 0)
 end
 
 function Base.iterate(b::Batcher, state)
     if b.batchsize > length(b.data)
-        return (shuffle!(b.data), 1)
+        return (shuffle!(b.data), 0)
     end
-    if state + b.batchsize-1 > length(b.data)
-        post_shuffle_size = length(b.data) - state + 1
-        result = b.data[state:end]
+    if state + b.batchsize > length(b.data)
+        post_shuffle_size = state + b.batchsize - length(b.data)
+        result = b.data[state+1:end]
         shuffle!(b.data)
-        (append!(result, b.data[1:post_shuffle_size]), post_shuffle_size+1)
+        (append!(result, b.data[1:post_shuffle_size]), post_shuffle_size)
     else
-        (b.data[state:state+b.batchsize-1], (state + b.batchsize) % length(b.data))
+        (b.data[state+1:state+b.batchsize], (state + b.batchsize) % length(b.data))
     end
 end
 
