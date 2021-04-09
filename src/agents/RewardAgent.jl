@@ -125,7 +125,7 @@ function setup_choice_encoder(agent::RewardAgent, ra::RootAgent, sts_state)
         return
     end
     @assert !any(p -> p["id"] == "Potion Slot", gs["potions"])
-    @assert gs["screen_state"]["rewards"][0]["reward_type"] == "POTION"
+    @assert gs["screen_state"]["rewards"][1]["reward_type"] == "POTION"
     @assert gs["screen_type"] == "COMBAT_REWARD"
     @assert "proceed" in sts_state["available_commands"]
     for (i, potion) in enumerate(gs["potions"])

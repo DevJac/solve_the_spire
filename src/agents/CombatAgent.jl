@@ -40,9 +40,6 @@ end
 function action(agent::CombatAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
-        if gs["screen_type"] == "GAME_OVER"
-            @assert awaiting(agent.sars) == sar_reward || !any(s -> s["game_state"]["seed"] == gs["seed"], agent.sars.states)
-        end
         if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"

@@ -24,6 +24,7 @@ function ShopAgent()
             :buy_relic      => VanillaNetwork(length(relics_encoder)+1, 20, [50]),
             :buy_potion     => VanillaNetwork(length(potions_encoder)+1, 20, [50]),
             :purge_card     => VanillaNetwork(1, 1, [50]),
+            :discard_potion => VanillaNetwork(length(potions_encoder), 20, [50]),
             :leave          => NullNetwork()
         ),
         20, [50])
@@ -127,6 +128,17 @@ function setup_choice_encoder(agent::ShopAgent, ra::RootAgent, sts_state)
                 continue
             end
             if !isempty(matching_potions)
+                if !any(p -> p["id"] == "Potion Slot", gs["potions"])
+                    for (potion_i, potion) in enumerate(gs["potions"])
+                        use_discard = potion["can_use"] ? "use" : "discard"
+                        add_encoded_choice(
+                            agent.choice_encoder,
+                            :discard_potion,
+                            potions_encoder([potion]),
+                            ("potion", use_discard, potion_i-1))
+                    end
+                    continue
+                end
                 matching_potion = matching_potions[1]
                 add_encoded_choice(
                     agent.choice_encoder,
