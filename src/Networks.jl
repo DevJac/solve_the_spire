@@ -48,7 +48,7 @@ function PoolNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_unifor
     push!(layers, Dense(hidden[end], out, identity))
     oif_weights = ones(Float32, out, 4) / 100
     for i in 1:out
-        oif_weights[i%4+1] = 1
+        oif_weights[i,i%4+1] = 1
     end
     PoolNetwork(Chain(layers...), oif_weights)
 end
