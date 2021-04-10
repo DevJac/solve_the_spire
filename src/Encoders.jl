@@ -184,10 +184,10 @@ function make_monster_encoder(game_data)
         j["block"]
     end
     ae() do j
-        j["move_adjusted_damage"]
+        get(j, "move_adjusted_damage", 0)
     end
     ae() do j
-        j["move_hits"]
+        get(j, "move_hits", 0)
     end
     ae() do j
         monster_total_attack(j)
