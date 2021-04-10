@@ -13,6 +13,8 @@ using Zygote
 
 export RootAgent, agent_command, action, train!
 
+const STANDARD_POLICY_LAYERS = [200, 200]
+
 mutable struct RootAgent
     games          :: Int
     generation     :: Int

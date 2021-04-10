@@ -30,8 +30,8 @@ function SpecialActionAgent()
             :confirm        => NullNetwork()
         ),
         20, [50])
-    policy = VanillaNetwork(length(choice_encoder), 1, [50])
-    critic = VanillaNetwork(state_length(choice_encoder), 1, [50])
+    policy = VanillaNetwork(length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
+    critic = VanillaNetwork(state_length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
     SpecialActionAgent(
         choice_encoder,
         policy,
