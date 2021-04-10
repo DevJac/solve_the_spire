@@ -27,12 +27,12 @@ function RootAgent()
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
     map_agent = MapAgent()
     agents = [
+        MenuAgent(),
         CampfireAgent(),
         CombatAgent(),
         DeckAgent(),
         EventAgent(),          # TODO
         map_agent,
-        MenuAgent(),
         RewardAgent(),
         ShopAgent(),
         SpecialActionAgent(),
