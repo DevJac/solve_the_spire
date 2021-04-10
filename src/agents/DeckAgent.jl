@@ -136,7 +136,7 @@ function state_value(agent::DeckAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::DeckAgent, ra::RootAgent, epochs=1000)
+function train!(agent::DeckAgent, ra::RootAgent, epochs=800)
     train_log = TBLogger("tb_logs/train_DeckAgent")
     sars = fill_q(agent.sars)
     if isempty(sars); return end

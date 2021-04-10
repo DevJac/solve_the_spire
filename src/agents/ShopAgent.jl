@@ -23,8 +23,8 @@ function ShopAgent()
             :buy_card       => VanillaNetwork(length(card_encoder)+1, 20, [50]),
             :buy_relic      => VanillaNetwork(length(relics_encoder)+1, 20, [50]),
             :buy_potion     => VanillaNetwork(length(potions_encoder)+1, 20, [50]),
-            :purge_card     => VanillaNetwork(1, 1, [50]),
             :discard_potion => VanillaNetwork(length(potions_encoder), 20, [50]),
+            :purge_card     => VanillaNetwork(1, 1, [50]),
             :leave          => NullNetwork()
         ),
         20, [50])
@@ -168,7 +168,7 @@ function state_value(agent::ShopAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::ShopAgent, ra::RootAgent, epochs=1000)
+function train!(agent::ShopAgent, ra::RootAgent, epochs=800)
     train_log = TBLogger("tb_logs/train_ShopAgent")
     sars = fill_q(agent.sars)
     if isempty(sars); return end

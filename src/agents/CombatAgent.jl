@@ -119,7 +119,7 @@ function state_value(agent::CombatAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::CombatAgent, ra::RootAgent, epochs=1000)
+function train!(agent::CombatAgent, ra::RootAgent, epochs=800)
     train_log = TBLogger("tb_logs/train_CombatAgent")
     sars = fill_q(agent.sars)
     if isempty(sars); return end
