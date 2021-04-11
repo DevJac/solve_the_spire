@@ -57,7 +57,7 @@ function (n::PoolNetwork)(s)
     # network out
     no = n.network(s)
     # applied order invariant functions
-    applied_oif = hcat(sum(no, dims=2), mean(no, dims=2), minimum(no, dims=2), maximum(no, dims=2))
+    applied_oif = hcat(minimum(no, dims=2), mean(no, dims=2), sum(no, dims=2), maximum(no, dims=2))
     pooled = sum(applied_oif .* n.oif_weights, dims=2)
     reshape(pooled, length(pooled))
 end
