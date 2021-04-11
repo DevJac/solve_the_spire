@@ -7,6 +7,8 @@ struct CombatAgent
     policy_opt
     critic_opt
     sars
+    floor_monster_hp     :: Tuple{Float32, Float32, Float32}
+    floor_partial_credit :: Float32
 end
 
 function CombatAgent()
@@ -34,7 +36,8 @@ function CombatAgent()
         critic,
         ADADelta(),
         ADADelta(),
-        SARS())
+        SARS(),
+        (0f0, 0f0, 0f0), 0f0)
 end
 
 function action(agent::CombatAgent, ra::RootAgent, sts_state)
@@ -44,13 +47,31 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"
             @assert !(win && lose)
+            if gs["floor"] != agent.floor_monster_hp
+                sum_hp = sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+                max_hp = maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+                agent.floor_monster_hp = Float32.((gs["floor"], sum_hp, max_hp))
+            end
+            if win
+                agent.floor_partial_credit = 1f0
+            else
+                sum_hp = sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+                max_hp = maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+                agent.floor_partial_credit = Float32(mean([
+                    1 - (sum_hp / agent.floor_monster_hp[2]),
+                    1 - (max_hp / agent.floor_monster_hp[3])]))
+            end
             last_hp = agent.sars.states[end]["game_state"]["current_hp"]
             current_hp = gs["current_hp"]
             r = current_hp - last_hp
-            if win; r+= 10 end
+            r += agent.floor_partial_credit * 10
             add_reward(agent.sars, r, win || lose ? 0 : 1)
             log_value(ra.tb_log, "CombatAgent/reward", r)
             log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
+            if win || lose
+                agent.floor_monster_hp = (0f0, 0f0, 0f0)
+                agent.floor_partial_credit = 0f0
+            end
         end
         if gs["screen_type"] == "NONE"
             actions, probabilities = action_probabilities(agent, ra, sts_state)

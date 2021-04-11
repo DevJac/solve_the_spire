@@ -21,6 +21,7 @@ mutable struct RootAgent
     ready_to_train :: Bool
     tb_log
     map_agent
+    combat_agent
     agents
 end
 
@@ -28,10 +29,11 @@ function RootAgent()
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
     map_agent = MapAgent()
+    combat_agent = CombatAgent()
     agents = [
         MenuAgent(),
+        combat_agent,
         CampfireAgent(),
-        CombatAgent(),
         DeckAgent(),
         EventAgent(),          # TODO
         map_agent,
@@ -39,7 +41,7 @@ function RootAgent()
         ShopAgent(),
         SpecialActionAgent(),
         PotionAgent()]
-    RootAgent(0, 0, false, tb_log, map_agent, agents)
+    RootAgent(0, 0, false, tb_log, map_agent, combat_agent, agents)
 end
 
 function RootAgent(ra::RootAgent)
@@ -161,6 +163,10 @@ end
 
 function current_map_node(ra::RootAgent)
     ra.map_agent.current_map_node
+end
+
+function floor_partial_credit(ra::RootAgent)
+    ra.combat_agent.floor_partial_credit
 end
 
 end # module
