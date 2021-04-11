@@ -17,13 +17,11 @@ function SpecialActionAgent()
         Dict(
             :potions        => VanillaNetwork(length(potions_encoder), 20, [50]),
             :relics         => VanillaNetwork(length(relics_encoder), 20, [50]),
-            :player_combat  => VanillaNetwork(length(player_combat_encoder)+1, 20, [50]),
-            :player_basic   => VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50]),
-            :deck           => PoolNetwork(length(card_encoder), 20, [50]),
+            :player         => VanillaNetwork(length(player_combat_encoder), 20, [50]),
             :hand           => PoolNetwork(length(card_encoder)+1, 20, [50]),
             :draw           => PoolNetwork(length(card_encoder)+1, 20, [50]),
             :discard        => PoolNetwork(length(card_encoder)+1, 20, [50]),
-            :monsters       => PoolNetwork(length(monster_encoder)+1, 20, [50]),
+            :monsters       => PoolNetwork(length(monster_encoder), 20, [50])
         ),
         Dict(
             :choose_card    => VanillaNetwork(length(card_encoder) + length(hand_select_actions), 20, [50]),
@@ -46,15 +44,17 @@ end
 function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
-        if gs["screen_type"] == "GAME_OVER"
-            @assert awaiting(agent.sars) == sar_reward || !any(s -> s["game_state"]["seed"] == gs["seed"], agent.sars.states)
-            if awaiting(agent.sars) == sar_reward
-                r = gs["floor"] - agent.last_floor_rewarded
-                agent.last_floor_rewarded = 0
-                add_reward(agent.sars, r, 0)
-                log_value(ra.tb_log, "SpecialActionAgent/reward", r)
-                log_value(ra.tb_log, "SpecialActionAgent/length_sars", length(agent.sars.rewards))
-            end
+        if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
+            win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
+            lose = gs["screen_type"] == "GAME_OVER"
+            @assert !(win && lose)
+            last_hp = agent.sars.states[end]["game_state"]["current_hp"]
+            current_hp = gs["current_hp"]
+            r = current_hp - last_hp
+            if win; r+= 10 end
+            add_reward(agent.sars, r, win || lose ? 0 : 1)
+            log_value(ra.tb_log, "CombatAgent/reward", r)
+            log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
         elseif gs["screen_type"] == "HAND_SELECT"
             if !in("choose", sts_state["available_commands"])
                 return "proceed"
@@ -85,28 +85,11 @@ function setup_choice_encoder(agent::SpecialActionAgent, ra::RootAgent, sts_stat
     ChoiceEncoders.reset!(agent.choice_encoder)
     add_encoded_state(agent.choice_encoder, :potions, potions_encoder(gs["potions"]))
     add_encoded_state(agent.choice_encoder, :relics, relics_encoder(gs["relics"]))
-    add_encoded_state(
-        agent.choice_encoder,
-        :player_combat,
-        encode_seq(player_combat_encoder, "combat_state" in keys(gs) ? [sts_state] : []))
-    add_encoded_state(agent.choice_encoder, :player_basic, player_basic_encoder(sts_state))
-    add_encoded_state(agent.choice_encoder, :deck, reduce(hcat, map(card_encoder, gs["deck"])))
-    add_encoded_state(
-        agent.choice_encoder,
-        :hand,
-        encode_seq(card_encoder, "combat_state" in keys(gs) ? gs["combat_state"]["hand"] : []))
-    add_encoded_state(
-        agent.choice_encoder,
-        :draw,
-        encode_seq(card_encoder, "combat_state" in keys(gs) ? gs["combat_state"]["draw_pile"] : []))
-    add_encoded_state(
-        agent.choice_encoder,
-        :discard,
-        encode_seq(card_encoder, "combat_state" in keys(gs) ? gs["combat_state"]["discard_pile"] : []))
-    add_encoded_state(
-        agent.choice_encoder,
-        :monsters,
-        encode_seq(monster_encoder, "combat_state" in keys(gs) ? gs["combat_state"]["monsters"] : []))
+    add_encoded_state(agent.choice_encoder, :player, player_combat_encoder(sts_state))
+    add_encoded_state(agent.choice_encoder, :hand, encode_seq(card_encoder, gs["combat_state"]["hand"]))
+    add_encoded_state(agent.choice_encoder, :draw, encode_seq(card_encoder, gs["combat_state"]["draw_pile"]))
+    add_encoded_state(agent.choice_encoder, :discard, encode_seq(card_encoder, gs["combat_state"]["discard_pile"]))
+    add_encoded_state(agent.choice_encoder, :monsters, reduce(hcat, map(monster_encoder, gs["combat_state"]["monsters"])))
     current_action_encoded = zeros(Float32, length(agent.hand_select_actions))
     current_action_i = find(gs["current_action"], agent.hand_select_actions)
     if !isnothing(current_action_i); current_action_encoded[current_action_i] = 1 end
