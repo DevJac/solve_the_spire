@@ -44,6 +44,11 @@ end
 function action(agent::CombatAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
+        if gs["floor"] != agent.floor_monster_hp[1]
+            agent.floor_monster_hp = (0f0, 0f0, 0f0)
+            agent.floor_partial_credit = 0f0
+            agent.last_rewarded_partial_credit = 0f0
+        end
         if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"
@@ -70,11 +75,6 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             add_reward(agent.sars, r, win || lose ? 0 : 1)
             log_value(ra.tb_log, "CombatAgent/reward", r)
             log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
-            if win || lose
-                agent.floor_monster_hp = (0f0, 0f0, 0f0)
-                if win; agent.floor_partial_credit = 0f0 end
-                agent.last_rewarded_partial_credit = 0f0
-            end
         end
         if gs["screen_type"] == "NONE"
             actions, probabilities = action_probabilities(agent, ra, sts_state)

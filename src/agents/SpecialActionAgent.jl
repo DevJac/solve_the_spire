@@ -7,7 +7,7 @@ mutable struct SpecialActionAgent
     policy_opt
     critic_opt
     sars
-    last_floor_rewarded
+    last_rewarded_partial_credit :: Float32
     hand_select_actions
 end
 
@@ -37,34 +37,30 @@ function SpecialActionAgent()
         ADADelta(),
         ADADelta(),
         SARS(),
-        0,
+        0f0,
         hand_select_actions)
 end
 
 function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
-        if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
+        if gs["screen_type"] in ("HAND_SELECT", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"
             @assert !(win && lose)
             last_hp = agent.sars.states[end]["game_state"]["current_hp"]
             current_hp = gs["current_hp"]
             r = current_hp - last_hp
-            r += (win ? 1 : floor_partial_credit(ra)) * 10
+            r += (floor_partial_credit(ra) - agent.last_rewarded_partial_credit) * 10
+            agent.last_rewarded_partial_credit = floor_partial_credit(ra)
             add_reward(agent.sars, r, win || lose ? 0 : 1)
             log_value(ra.tb_log, "SpecialActionAgent/reward", r)
             log_value(ra.tb_log, "SpecialActionAgent/length_sars", length(agent.sars.rewards))
-        elseif gs["screen_type"] == "HAND_SELECT"
+            if win || lose; agent.last_rewarded_partial_credit = 0f0 end
+        end
+        if gs["screen_type"] == "HAND_SELECT"
             if !in("choose", sts_state["available_commands"])
                 return "proceed"
-            end
-            if awaiting(agent.sars) == sar_reward
-                r = gs["floor"] - agent.last_floor_rewarded
-                agent.last_floor_rewarded = gs["floor"]
-                add_reward(agent.sars, r)
-                log_value(ra.tb_log, "SpecialActionAgent/reward", r)
-                log_value(ra.tb_log, "SpecialActionAgent/length_sars", length(agent.sars.rewards))
             end
             actions, probabilities = action_probabilities(agent, ra, sts_state)
             log_value(ra.tb_log, "SpecialActionAgent/state_value", state_value(agent, ra, sts_state))
