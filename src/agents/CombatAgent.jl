@@ -72,7 +72,6 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
             if win || lose
                 agent.floor_monster_hp = (0f0, 0f0, 0f0)
-                agent.floor_partial_credit = 0f0
                 agent.last_rewarded_partial_credit = 0f0
             end
         end
