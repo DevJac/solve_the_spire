@@ -51,7 +51,7 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
             last_hp = agent.sars.states[end]["game_state"]["current_hp"]
             current_hp = gs["current_hp"]
             r = current_hp - last_hp
-            r += floor_partial_credit(ra) * 10
+            r += (win ? 1 : floor_partial_credit(ra)) * 10
             add_reward(agent.sars, r, win || lose ? 0 : 1)
             log_value(ra.tb_log, "SpecialActionAgent/reward", r)
             log_value(ra.tb_log, "SpecialActionAgent/length_sars", length(agent.sars.rewards))
