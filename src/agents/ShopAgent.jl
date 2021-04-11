@@ -47,7 +47,7 @@ function action(agent::ShopAgent, ra::RootAgent, sts_state)
             agent.last_visited_shop_floor = 0
             @assert awaiting(agent.sars) == sar_reward || !any(s -> s["game_state"]["seed"] == gs["seed"], agent.sars.states)
             if awaiting(agent.sars) == sar_reward
-                r = gs["floor"] - agent.last_floor_rewarded
+                r = gs["floor"] - agent.last_floor_rewarded + floor_partial_credit(ra)
                 agent.last_floor_rewarded = 0
                 add_reward(agent.sars, r, 0)
                 log_value(ra.tb_log, "ShopAgent/reward", r)

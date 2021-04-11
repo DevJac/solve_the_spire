@@ -43,7 +43,7 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
             agent.current_map_node = (0, -1)
             @assert awaiting(agent.sars) == sar_reward || !any(s -> s["game_state"]["seed"] == gs["seed"], agent.sars.states)
             if awaiting(agent.sars) == sar_reward
-                r = gs["floor"] - agent.last_floor_rewarded
+                r = gs["floor"] - agent.last_floor_rewarded + floor_partial_credit(ra)
                 agent.last_floor_rewarded = 0
                 add_reward(agent.sars, r, 0)
                 log_value(ra.tb_log, "MapAgent/reward", r)
