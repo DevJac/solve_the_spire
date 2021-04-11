@@ -53,8 +53,8 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
             r = current_hp - last_hp
             if win; r+= 10 end
             add_reward(agent.sars, r, win || lose ? 0 : 1)
-            log_value(ra.tb_log, "CombatAgent/reward", r)
-            log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
+            log_value(ra.tb_log, "SpecialActionAgent/reward", r)
+            log_value(ra.tb_log, "SpecialActionAgent/length_sars", length(agent.sars.rewards))
         elseif gs["screen_type"] == "HAND_SELECT"
             if !in("choose", sts_state["available_commands"])
                 return "proceed"
