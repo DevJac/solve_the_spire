@@ -73,6 +73,7 @@ end
 
 function train!(root_agent::RootAgent)
     for agent in root_agent.agents
+        println("Training: $(typeof(agent))")
         train!(agent, root_agent)
     end
     empty!(memoize_cache(Encoders.encode))
