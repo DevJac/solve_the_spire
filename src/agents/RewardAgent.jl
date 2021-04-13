@@ -8,7 +8,7 @@ mutable struct RewardAgent
     critic_opt
     sars
     last_floor_rewarded
-    last_card_reward_floor
+    last_card_reward  # (floor, last card reward chosen, last card reward count)
 end
 
 function RewardAgent()
@@ -35,7 +35,7 @@ function RewardAgent()
         ADADelta(),
         ADADelta(),
         SARS(),
-        0, 0)
+        0, (0, 0, 0))
 end
 
 function action(agent::RewardAgent, ra::RootAgent, sts_state)
@@ -43,7 +43,7 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
         gs = sts_state["game_state"]
         if gs["screen_type"] == "GAME_OVER"
             @assert awaiting(agent.sars) == sar_reward || !any(s -> s["game_state"]["seed"] == gs["seed"], agent.sars.states)
-            agent.last_card_reward_floor = 0
+            agent.last_card_reward = (0, 0, 0)
             if awaiting(agent.sars) == sar_reward
                 r = gs["floor"] - agent.last_floor_rewarded + floor_partial_credit(ra)
                 agent.last_floor_rewarded = 0
@@ -57,13 +57,24 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
                 return "choose 0"
             end
             if gs["screen_type"] == "COMBAT_REWARD"
+                # The conditions below will choose all no-brainer rewards,
+                # and at least look at each card reward; what's left will be
+                # decided by the neural networks.
+                card_reward_count = count(r -> r["reward_type"] == "CARD", gs["screen_state"]["rewards"])
+                card_i = 0
                 for (i, reward) in enumerate(gs["screen_state"]["rewards"])
                     if reward["reward_type"] in ("GOLD", "STOLEN_GOLD", "EMERALD_KEY")
                         return "choose $(i-1)"
                     end
-                    if reward["reward_type"] == "CARD" && agent.last_card_reward_floor != gs["floor"]
-                        agent.last_card_reward_floor = gs["floor"]
-                        return "choose $(i-1)"
+                    if reward["reward_type"] == "CARD"
+                        card_i += 1
+                        if agent.last_card_reward[1] != gs["floor"]
+                            agent.last_card_reward = (gs["floor"], 0, card_reward_count)
+                        end
+                        if card_i > agent.last_card_reward[2] || card_reward_count < agent.last_card_reward[3]
+                            agent.last_card_reward = (gs["floor"], card_i, card_reward_count)
+                            return "choose $(i-1)"
+                        end
                     end
                     if reward["reward_type"] == "POTION" && any(p -> p["id"] == "Potion Slot", gs["potions"])
                         return "choose $(i-1)"
@@ -73,10 +84,7 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
                         return "choose $(i-1)"
                     end
                 end
-                if (!in("choose", sts_state["available_commands"]) ||
-                    (length(gs["choice_list"]) == 1 &&
-                     gs["choice_list"][1] == "card" &&
-                     agent.last_card_reward_floor == gs["floor"]))
+                if !in("choose", sts_state["available_commands"]) || all(c -> c == "card", gs["choice_list"])
                     return "proceed"
                 end
             end
@@ -132,6 +140,7 @@ function setup_choice_encoder(agent::RewardAgent, ra::RootAgent, sts_state)
         potion_action = potion["can_use"] ? "use" : "discard"
         add_encoded_choice(agent.choice_encoder, :give_up_potion, potions_encoder([potion]), ("potion", potion_action, i-1))
     end
+    @assert gs["screen_state"]["rewards"][1]["reward_type"] == "POTION"
     potion_rewarded = gs["screen_state"]["rewards"][1]["potion"]
     add_encoded_choice(agent.choice_encoder, :give_up_potion, potions_encoder([potion_rewarded]), ("proceed",))
 end
