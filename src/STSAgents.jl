@@ -47,7 +47,7 @@ end
 function RootAgent(ra::RootAgent)
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
-    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.map_agent, ra.agents)
+    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.map_agent, ra.combat_agent, ra.agents)
 end
 
 function agent_command(root_agent::RootAgent, sts_state)
