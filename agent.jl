@@ -21,11 +21,11 @@ const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
 
 function launch_sts()
     ENV["STS_COMMUNICATION_SOCKET"] = tempname()
-    run(pipeline(`./launch_sts.sh`, stdout="sts_out.txt", stderr="sts_err.txt"), wait=false)
+    sts_process = run(pipeline(`./launch_sts.sh`, stdout="sts_out.txt", stderr="sts_err.txt"), wait=false)
     timeout_start = time()
     while true
         try
-            return connect(ENV["STS_COMMUNICATION_SOCKET"])
+            return sts_process, connect(ENV["STS_COMMUNICATION_SOCKET"])
         catch e
             if typeof(e) == Base.IOError && timeout_start + 30 > time()
                 sleep(3)
@@ -91,7 +91,7 @@ function main()
 end
 
 function agent_main(root_agent)
-    socket = launch_sts()
+    sts_process, sts_socket = launch_sts()
     socket_channel = Channel(1000)
     @async begin
         while true
@@ -101,6 +101,7 @@ function agent_main(root_agent)
     open(LOG_FILE, "a") do log_file
         while true
             if root_agent.ready_to_train
+                kill(sts_process)
                 root_agent.ready_to_train = false
                 println("Training")
                 Profile.init(10_000_000, 0.1)
@@ -114,6 +115,7 @@ function agent_main(root_agent)
                 BSON.bson(
                     @sprintf("models/agent.%04d.t.bson", max_file_number("models", "agent")+1),
                     model=root_agent)
+                return
             end
             local sts_state
             while true
