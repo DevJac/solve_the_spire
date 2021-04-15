@@ -78,6 +78,14 @@ end
 
 nearest(n, ns) = minimum(x -> (abs(n - x), x), ns)[2]
 
+function kill_java()
+    try
+        run(`killall -q java`)
+    catch e
+        if !isa(e, ProcessFailedException); rethrow() end
+    end
+end
+
 export Smoother, smooth!
 
 mutable struct Smoother

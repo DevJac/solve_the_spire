@@ -50,6 +50,9 @@ function action(agent::MapAgent, ra::RootAgent, sts_state)
                 log_value(ra.tb_log, "MapAgent/length_sars", length(agent.sars.rewards))
             end
         elseif gs["screen_type"] == "MAP"
+            if !in("choose", sts_state["available_commands"])
+                return "return"
+            end
             if length(gs["screen_state"]["next_nodes"]) <= 1
                 return "choose 0"
             end

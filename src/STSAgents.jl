@@ -56,6 +56,7 @@ function agent_command(root_agent::RootAgent, sts_state)
     if "error" in keys(sts_state)
         root_agent.errors += 1
         log_value(root_agent.tb_log, "agent/errors", root_agent.errors)
+        if root_agent.errors % 100 == 0; kill_java() end
         return "state"
     end
     increment_step!(root_agent.tb_log, 1)
