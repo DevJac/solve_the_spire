@@ -14,6 +14,7 @@ using Zygote
 export RootAgent, agent_command, action, train!
 
 const STANDARD_POLICY_LAYERS = [200, 200, 200, 200]
+const STANDARD_KL_DIV_EARLY_STOP = 0.01
 
 mutable struct RootAgent
     errors         :: Int

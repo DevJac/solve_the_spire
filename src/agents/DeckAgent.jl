@@ -184,7 +184,7 @@ function train!(agent::DeckAgent, ra::RootAgent, epochs=800)
         log_value(train_log, "train/entropy", mean(entropys), step=epoch)
         log_value(train_log, "train/explore", mean(explore), step=epoch)
         Flux.Optimise.update!(agent.policy_opt, prms, grads)
-        if smooth!(kl_div_smoother, mean(kl_divs)) > 0.01; break end
+        if smooth!(kl_div_smoother, mean(kl_divs)) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
         empty!(entropys); empty!(explore)
     end
