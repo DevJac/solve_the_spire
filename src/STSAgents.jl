@@ -16,6 +16,7 @@ export RootAgent, agent_command, action, train!
 const STANDARD_POLICY_LAYERS = [200, 200, 200, 200]
 
 mutable struct RootAgent
+    errors         :: Int
     games          :: Int
     generation     :: Int
     ready_to_train :: Bool
@@ -41,16 +42,21 @@ function RootAgent()
         ShopAgent(),
         SpecialActionAgent(),
         PotionAgent()]
-    RootAgent(0, 0, false, tb_log, map_agent, combat_agent, agents)
+    RootAgent(0, 0, 0, false, tb_log, map_agent, combat_agent, agents)
 end
 
 function RootAgent(ra::RootAgent)
     tb_log = TBLogger("tb_logs/agent", tb_append)
     set_step!(tb_log, maximum(TensorBoardLogger.steps(tb_log)))
-    RootAgent(ra.games, ra.generation, ra.ready_to_train, tb_log, ra.map_agent, ra.combat_agent, ra.agents)
+    RootAgent(ra.errors, ra.games, ra.generation, ra.ready_to_train, tb_log, ra.map_agent, ra.combat_agent, ra.agents)
 end
 
 function agent_command(root_agent::RootAgent, sts_state)
+    if "error" in keys(sts_state)
+        root_agent.errors += 1
+        log_value(ra.tb_log, "agent/errors", root_agent.errors)
+        return "state"
+    end
     increment_step!(root_agent.tb_log, 1)
     log_value(root_agent.tb_log, "agent/games", root_agent.games)
     log_value(root_agent.tb_log, "agent/generation", root_agent.generation)
