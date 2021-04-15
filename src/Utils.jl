@@ -3,7 +3,7 @@ using Random
 using SparseArrays
 using Zygote
 
-export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds, diagcat, nearest
+export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds, diagcat, nearest, kill_java
 
 function mc_q(r, f, γ=1f0)
     result = Float32.(similar(r))
