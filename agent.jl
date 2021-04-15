@@ -87,7 +87,7 @@ function main()
             end
             rethrow()
         finally
-            run(`killall java`)
+            run(`killall -q java`)
         end
     end
 end
@@ -103,7 +103,7 @@ function agent_main(root_agent)
     open(LOG_FILE, "a") do log_file
         while true
             if root_agent.ready_to_train
-                run(`killall java`)
+                run(`killall -q java`)
                 root_agent.ready_to_train = false
                 println("Training")
                 Profile.init(10_000_000, 0.1)
