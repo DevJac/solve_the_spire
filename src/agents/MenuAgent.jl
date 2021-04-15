@@ -5,7 +5,7 @@ mutable struct MenuAgent
     gen_score         :: Vector{Float32}
     gen_victory       :: Vector{Float32}
 end
-MenuAgent() = MenuAgent([], [], [], 0)
+MenuAgent() = MenuAgent([], [], [])
 
 function action(agent::MenuAgent, ra::RootAgent, sts_state)
     if "in_game" in keys(sts_state) && !sts_state["in_game"]
