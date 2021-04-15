@@ -92,10 +92,10 @@ end
 
 function agent_main(root_agent)
     sts_process, sts_socket = launch_sts()
-    socket_channel = Channel(1000)
+    sts_socket_channel = Channel(1000)
     @async begin
         while true
-            put!(socket_channel, readline(socket))
+            put!(sts_socket_channel, readline(sts_socket))
         end
     end
     open(LOG_FILE, "a") do log_file
@@ -119,8 +119,8 @@ function agent_main(root_agent)
             end
             local sts_state
             while true
-                sts_state = JSON.parse(take!(socket_channel))
-                if isempty(socket_channel); break end
+                sts_state = JSON.parse(take!(sts_socket_channel))
+                if isempty(sts_socket_channel); break end
             end
             write_json(log_file, Dict("sts_state" => sts_state))
             ac = agent_command(root_agent, sts_state)
@@ -128,7 +128,7 @@ function agent_main(root_agent)
                 println("Agent gave no command. You may enter a manual command.")
                 mc = manual_command()
                 write_json(log_file, Dict("manual_command" => mc))
-                write(socket, mc * "\n")
+                write(sts_socket, mc * "\n")
             else
                 if typeof(ac) == String; ac = Command(ac) end
                 if isnothing(ac.extra)
@@ -136,7 +136,7 @@ function agent_main(root_agent)
                 else
                     write_json(log_file, Dict("agent_command" => ac.command, "extra" => ac.extra))
                 end
-                write(socket, ac.command * "\n")
+                write(sts_socket, ac.command * "\n")
             end
             if is_game_over(sts_state)
                 root_agent.games += 1
