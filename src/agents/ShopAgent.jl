@@ -168,7 +168,7 @@ function state_value(agent::ShopAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::ShopAgent, ra::RootAgent, epochs=800)
+function train!(agent::ShopAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOCHS)
     train_log = TBLogger("tb_logs/train_ShopAgent")
     sars = fill_q(agent.sars)
     if isempty(sars); return end

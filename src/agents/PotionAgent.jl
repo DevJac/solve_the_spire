@@ -132,7 +132,7 @@ function state_value(agent::PotionAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::PotionAgent, ra::RootAgent, epochs=800)
+function train!(agent::PotionAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOCHS)
     train_log = TBLogger("tb_logs/train_PotionAgent")
     sars = fill_q(agent.sars)
     if isempty(sars); return end

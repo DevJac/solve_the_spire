@@ -117,7 +117,7 @@ function state_value(agent::MapAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::MapAgent, ra::RootAgent, epochs=800)
+function train!(agent::MapAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOCHS)
     train_log = TBLogger("tb_logs/train_MapAgent")
     sars = fill_q(agent.sars)
     if isempty(sars); return end

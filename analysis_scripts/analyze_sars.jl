@@ -34,12 +34,16 @@ for agent in m.agents
                     rethrow()
                 end
             end
-            @printf("%4d (%6.2f, %6.2f) %6.2f %6.2f\n",
+            sv = STSAgents.state_value(agent, m, qs[i].state)
+            @printf("%4d (%6.2f, %6.2f) %6.2f %6.2f (%6.2f - ev: %6.2f) = %6.2f\n",
                     floor,
                     agent.sars.rewards[i][1],
                     agent.sars.rewards[i][2],
                     q.reward,
-                    q.q)
+                    q.q,
+                    q.q,
+                    sv,
+                    q.q - sv)
         end
     end
 end
