@@ -131,8 +131,20 @@ function train!(agent::SpecialActionAgent, ra::RootAgent, epochs=STANDARD_TRAINI
     train_log = TBLogger("tb_logs/train_SpecialActionAgent")
     sars = fill_q(agent.sars)
     if isempty(sars); return end
-    log_histogram(ra.tb_log, "SpecialActionAgent/rewards", map(sar -> sar.reward, sars))
-    log_histogram(ra.tb_log, "SpecialActionAgent/q", map(sar -> sar.q, sars))
+    for (epoch, batch) in enumerate(Batcher(sars, 100))
+        if epoch > epochs; break end
+        prms = params(agent.critic)
+        loss, grads = valgrad(prms) do
+            mean(batch) do sar
+                predicted_q = state_value(agent, ra, sar.state)
+                actual_q = sar.q
+                (predicted_q - actual_q)^2
+            end
+        end
+        log_value(train_log, "train/critic_loss", loss, step=epoch)
+        Flux.Optimise.update!(agent.critic_opt, prms, grads)
+    end
+    log_value(ra.tb_log, "SpecialActionAgent/critic_loss", loss)
     target_agent = deepcopy(agent)
     kl_div_smoother = Smoother()
     local loss
@@ -186,19 +198,5 @@ function train!(agent::SpecialActionAgent, ra::RootAgent, epochs=STANDARD_TRAINI
     log_value(ra.tb_log, "SpecialActionAgent/estimated_advantage", mean(estimated_advantage))
     log_value(ra.tb_log, "SpecialActionAgent/entropy", mean(entropys))
     log_value(ra.tb_log, "SpecialActionAgent/explore", mean(explore))
-    for (epoch, batch) in enumerate(Batcher(sars, 100))
-        if epoch > epochs; break end
-        prms = params(agent.critic)
-        loss, grads = valgrad(prms) do
-            mean(batch) do sar
-                predicted_q = state_value(agent, ra, sar.state)
-                actual_q = sar.q
-                (predicted_q - actual_q)^2
-            end
-        end
-        log_value(train_log, "train/critic_loss", loss, step=epoch)
-        Flux.Optimise.update!(agent.critic_opt, prms, grads)
-    end
-    log_value(ra.tb_log, "SpecialActionAgent/critic_loss", loss)
     empty!(agent.sars)
 end
