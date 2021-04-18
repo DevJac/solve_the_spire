@@ -171,7 +171,7 @@ function train!(agent::CampfireAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EP
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
                 target_aps = Zygote.@ignore action_probabilities(target_agent, ra, sar.state)[2]
-                target_ap = Zygote.@ignore target_aps[sar.action]
+                target_ap = Zygote.@ignore max(1e-8, target_aps[sar.action])
                 online_aps = action_probabilities(agent, ra, sar.state)[2]
                 online_ap = online_aps[sar.action]
                 advantage = Zygote.@ignore sar.q - state_value(target_agent, ra, sar.state)
