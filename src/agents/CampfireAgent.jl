@@ -29,7 +29,7 @@ function CampfireAgent()
         ),
         20, [50])
     policy = VanillaNetwork(length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
-    critic = VanillaNetwork(state_length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
+    critic = VanillaNetwork(state_length(choice_encoder), 1, STANDARD_CRITIC_LAYERS)
     CampfireAgent(
         choice_encoder,
         policy,
