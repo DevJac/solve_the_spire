@@ -164,7 +164,6 @@ function train!(agent::CampfireAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EP
     entropys = Float32[]
     explore = Float32[]
     for (epoch, batch) in enumerate(Batcher(sars, 10_000))
-        if epoch > epochs; break end
         prms = params(
             agent.choice_encoder,
             agent.policy)
@@ -196,7 +195,7 @@ function train!(agent::CampfireAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EP
         log_value(train_log, "train/entropy", mean(entropys), step=epoch)
         log_value(train_log, "train/explore", mean(explore), step=epoch)
         Flux.Optimise.update!(agent.policy_opt, prms, grads)
-        if smooth!(kl_div_smoother, mean(kl_divs)) > STANDARD_KL_DIV_EARLY_STOP; break end
+        if epoch >= epochs || smooth!(kl_div_smoother, mean(kl_divs)) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
         empty!(entropys); empty!(explore)
     end
