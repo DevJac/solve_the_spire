@@ -55,6 +55,8 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
                 1 - (monster_hp_sum / initial_hp_stats(ra).monster_hp_sum)]))
             player_hp_loss_ratio = 1 - (gs["current_hp"] / initial_hp_stats(ra).player_hp)
             target_reward = monster_hp_loss_ratio - player_hp_loss_ratio
+            if win; target_reward += 1 end
+            if lose; target_reward -= 1 end
             r = target_reward - agent.last_rewarded_target
             agent.last_rewarded_target = target_reward
             add_reward(agent.sars, r, win || lose ? 0 : 1)
