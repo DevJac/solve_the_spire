@@ -16,7 +16,7 @@ mutable struct CombatAgent
     sars
     initial_hp_stats     :: InitialHPStats
     floor_partial_credit :: Float32
-    last_reward          :: Float32
+    last_rewarded_target :: Float32
 end
 
 function CombatAgent()
@@ -53,28 +53,28 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
         gs = sts_state["game_state"]
         if gs["floor"] != agent.initial_hp_stats.floor
             agent.initial_hp_stats = InitialHPStats(0, 0, 0, 0)
-            agent.last_floor_partial_credit = 0
-            agent.last_reward = 0
+            agent.floor_partial_credit = 0
+            agent.last_rewarded_target = 0
         end
         if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"
             @assert !(win && lose)
-            if !win && gs["floor"] != agent.initial_hp_stats.floor
-                monster_hp_max = maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
-                monster_hp_sum = sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+            if gs["floor"] != agent.initial_hp_stats.floor
+                monster_hp_max = win ? 0 : maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+                monster_hp_sum = win ? 0 : sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
                 agent.initial_hp_stats = InitialHPStats(gs["floor"], monster_hp_max, monster_hp_sum, gs["current_hp"])
             end
             monster_hp_max = win ? 0 : maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
             monster_hp_sum = win ? 0 : sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
-            monster_hp_loss_ratio = Float32(mean([
+            monster_hp_loss_ratio = win ? 1 : Float32(mean([
                 1 - (monster_hp_max / agent.initial_hp_stats.monster_hp_max),
                 1 - (monster_hp_sum / agent.initial_hp_stats.monster_hp_sum)]))
             agent.floor_partial_credit = monster_hp_loss_ratio
-            player_hp_loss_ratio = gs["current_hp"] / agent.initial_hp_stats.player_hp
+            player_hp_loss_ratio = lose ? 1 : 1 - (gs["current_hp"] / agent.initial_hp_stats.player_hp)
             target_reward = monster_hp_loss_ratio - player_hp_loss_ratio
-            r = target_reward - agent.last_reward
-            agent.last_reward = r
+            r = target_reward - agent.last_rewarded_target
+            agent.last_rewarded_target = target_reward
             add_reward(agent.sars, r, win || lose ? 0 : 1)
             log_value(ra.tb_log, "CombatAgent/reward", r)
             log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))

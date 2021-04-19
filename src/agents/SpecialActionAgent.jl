@@ -7,8 +7,8 @@ mutable struct SpecialActionAgent
     policy_opt
     critic_opt
     sars
-    last_reward         :: Float32
-    hand_select_actions :: Vector{String}
+    last_rewarded_target :: Float32
+    hand_select_actions  :: Vector{String}
 end
 
 function SpecialActionAgent()
@@ -53,14 +53,14 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
             monster_hp_loss_ratio = Float32(mean([
                 1 - (monster_hp_max / initial_hp_stats(ra).monster_hp_max),
                 1 - (monster_hp_sum / initial_hp_stats(ra).monster_hp_sum)]))
-            player_hp_loss_ratio = gs["current_hp"] / initial_hp_stats(ra).player_hp
+            player_hp_loss_ratio = 1 - (gs["current_hp"] / initial_hp_stats(ra).player_hp)
             target_reward = monster_hp_loss_ratio - player_hp_loss_ratio
-            r = target_reward - agent.last_reward
-            agent.last_reward = r
+            r = target_reward - agent.last_rewarded_target
+            agent.last_rewarded_target = target_reward
             add_reward(agent.sars, r, win || lose ? 0 : 1)
             log_value(ra.tb_log, "SpecialActionAgent/reward", r)
             log_value(ra.tb_log, "SpecialActionAgent/length_sars", length(agent.sars.rewards))
-            if win || lose; agent.last_reward = 0 end
+            if win || lose; agent.last_rewarded_target = 0 end
         end
         if gs["screen_type"] == "HAND_SELECT"
             if !in("choose", sts_state["available_commands"])
