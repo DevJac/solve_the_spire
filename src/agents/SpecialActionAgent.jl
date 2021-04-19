@@ -53,7 +53,6 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
             monster_hp_loss_ratio = win ? 1 : Float32(mean([
                 1 - (monster_hp_max / initial_hp_stats(ra).monster_hp_max),
                 1 - (monster_hp_sum / initial_hp_stats(ra).monster_hp_sum)]))
-            agent.floor_partial_credit = monster_hp_loss_ratio
             player_hp_loss_ratio = lose ? 1 : 1 - (gs["current_hp"] / initial_hp_stats(ra).player_hp)
             target_reward = monster_hp_loss_ratio - player_hp_loss_ratio
             if win; target_reward += 1 end
