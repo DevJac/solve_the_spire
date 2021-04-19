@@ -175,6 +175,10 @@ function current_map_node(ra::RootAgent)
     ra.map_agent.current_map_node
 end
 
+function initial_hp_stats(ra::RootAgent)
+    ra.combat_agent.initial_hp_stats
+end
+
 function floor_partial_credit(ra::RootAgent)
     ra.combat_agent.floor_partial_credit
 end

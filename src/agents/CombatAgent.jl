@@ -1,5 +1,12 @@
 export CombatAgent, action, train!
 
+struct InitialHPStats
+    floor          :: Int
+    monster_hp_max :: Float32
+    monster_hp_sum :: Float32
+    player_hp      :: Float32
+end
+
 mutable struct CombatAgent
     choice_encoder
     policy
@@ -7,9 +14,9 @@ mutable struct CombatAgent
     policy_opt
     critic_opt
     sars
-    floor_monster_hp             :: Tuple{Float32, Float32, Float32}
-    floor_partial_credit         :: Float32
-    last_rewarded_partial_credit :: Float32
+    initial_hp_stats     :: InitialHPStats
+    floor_partial_credit :: Float32
+    last_reward          :: Float32
 end
 
 function CombatAgent()
@@ -38,40 +45,36 @@ function CombatAgent()
         ADADelta(),
         ADADelta(),
         SARS(),
-        (0f0, 0f0, 0f0), 0f0, 0f0)
+        InitialHPStats(0, 0, 0, 0), 0, 0)
 end
 
 function action(agent::CombatAgent, ra::RootAgent, sts_state)
     if "game_state" in keys(sts_state)
         gs = sts_state["game_state"]
-        if gs["floor"] != agent.floor_monster_hp[1]
-            agent.floor_monster_hp = (0f0, 0f0, 0f0)
-            agent.floor_partial_credit = 0f0
-            agent.last_rewarded_partial_credit = 0f0
+        if gs["floor"] != agent.initial_hp_stats.floor
+            agent.initial_hp_stats = InitialHPStats(0, 0, 0, 0)
+            agent.last_floor_partial_credit = 0
+            agent.last_reward = 0
         end
         if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"
             @assert !(win && lose)
-            if !win && gs["floor"] != agent.floor_monster_hp[1]
-                sum_hp = sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
-                max_hp = maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
-                agent.floor_monster_hp = Float32.((gs["floor"], sum_hp, max_hp))
+            if !win && gs["floor"] != agent.initial_hp_stats.floor
+                monster_hp_max = maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+                monster_hp_sum = sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+                agent.initial_hp_stats = InitialHPStats(gs["floor"], monster_hp_max, monster_hp_sum, gs["current_hp"])
             end
-            if win
-                agent.floor_partial_credit = 1f0
-            else
-                sum_hp = sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
-                max_hp = maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
-                agent.floor_partial_credit = Float32(mean([
-                    1 - (sum_hp / agent.floor_monster_hp[2]),
-                    1 - (max_hp / agent.floor_monster_hp[3])]))
-            end
-            last_hp = agent.sars.states[end]["game_state"]["current_hp"]
-            current_hp = gs["current_hp"]
-            r = current_hp - last_hp
-            r += (agent.floor_partial_credit - agent.last_rewarded_partial_credit) * 10
-            agent.last_rewarded_partial_credit = agent.floor_partial_credit
+            monster_hp_max = win ? 0 : maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+            monster_hp_sum = win ? 0 : sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+            monster_hp_loss_ratio = Float32(mean([
+                1 - (monster_hp_max / agent.initial_hp_stats.monster_hp_max),
+                1 - (monster_hp_sum / agent.initial_hp_stats.monster_hp_sum)]))
+            agent.floor_partial_credit = monster_hp_loss_ratio
+            player_hp_loss_ratio = gs["current_hp"] / agent.initial_hp_stats.player_hp
+            target_reward = monster_hp_loss_ratio - player_hp_loss_ratio
+            r = target_reward - agent.last_reward
+            agent.last_reward = r
             add_reward(agent.sars, r, win || lose ? 0 : 1)
             log_value(ra.tb_log, "CombatAgent/reward", r)
             log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))

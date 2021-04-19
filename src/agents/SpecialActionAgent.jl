@@ -7,8 +7,8 @@ mutable struct SpecialActionAgent
     policy_opt
     critic_opt
     sars
-    last_rewarded_partial_credit :: Float32
-    hand_select_actions
+    last_reward         :: Float32
+    hand_select_actions :: Vector{String}
 end
 
 function SpecialActionAgent()
@@ -37,7 +37,7 @@ function SpecialActionAgent()
         ADADelta(),
         ADADelta(),
         SARS(),
-        0f0,
+        0,
         hand_select_actions)
 end
 
@@ -48,15 +48,19 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"
             @assert !(win && lose)
-            last_hp = agent.sars.states[end]["game_state"]["current_hp"]
-            current_hp = gs["current_hp"]
-            r = current_hp - last_hp
-            r += (floor_partial_credit(ra) - agent.last_rewarded_partial_credit) * 10
-            agent.last_rewarded_partial_credit = floor_partial_credit(ra)
+            monster_hp_max = win ? 0 : maximum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+            monster_hp_sum = win ? 0 : sum(m -> m["current_hp"], gs["combat_state"]["monsters"])
+            monster_hp_loss_ratio = Float32(mean([
+                1 - (monster_hp_max / initial_hp_stats(ra).monster_hp_max),
+                1 - (monster_hp_sum / initial_hp_stats(ra).monster_hp_sum)]))
+            player_hp_loss_ratio = gs["current_hp"] / initial_hp_stats(ra).player_hp
+            target_reward = monster_hp_loss_ratio - player_hp_loss_ratio
+            r = target_reward - agent.last_reward
+            agent.last_reward = r
             add_reward(agent.sars, r, win || lose ? 0 : 1)
             log_value(ra.tb_log, "SpecialActionAgent/reward", r)
             log_value(ra.tb_log, "SpecialActionAgent/length_sars", length(agent.sars.rewards))
-            if win || lose; agent.last_rewarded_partial_credit = 0f0 end
+            if win || lose; agent.last_reward = 0 end
         end
         if gs["screen_type"] == "HAND_SELECT"
             if !in("choose", sts_state["available_commands"])
