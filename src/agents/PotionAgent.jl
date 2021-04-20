@@ -136,6 +136,20 @@ function train!(agent::PotionAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOC
     train_log = TBLogger("tb_logs/train_PotionAgent")
     sars = fill_q(agent.sars)
     if isempty(sars); return end
+    for (epoch, batch) in enumerate(Batcher(sars, 100))
+        if epoch > epochs; break end
+        prms = params(agent.critic)
+        loss, grads = valgrad(prms) do
+            mean(batch) do sar
+                predicted_q = state_value(agent, ra, sar.state)
+                actual_q = sar.q
+                (predicted_q - actual_q)^2
+            end
+        end
+        log_value(train_log, "train/critic_loss", loss, step=epoch)
+        Flux.Optimise.update!(agent.critic_opt, prms, grads)
+    end
+    log_value(ra.tb_log, "PotionAgent/critic_loss", loss)
     target_agent = deepcopy(agent)
     kl_div_smoother = Smoother()
     local loss
@@ -188,19 +202,5 @@ function train!(agent::PotionAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOC
     log_value(ra.tb_log, "PotionAgent/estimated_advantage", mean(estimated_advantage))
     log_value(ra.tb_log, "PotionAgent/entropy", mean(entropys))
     log_value(ra.tb_log, "PotionAgent/explore", mean(explore))
-    for (epoch, batch) in enumerate(Batcher(sars, 100))
-        if epoch > epochs; break end
-        prms = params(agent.critic)
-        loss, grads = valgrad(prms) do
-            mean(batch) do sar
-                predicted_q = state_value(agent, ra, sar.state)
-                actual_q = sar.q
-                (predicted_q - actual_q)^2
-            end
-        end
-        log_value(train_log, "train/critic_loss", loss, step=epoch)
-        Flux.Optimise.update!(agent.critic_opt, prms, grads)
-    end
-    log_value(ra.tb_log, "PotionAgent/critic_loss", loss)
     empty!(agent.sars)
 end
