@@ -56,7 +56,7 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             agent.floor_partial_credit = 0
             agent.last_rewarded_target = 0
         end
-        if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") && awaiting(agent.sars) == sar_reward
+        if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER")
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"
             @assert !(win && lose)
@@ -71,15 +71,17 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
                 1 - (monster_hp_max / agent.initial_hp_stats.monster_hp_max),
                 1 - (monster_hp_sum / agent.initial_hp_stats.monster_hp_sum)]))
             agent.floor_partial_credit = monster_hp_loss_ratio
-            player_hp_loss_ratio = lose ? 1 : 1 - (gs["current_hp"] / agent.initial_hp_stats.player_hp)
-            target_reward = monster_hp_loss_ratio - player_hp_loss_ratio
-            if win; target_reward += 1 end
-            if lose; target_reward -= 1 end
-            r = target_reward - agent.last_rewarded_target
-            agent.last_rewarded_target = target_reward
-            add_reward(agent.sars, clamp(r, -1, 1), win || lose ? 0 : 1)
-            log_value(ra.tb_log, "CombatAgent/reward", r)
-            log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
+            if awaiting(agent.sars) == sar_reward
+                player_hp_loss_ratio = lose ? 1 : 1 - (gs["current_hp"] / agent.initial_hp_stats.player_hp)
+                target_reward = monster_hp_loss_ratio - player_hp_loss_ratio
+                if win; target_reward += 1 end
+                if lose; target_reward -= 1 end
+                r = target_reward - agent.last_rewarded_target
+                agent.last_rewarded_target = target_reward
+                add_reward(agent.sars, clamp(r, -1, 1), win || lose ? 0 : 1)
+                log_value(ra.tb_log, "CombatAgent/reward", r)
+                log_value(ra.tb_log, "CombatAgent/length_sars", length(agent.sars.rewards))
+            end
         end
         if gs["screen_type"] == "NONE"
             actions, probabilities = action_probabilities(agent, ra, sts_state)
