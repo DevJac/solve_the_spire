@@ -74,7 +74,6 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
             action_i = sample(1:length(actions), Weights(probabilities))
             add_state(agent.sars, sts_state)
             add_action(agent.sars, action_i)
-            if isempty(actions[action_i]); return nothing end
             action = join(actions[action_i], " ")
             @assert isa(action, String)
             action
