@@ -59,7 +59,7 @@ function action(agent::SpecialActionAgent, ra::RootAgent, sts_state)
             if lose; target_reward -= 1 end
             r = target_reward - agent.last_rewarded_target
             agent.last_rewarded_target = target_reward
-            add_reward(agent.sars, r, win || lose ? 0 : 1)
+            add_reward(agent.sars, clamp(r, 0, 1), win || lose ? 0 : 1)
             log_value(ra.tb_log, "SpecialActionAgent/reward", r)
             log_value(ra.tb_log, "SpecialActionAgent/length_sars", length(agent.sars.rewards))
             if win || lose; agent.last_rewarded_target = 0 end
