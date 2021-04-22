@@ -56,7 +56,8 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             agent.floor_partial_credit = 0
             agent.last_rewarded_target = 0
         end
-        if gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER")
+        if (gs["screen_type"] in ("NONE", "COMBAT_REWARD", "MAP", "GAME_OVER") &&
+            (gs["screen_type"] != "GAME_OVER" || "combat_state" in keys(gs)))
             win = gs["screen_type"] in ("COMBAT_REWARD", "MAP")
             lose = gs["screen_type"] == "GAME_OVER"
             @assert !(win && lose)
