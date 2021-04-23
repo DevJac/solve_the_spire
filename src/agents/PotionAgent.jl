@@ -135,7 +135,7 @@ end
 function train!(agent::PotionAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOCHS)
     train_log = TBLogger("tb_logs/train_PotionAgent")
     sars = fill_q(agent.sars)
-    if isempty(sars); return end
+    if length(sars) < 2; return end
     target_agent = deepcopy(agent)
     kl_div_smoother = Smoother()
     local loss
