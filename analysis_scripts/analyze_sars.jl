@@ -35,7 +35,8 @@ for agent in m.agents
                 end
             end
             sv = STSAgents.state_value(agent, m, qs[i].state)
-            @printf("%4d (%6.2f, %6.2f) %6.2f %6.2f (%6.2f - ev: %6.2f) = %6.2f\n",
+            @printf("%4d %4d (%6.2f, %6.2f) %6.2f %6.2f (%6.2f - ev: %6.2f) = %6.2f",
+                    i,
                     floor,
                     agent.sars.rewards[i][1],
                     agent.sars.rewards[i][2],
@@ -44,6 +45,17 @@ for agent in m.agents
                     q.q,
                     sv,
                     q.q - sv)
+            if "combat_state" in keys(qs[i].state["game_state"])
+                state = qs[i].state
+                as, aps = STSAgents.action_probabilities(agent, m, state)
+                @printf("  Action: %20s %4.2f PH: %2d MH: (%s)\n",
+                        as[qs[i].action],
+                        aps[qs[i].action],
+                        state["game_state"]["current_hp"],
+                        map(m -> m["current_hp"], state["game_state"]["combat_state"]["monsters"]))
+            else
+                @printf("\n")
+            end
         end
     end
 end
