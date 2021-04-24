@@ -41,10 +41,10 @@ for agent in m.agents
                     agent.sars.rewards[i][1],
                     agent.sars.rewards[i][2],
                     q.reward,
-                    q.q,
-                    q.q,
+                    q.q_norm,
+                    q.q_norm,
                     sv,
-                    q.q - sv)
+                    q.q_norm - sv)
             if "combat_state" in keys(qs[i].state["game_state"])
                 state = qs[i].state
                 as, aps = STSAgents.action_probabilities(agent, m, state)

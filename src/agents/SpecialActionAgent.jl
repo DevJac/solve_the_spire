@@ -92,7 +92,7 @@ function setup_choice_encoder(agent::SpecialActionAgent, ra::RootAgent, sts_stat
     add_encoded_state(agent.choice_encoder, :discard, encode_seq(card_encoder, gs["combat_state"]["discard_pile"]))
     add_encoded_state(agent.choice_encoder, :monsters, reduce(hcat, map(monster_encoder, gs["combat_state"]["monsters"])))
     current_action_encoded = zeros(Float32, length(agent.hand_select_actions))
-    current_action_i = find(gs["current_action"], agent.hand_select_actions)
+    current_action_i = find(get(gs, "current_action", ""), agent.hand_select_actions)
     if !isnothing(current_action_i); current_action_encoded[current_action_i] = 1 end
     @assert sum(current_action_encoded) in (0, 1)
     for action in all_valid_actions(sts_state)
