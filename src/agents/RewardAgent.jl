@@ -14,18 +14,18 @@ end
 function RewardAgent()
     choice_encoder = ChoiceEncoder(
         Dict(
-            :potions      => VanillaNetwork(length(potions_encoder), 20, [50]),
-            :relics       => VanillaNetwork(length(relics_encoder), 20, [50]),
+            :potions      => VanillaNetwork(length(potions_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :relics       => VanillaNetwork(length(relics_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
             :player       => VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50]),
-            :deck         => PoolNetwork(length(card_encoder), 20, [50]),
-            :map          => VanillaNetwork(length(map_encoder), 20, [50])
+            :deck         => PoolNetwork(length(card_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :map          => VanillaNetwork(length(map_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
         ),
         Dict(
-            :give_up_potion      => VanillaNetwork(length(potions_encoder), 20, [50]),
-            :choose_relic        => VanillaNetwork(length(relics_encoder), 20, [50]),
+            :give_up_potion      => VanillaNetwork(length(potions_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :choose_relic        => VanillaNetwork(length(relics_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
             :choose_sapphire_key => NullNetwork()
         ),
-        20, [50])
+        STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
     policy = VanillaNetwork(length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
     critic = VanillaNetwork(state_length(choice_encoder), 1, STANDARD_CRITIC_LAYERS)
     RewardAgent(

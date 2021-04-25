@@ -14,15 +14,15 @@ end
 function MapAgent()
     choice_encoder = ChoiceEncoder(
         Dict(
-            :potions      => VanillaNetwork(length(potions_encoder), 20, [50]),
-            :relics       => VanillaNetwork(length(relics_encoder), 20, [50]),
+            :potions      => VanillaNetwork(length(potions_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :relics       => VanillaNetwork(length(relics_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
             :player       => VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50]),
-            :deck         => PoolNetwork(length(card_encoder), 20, [50])
+            :deck         => PoolNetwork(length(card_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
         ),
         Dict(
-            :map          => VanillaNetwork(length(map_encoder), 20, [50])
+            :map          => VanillaNetwork(length(map_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
         ),
-        20, [50])
+        STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
     policy = VanillaNetwork(length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
     critic = VanillaNetwork(state_length(choice_encoder), 1, STANDARD_CRITIC_LAYERS)
     MapAgent(

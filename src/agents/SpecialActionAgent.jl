@@ -15,19 +15,19 @@ function SpecialActionAgent()
     hand_select_actions = readlines("game_data/hand_select_actions.txt")
     choice_encoder = ChoiceEncoder(
         Dict(
-            :potions        => VanillaNetwork(length(potions_encoder), 20, [50]),
-            :relics         => VanillaNetwork(length(relics_encoder), 20, [50]),
-            :player         => VanillaNetwork(length(player_combat_encoder), 20, [50]),
-            :hand           => PoolNetwork(length(card_encoder)+1, 20, [50]),
-            :draw           => PoolNetwork(length(card_encoder)+1, 20, [50]),
-            :discard        => PoolNetwork(length(card_encoder)+1, 20, [50]),
-            :monsters       => PoolNetwork(length(monster_encoder), 20, [50])
+            :potions        => VanillaNetwork(length(potions_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :relics         => VanillaNetwork(length(relics_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :player         => VanillaNetwork(length(player_combat_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :hand           => PoolNetwork(length(card_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :draw           => PoolNetwork(length(card_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :discard        => PoolNetwork(length(card_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :monsters       => PoolNetwork(length(monster_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
         ),
         Dict(
-            :choose_card    => VanillaNetwork(length(card_encoder) + length(hand_select_actions), 20, [50]),
+            :choose_card    => VanillaNetwork(length(card_encoder) + length(hand_select_actions), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
             :confirm        => NullNetwork()
         ),
-        20, [50])
+        STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
     policy = VanillaNetwork(length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
     critic = VanillaNetwork(state_length(choice_encoder), 1, STANDARD_CRITIC_LAYERS)
     SpecialActionAgent(

@@ -13,21 +13,21 @@ end
 function PotionAgent()
     choice_encoder = ChoiceEncoder(
         Dict(
-            :potions        => VanillaNetwork(length(potions_encoder), 20, [50]),
-            :relics         => VanillaNetwork(length(relics_encoder), 20, [50]),
-            :player_combat  => VanillaNetwork(length(player_combat_encoder)+1, 20, [50]),
+            :potions        => VanillaNetwork(length(potions_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :relics         => VanillaNetwork(length(relics_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :player_combat  => VanillaNetwork(length(player_combat_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
             :player_basic   => VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50]),
-            :deck           => PoolNetwork(length(card_encoder), 20, [50]),
-            :hand           => PoolNetwork(length(card_encoder)+1, 20, [50]),
-            :draw           => PoolNetwork(length(card_encoder)+1, 20, [50]),
-            :discard        => PoolNetwork(length(card_encoder)+1, 20, [50]),
-            :monsters       => PoolNetwork(length(monster_encoder)+1, 20, [50])
+            :deck           => PoolNetwork(length(card_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :hand           => PoolNetwork(length(card_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :draw           => PoolNetwork(length(card_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :discard        => PoolNetwork(length(card_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :monsters       => PoolNetwork(length(monster_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
         ),
         Dict(
             :no_potion      => NullNetwork(),
-            :potion         => VanillaNetwork(length(potions_encoder), 20, [50])
+            :potion         => VanillaNetwork(length(potions_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
         ),
-        20, [50])
+        STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
     policy = VanillaNetwork(length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
     critic = VanillaNetwork(state_length(choice_encoder), 1, STANDARD_CRITIC_LAYERS)
     PotionAgent(

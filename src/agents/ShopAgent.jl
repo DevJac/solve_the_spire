@@ -14,20 +14,20 @@ end
 function ShopAgent()
     choice_encoder = ChoiceEncoder(
         Dict(
-            :potions        => VanillaNetwork(length(potions_encoder), 20, [50]),
-            :relics         => VanillaNetwork(length(relics_encoder), 20, [50]),
+            :potions        => VanillaNetwork(length(potions_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :relics         => VanillaNetwork(length(relics_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
             :player_basic   => VanillaNetwork(length(player_basic_encoder), length(player_basic_encoder), [50]),
-            :deck           => PoolNetwork(length(card_encoder), 20, [50])
+            :deck           => PoolNetwork(length(card_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
         ),
         Dict(
-            :buy_card       => VanillaNetwork(length(card_encoder)+1, 20, [50]),
-            :buy_relic      => VanillaNetwork(length(relics_encoder)+1, 20, [50]),
-            :buy_potion     => VanillaNetwork(length(potions_encoder)+1, 20, [50]),
-            :discard_potion => VanillaNetwork(length(potions_encoder), 20, [50]),
+            :buy_card       => VanillaNetwork(length(card_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :buy_relic      => VanillaNetwork(length(relics_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :buy_potion     => VanillaNetwork(length(potions_encoder)+1, STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
+            :discard_potion => VanillaNetwork(length(potions_encoder), STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS),
             :purge_card     => VanillaNetwork(1, 1, [50]),
             :leave          => NullNetwork()
         ),
-        20, [50])
+        STANDARD_EMBEDDER_OUT, STANDARD_EMBEDDER_LAYERS)
     policy = VanillaNetwork(length(choice_encoder), 1, STANDARD_POLICY_LAYERS)
     critic = VanillaNetwork(state_length(choice_encoder), 1, STANDARD_CRITIC_LAYERS)
     ShopAgent(
