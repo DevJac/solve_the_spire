@@ -74,7 +74,7 @@ function action(agent::CombatAgent, ra::RootAgent, sts_state)
             agent.floor_partial_credit = monster_hp_loss_ratio
             if awaiting(agent.sars) == sar_reward
                 player_hp_loss_ratio = lose ? 1 : 1 - (gs["current_hp"] / agent.initial_hp_stats.player_hp)
-                target_reward = clamp(monster_hp_loss_ratio, 0, 1) - clamp(player_hp_loss_ratio, -1, 1)
+                target_reward = clamp(monster_hp_loss_ratio, 0, 1) - clamp(player_hp_loss_ratio, -1, 1) * 2
                 if win; target_reward += 0.1 end
                 if lose; target_reward -= 0.1 end
                 r = target_reward - agent.last_rewarded_target
