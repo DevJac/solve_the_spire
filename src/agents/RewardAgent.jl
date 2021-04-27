@@ -46,6 +46,7 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
             agent.last_card_reward = (0, 0, 0)
             if awaiting(agent.sars) == sar_reward
                 r = gs["floor"] - agent.last_floor_rewarded + floor_partial_credit(ra)
+                @assert r >= 0
                 agent.last_floor_rewarded = 0
                 add_reward(agent.sars, r, 0)
                 log_value(ra.tb_log, "RewardAgent/reward", r)
@@ -90,6 +91,7 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
             end
             if awaiting(agent.sars) == sar_reward
                 r = gs["floor"] - agent.last_floor_rewarded
+                @assert r >= 0
                 agent.last_floor_rewarded = gs["floor"]
                 add_reward(agent.sars, r)
                 log_value(ra.tb_log, "RewardAgent/reward", r)
