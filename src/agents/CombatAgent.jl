@@ -42,8 +42,8 @@ function CombatAgent()
         choice_encoder,
         policy,
         critic,
-        ADADelta(),
-        ADADelta(),
+        RMSProp(0.000_1),
+        RMSProp(0.000_1),
         SARS(),
         InitialHPStats(0, 0, 0, 0), 0, 0)
 end

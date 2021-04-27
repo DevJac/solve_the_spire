@@ -29,8 +29,8 @@ function MapAgent()
         choice_encoder,
         policy,
         critic,
-        ADADelta(),
-        ADADelta(),
+        RMSProp(0.000_1),
+        RMSProp(0.000_1),
         SARS(),
         0,
         (0, -1))
