@@ -176,6 +176,8 @@ function train!(agent::SpecialActionAgent, ra::RootAgent, epochs=STANDARD_TRAINI
         log_value(train_log, "train/estimated_advantage", mean(estimated_advantage), step=epoch)
         log_value(train_log, "train/entropy", mean(entropys), step=epoch)
         log_value(train_log, "train/explore", mean(explore), step=epoch)
+        @assert !any(isnan, (loss, mean(kl_divs), mean(actual_value), mean(estimated_value),
+                             mean(estimated_advantage), mean(entropys), mean(explore)))
         Flux.Optimise.update!(agent.policy_opt, prms, grads)
         if epoch >= epochs || smooth!(kl_div_smoother, mean(kl_divs)) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
@@ -199,6 +201,7 @@ function train!(agent::SpecialActionAgent, ra::RootAgent, epochs=STANDARD_TRAINI
             end
         end
         log_value(train_log, "train/critic_loss", loss, step=epoch)
+        @assert !isnan(loss)
         Flux.Optimise.update!(agent.critic_opt, prms, grads)
     end
     log_value(ra.tb_log, "SpecialActionAgent/critic_loss", loss)
