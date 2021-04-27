@@ -42,7 +42,7 @@ function CombatAgent()
         choice_encoder,
         policy,
         critic,
-        RMSProp(0.000_15),
+        RMSProp(0.000_1),
         RMSProp(0.000_1),
         SARS(),
         InitialHPStats(0, 0, 0, 0), 0, 0)
