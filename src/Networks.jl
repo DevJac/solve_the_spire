@@ -48,11 +48,9 @@ function PoolNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_unifor
     PoolNetwork(Chain(layers...))
 end
 
-logsumexp(x) = log.(sum(exp, x, dims=2))
-
 function (n::PoolNetwork)(s)
     network_out = n.network(s)
-    pooled = logsumexp(network_out)
+    pooled = sum(network_out, dims=2)
     reshape(pooled, length(pooled))
 end
 
