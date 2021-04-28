@@ -32,8 +32,8 @@ function RewardAgent()
         choice_encoder,
         policy,
         critic,
-        RMSProp(0.000_01),
-        RMSProp(0.000_01),
+        RMSProp(0.000_03),
+        RMSProp(0.000_03),
         SARS(),
         0, (0, 0, 0))
 end
