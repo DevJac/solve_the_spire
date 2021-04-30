@@ -34,8 +34,8 @@ function PotionAgent()
         choice_encoder,
         policy,
         critic,
-        RMSProp(STANDARD_LEARNING_RATE),
-        RMSProp(STANDARD_LEARNING_RATE),
+        STANDARD_OPTIMIZER(),
+        STANDARD_OPTIMIZER(),
         SARS(),
         0)
 end
