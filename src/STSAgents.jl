@@ -19,7 +19,7 @@ const STANDARD_EMBEDDER_LAYERS = [70, 70]
 const STANDARD_EMBEDDER_OUT = 50
 const STANDARD_TRAINING_EPOCHS = 40
 const STANDARD_KL_DIV_EARLY_STOP = 0.02
-const STANDARD_OPTIMIZER = () -> ADADelta()
+const STANDARD_OPTIMIZER = () -> RMSProp(0.000_01)
 
 mutable struct RootAgent
     errors         :: Int
