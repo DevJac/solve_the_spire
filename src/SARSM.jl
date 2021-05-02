@@ -54,20 +54,30 @@ struct SingleSAR{S, A}
     continuity :: Float32
     q          :: Float32
     q_norm     :: Float32
+    weight     :: Float32
 end
 
-function fill_q(sars::SARS, discount_factor=1.0f0)
+function fill_q(sars::SARS, discount_factor=1.0f0, episode_continuity_threshold=0.1)
     @assert all(v -> length(sars.states) == length(v), (sars.actions, sars.rewards))
     first_pass = SingleSAR[]
     q = 0.0f0
+    episode = 0f0
     for i in length(sars.rewards):-1:1
         reward, continuity = sars.rewards[i]
         q *= continuity * discount_factor
         q += reward
-        push!(first_pass, SingleSAR(sars.states[i], sars.actions[i], reward, continuity, q, 0f0))
+        if continuity <= episode_continuity_threshold
+            episode += 1
+        end
+        push!(first_pass, SingleSAR(sars.states[i], sars.actions[i], reward, continuity, q, 0f0, episode))
     end
     q_mean = mean([sar.q for sar in first_pass])
     q_std = std([sar.q for sar in first_pass])
+    episode_counts = Dict{Float32, Int}()
+    map(first_pass) do sar
+        episode_counts[sar.weight] = get(episode_counts, sar.weight, 0) + 1
+    end
+    per_episode_weight = 1f0 / length(episode_counts)
     reverse([
         SingleSAR(
             sar.state,
@@ -75,33 +85,9 @@ function fill_q(sars::SARS, discount_factor=1.0f0)
             sar.reward,
             sar.continuity,
             sar.q,
-            ((sar.q - q_mean) / q_std))
+            ((sar.q - q_mean) / q_std),
+            per_episode_weight / episode_counts[sar.weight])
         for sar in first_pass])
-end
-
-export sars_mean
-
-function sars_mean(f, sars, episode_continuity_threshold=0.1)
-    cqs = map(f, sars)
-    episodes = 0
-    total_total = 0
-    count = 0
-    total = 0
-    last_cont = true
-    for (c, q) in cqs
-        count += 1
-        total += q
-        if c <= episode_continuity_threshold
-            episodes += 1
-            total_total += total / count
-            count = 0
-            total = 0
-            last_cont = false
-        else
-            last_cont = true
-        end
-    end
-    (total_total + (last_cont ? total / count : 0)) / (episodes + (last_cont ? 1 : 0))
 end
 
 end # module
