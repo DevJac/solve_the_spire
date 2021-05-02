@@ -203,7 +203,7 @@ function train!(train_log, agent, ra, epochs)
             agent.choice_encoder,
             agent.policy)
         loss, grads = valgrad(prms) do
-            -sum(batch) do sar
+            -mean(batch) do sar
                 target_aps = Zygote.@ignore action_probabilities(target_agent, ra, sar.state)[2]
                 target_ap = Zygote.@ignore max(1e-8, target_aps[sar.action])
                 online_aps = action_probabilities(agent, ra, sar.state)[2]

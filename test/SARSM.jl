@@ -43,7 +43,7 @@ using SARSM
     sar_structs = fill_q(sars)
     @test map(x -> x.q, sar_structs) == Float32.([2, 1, 1, 7, 13, 12, 11, 10])
     @test map(x -> x.continuity, sar_structs) == Float32.([1, 0, 0, 0, 1, 1, 1, 1])
-    @test map(x -> x.weight, sar_structs) == Float32.([1/8, 1/8, 1/4, 1/4, 1/16, 1/16, 1/16, 1/16])
+    @test map(x -> x.weight, sar_structs) == Float32.([1/2, 1/2, 1, 1, 1/4, 1/4, 1/4, 1/4])
     @test isapprox(sar_structs[1].q_norm, -1.00268)
     empty!(sars)
     @test map(x -> x.q, fill_q(sars)) == Float32.([])

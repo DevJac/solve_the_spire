@@ -77,7 +77,6 @@ function fill_q(sars::SARS, discount_factor=1.0f0, episode_continuity_threshold=
     map(first_pass) do sar
         episode_counts[sar.weight] = get(episode_counts, sar.weight, 0) + 1
     end
-    per_episode_weight = 1f0 / length(episode_counts)
     reverse([
         SingleSAR(
             sar.state,
@@ -86,7 +85,7 @@ function fill_q(sars::SARS, discount_factor=1.0f0, episode_continuity_threshold=
             sar.continuity,
             sar.q,
             ((sar.q - q_mean) / q_std),
-            per_episode_weight / episode_counts[sar.weight])
+            1f0 / episode_counts[sar.weight])
         for sar in first_pass])
 end
 
