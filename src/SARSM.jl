@@ -79,4 +79,29 @@ function fill_q(sars::SARS, discount_factor=1.0f0)
         for sar in first_pass])
 end
 
+export sars_mean
+
+function sars_mean(f, sars, episode_continuity_threshold=0.1)
+    cqs = map(f, sars)
+    episodes = 0
+    total_total = 0
+    count = 0
+    total = 0
+    last_cont = true
+    for (c, q) in cqs
+        count += 1
+        total += q
+        if c <= episode_continuity_threshold
+            episodes += 1
+            total_total += total / count
+            count = 0
+            total = 0
+            last_cont = false
+        else
+            last_cont = true
+        end
+    end
+    (total_total + (last_cont ? total / count : 0)) / (episodes + (last_cont ? 1 : 0))
+end
+
 end # module

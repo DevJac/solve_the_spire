@@ -50,3 +50,26 @@ using SARSM
     @test length(sars.actions) == 0
     @test length(sars.rewards) == 0
 end
+
+@testset "sars_mean" begin
+    x1 = [(1, 1)
+          (1, 2)
+          (0, 3)
+          (1, 4)
+          (1, 5)
+          (1, 6)
+          (0, 7)
+          (1, 8)
+          (1, 9)]
+    x2 = [(1, 1)
+          (1, 2)
+          (0, 3)
+          (1, 4)
+          (1, 5)
+          (1, 6)
+          (0, 7)
+          (1, 8)
+          (0, 9)]
+    @test sars_mean(identity, x1) == 16 / 3
+    @test sars_mean(identity, x2) == 16 / 3
+end
