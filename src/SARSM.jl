@@ -48,11 +48,12 @@ end
 export SingleSAR, fill_q
 
 struct SingleSAR{S, A}
-    state  :: S
-    action :: A
-    reward :: Float32
-    q      :: Float32
-    q_norm :: Float32
+    state      :: S
+    action     :: A
+    reward     :: Float32
+    continuity :: Float32
+    q          :: Float32
+    q_norm     :: Float32
 end
 
 function fill_q(sars::SARS, discount_factor=1.0f0)
@@ -63,7 +64,7 @@ function fill_q(sars::SARS, discount_factor=1.0f0)
         reward, continuity = sars.rewards[i]
         q *= continuity * discount_factor
         q += reward
-        push!(first_pass, SingleSAR(sars.states[i], sars.actions[i], reward, q, 0f0))
+        push!(first_pass, SingleSAR(sars.states[i], sars.actions[i], reward, continuity, q, 0f0))
     end
     q_mean = mean([sar.q for sar in first_pass])
     q_std = std([sar.q for sar in first_pass])
@@ -72,6 +73,7 @@ function fill_q(sars::SARS, discount_factor=1.0f0)
             sar.state,
             sar.action,
             sar.reward,
+            sar.continuity,
             sar.q,
             ((sar.q - q_mean) / q_std))
         for sar in first_pass])
