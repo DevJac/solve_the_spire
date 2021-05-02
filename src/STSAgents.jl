@@ -18,8 +18,8 @@ const STANDARD_CRITIC_LAYERS = [230, 230, 230, 230, 230, 230]
 const STANDARD_EMBEDDER_LAYERS = [70, 70]
 const STANDARD_EMBEDDER_OUT = 50
 const STANDARD_TRAINING_EPOCHS = 40
-const STANDARD_KL_DIV_EARLY_STOP = 0.02
-const STANDARD_OPTIMIZER = () -> RMSProp(0.000_01)
+const STANDARD_KL_DIV_EARLY_STOP = 0.01
+const STANDARD_OPTIMIZER = () -> RMSProp(0.000_03)
 
 mutable struct RootAgent
     errors         :: Int
@@ -190,7 +190,6 @@ function train!(train_log, agent, ra, epochs)
     sars = fill_q(agent.sars)
     if length(sars) < 2; return end
     target_agent = deepcopy(agent)
-    kl_div_smoother = Smoother()
     local loss
     kl_divs = Float32[]
     actual_value = Float32[]
@@ -232,7 +231,7 @@ function train!(train_log, agent, ra, epochs)
         @assert !any(isnan, (loss, mean(kl_divs), mean(actual_value), mean(estimated_value),
                              mean(estimated_advantage), mean(entropys), mean(explore)))
         Flux.Optimise.update!(agent.policy_opt, prms, grads)
-        if epoch >= epochs || smooth!(kl_div_smoother, mean(kl_divs)) > STANDARD_KL_DIV_EARLY_STOP; break end
+        if epoch >= epochs || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
         empty!(entropys); empty!(explore)
     end
