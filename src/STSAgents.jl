@@ -203,7 +203,7 @@ function train!(train_log, agent, ra, epochs)
             agent.choice_encoder,
             agent.policy)
         loss, grads = valgrad(prms) do
-            -mean(batch) do sar
+            -sum(batch) do sar
                 target_aps = Zygote.@ignore action_probabilities(target_agent, ra, sar.state)[2]
                 target_ap = Zygote.@ignore max(1e-8, target_aps[sar.action])
                 online_aps = action_probabilities(agent, ra, sar.state)[2]
@@ -217,7 +217,7 @@ function train!(train_log, agent, ra, epochs)
                     push!(entropys, entropy(online_aps))
                     push!(explore, explore_odds(online_aps))
                 end
-                min(
+                sar.weight * min(
                     (online_ap / target_ap) * advantage,
                     clip(online_ap / target_ap, 0.2) * advantage)
             end
