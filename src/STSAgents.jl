@@ -19,7 +19,7 @@ const STANDARD_EMBEDDER_LAYERS = [70, 70]
 const STANDARD_EMBEDDER_OUT = 50
 const STANDARD_TRAINING_EPOCHS = 20
 const STANDARD_KL_DIV_EARLY_STOP = 0.1
-const STANDARD_OPTIMIZER = () -> ADADelta()
+const STANDARD_OPTIMIZER = () -> RMSProp(0.000_03)
 
 mutable struct RootAgent
     errors         :: Int
@@ -197,7 +197,7 @@ function train!(train_log, agent, ra, epochs)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 1000))
+    for (epoch, batch) in enumerate(Batcher(sars, 5000))
         prms = params(
             agent.choice_encoder,
             agent.policy)
@@ -242,7 +242,7 @@ function train!(train_log, agent, ra, epochs)
     log_value(ra.tb_log, "$(typeof(agent))/estimated_advantage", mean(estimated_advantage))
     log_value(ra.tb_log, "$(typeof(agent))/entropy", mean(entropys))
     log_value(ra.tb_log, "$(typeof(agent))/explore", mean(explore))
-    for (epoch, batch) in enumerate(Batcher(sars, 100))
+    for (epoch, batch) in enumerate(Batcher(sars, 1000))
         if epoch > epochs; break end
         prms = params(agent.critic)
         loss, grads = valgrad(prms) do
