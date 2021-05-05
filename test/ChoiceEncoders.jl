@@ -172,8 +172,8 @@ end
         Dict(:state_a => VanillaNetwork(4, 3, [8]), :state_b => VanillaNetwork(4, 3, [8])),
         Dict(:choice_a => VanillaNetwork(4, 3, [8]), :choice_b => NullNetwork()),
         3, [8])
-    @test length(params(ce)) == 16
-    @test length.(params(ce)) == [32, 8, 24, 3, 32, 8, 24, 3, 32, 8, 24, 3, 40, 8, 24, 3]
+    @test length(params(ce)) == 17
+    @test length.(params(ce)) == [32, 8, 24, 3, 32, 8, 24, 3, 32, 8, 24, 3, 40, 8, 24, 3, 36]
 end
 
 @testset "encode_state" begin

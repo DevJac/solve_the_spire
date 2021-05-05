@@ -13,10 +13,10 @@ using Zygote
 
 export RootAgent, agent_command, action, train!
 
-const STANDARD_POLICY_LAYERS = [80, 80]
-const STANDARD_CRITIC_LAYERS = [80, 80]
-const STANDARD_EMBEDDER_LAYERS = [40]
-const STANDARD_EMBEDDER_OUT = 20
+const STANDARD_POLICY_LAYERS = [20, 20]
+const STANDARD_CRITIC_LAYERS = [20, 20]
+const STANDARD_EMBEDDER_LAYERS = [10]
+const STANDARD_EMBEDDER_OUT = 5
 const STANDARD_TRAINING_EPOCHS = 20
 const STANDARD_KL_DIV_EARLY_STOP = 1000 # disabled, no limit
 const STANDARD_OPTIMIZER = () -> ADADelta()
@@ -189,6 +189,21 @@ end
 function train!(train_log, agent, ra, epochs)
     sars = fill_q(agent.sars)
     if length(sars) < 2; return end
+    for (epoch, batch) in enumerate(Batcher(sars, 1000))
+        if epoch > epochs; break end
+        prms = params(agent.critic)
+        loss, grads = valgrad(prms) do
+            mean(batch) do sar
+                predicted_q = state_value(agent, ra, sar.state)
+                actual_q = sar.q_norm
+                (predicted_q - actual_q)^2
+            end
+        end
+        log_value(train_log, "train/critic_loss", loss, step=epoch)
+        @assert !isnan(loss)
+        Flux.Optimise.update!(agent.critic_opt, prms, grads)
+    end
+    log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     target_agent = deepcopy(agent)
     local loss
     kl_divs = Float32[]
@@ -242,21 +257,6 @@ function train!(train_log, agent, ra, epochs)
     log_value(ra.tb_log, "$(typeof(agent))/estimated_advantage", mean(estimated_advantage))
     log_value(ra.tb_log, "$(typeof(agent))/entropy", mean(entropys))
     log_value(ra.tb_log, "$(typeof(agent))/explore", mean(explore))
-    for (epoch, batch) in enumerate(Batcher(sars, 1000))
-        if epoch > epochs; break end
-        prms = params(agent.critic)
-        loss, grads = valgrad(prms) do
-            mean(batch) do sar
-                predicted_q = state_value(agent, ra, sar.state)
-                actual_q = sar.q_norm
-                (predicted_q - actual_q)^2
-            end
-        end
-        log_value(train_log, "train/critic_loss", loss, step=epoch)
-        @assert !isnan(loss)
-        Flux.Optimise.update!(agent.critic_opt, prms, grads)
-    end
-    log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     empty!(agent.sars)
 end
 
