@@ -56,7 +56,7 @@ end
 # Authors: Giovanni Pellegrini, Alessandro Tibo, Paolo Frasconi, Andrea Passerini, Manfred Jaeger
 
 function L(a, b, x)
-    sum(x.^b)^a
+    sum(x .^ max(b, 0)) ^ max(a, 0)
 end
 
 function LAF(params_and_x)
