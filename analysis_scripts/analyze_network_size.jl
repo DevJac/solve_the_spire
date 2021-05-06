@@ -17,7 +17,7 @@ using STSAgents
 using TensorBoardLogger
 using Utils
 
-m = BSON.load(ARGS[1])[:model]
+m = RootAgent()
 
 all_agents_total = 0
 for agent in m.agents
