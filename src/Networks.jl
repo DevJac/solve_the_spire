@@ -46,8 +46,9 @@ function PoolNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_unifor
         push!(layers, Dense(hidden[i], hidden[i+1], activation, initW=initW))
     end
     push!(layers, Dense(hidden[end], out, identity))
-
-    PoolNetwork(Chain(layers...), rand(Float32, out, 12))
+    laf_parameters = rand(Float32, out, 12)
+    laf_parameters[:,[2,4,6,8]] *= 5
+    PoolNetwork(Chain(layers...), laf_parameters)
 end
 
 # See: https://arxiv.org/abs/2012.08482
@@ -61,7 +62,7 @@ end
 function LAF(params_and_x)
     a, b, c, d, e, f, g, h, α, β, γ, δ, x0... = params_and_x
     x = sigmoid.(x0)
-    ((α * L(a, b, x)) + (β * L(c, d, x))) / ((γ * L(e, f, x)) + (δ * L(g, h, x)))
+    ((α * L(a, b, x)) + (β * L(c, d, (1 .- x)))) / ((γ * L(e, f, x)) + (δ * L(g, h, (1 .- x))))
 end
 
 function (n::PoolNetwork)(s)
