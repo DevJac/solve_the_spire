@@ -47,7 +47,7 @@ function PoolNetwork(in, out, hidden, activation=relu, initW=Flux.kaiming_unifor
     end
     push!(layers, Dense(hidden[end], out, identity))
     laf_parameters = rand(Float32, out, 12)
-    laf_parameters[:,[2,4,6,8]] *= 5
+    laf_parameters[:,[2,4,6,8]] *= 2
     PoolNetwork(Chain(layers...), laf_parameters)
 end
 
@@ -56,7 +56,7 @@ end
 # Authors: Giovanni Pellegrini, Alessandro Tibo, Paolo Frasconi, Andrea Passerini, Manfred Jaeger
 
 function L(a, b, x)
-    sum(x .^ max(b, 0)) ^ max(a, 0)
+    sum(x .^ exp(b)) ^ exp(a)
 end
 
 function LAF(params_and_x)
