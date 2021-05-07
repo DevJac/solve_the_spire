@@ -56,19 +56,20 @@ end
 # Authors: Giovanni Pellegrini, Alessandro Tibo, Paolo Frasconi, Andrea Passerini, Manfred Jaeger
 
 function L(a, b, x)
-    sum(x .^ exp(b)) ^ exp(a)
+    sum(x .^ exp.(b), dims=2) .^ exp.(a)
 end
 
-function LAF(params_and_x)
-    a, b, c, d, e, f, g, h, α, β, γ, δ, x0... = params_and_x
+function LAF(params, x0)
+    @assert size(params, 2) == 12
+    a, b, c, d, e, f, g, h, α, β, γ, δ = eachcol(params)
     x = sigmoid.(x0)
-    ((α * L(a, b, x)) + (β * L(c, d, (1 .- x)))) / ((γ * L(e, f, x)) + (δ * L(g, h, (1 .- x))))
+    ((α .* L(a, b, x)) .+ (β .* L(c, d, (1 .- x)))) ./ ((γ .* L(e, f, x)) .+ (δ .* L(g, h, (1 .- x))))
 end
 
 function (n::PoolNetwork)(s)
     network_out = n.network(Float32.(s))
-    with_params = vcat(n.laf_parameters', network_out')
-    map(i -> LAF(with_params[:,i]), 1:size(with_params, 2))
+    pooled = LAF(n.laf_parameters, network_out)
+    reshape(pooled, length(pooled))
 end
 
 Base.length(n::PoolNetwork) = length(n.network.layers[end].b)
