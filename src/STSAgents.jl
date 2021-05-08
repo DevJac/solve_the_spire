@@ -189,7 +189,7 @@ end
 function train!(train_log, agent, ra, epochs)
     sars = fill_q(agent.sars)
     if length(sars) < 2; return end
-    for (epoch, batch) in enumerate(Batcher(sars, 1000))
+    for (epoch, batch) in enumerate(Batcher(sars, 100))
         if epoch > epochs; break end
         prms = params(agent.critic)
         loss, grads = valgrad(prms) do
@@ -213,7 +213,7 @@ function train!(train_log, agent, ra, epochs)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 5000))
+    for (epoch, batch) in enumerate(Batcher(sars, 1000))
         prms = params(
             agent.choice_encoder,
             agent.policy)
