@@ -1,3 +1,4 @@
+using Statistics
 using Test
 
 using SARSM
@@ -46,6 +47,11 @@ using SARSM
     @test map(x -> x.weight, sar_structs) == Float32.([1/2, 1/2, 1, 1, 1/4, 1/4, 1/4, 1/4])
     @test isapprox(sar_structs[1].q_norm, -1.00268)
     @test isapprox(sar_structs[1].advantage_norm, -1.00268)
+
+    @test mean([x.q_norm for x in sar_structs]) == 0
+    @test std([x.q_norm for x in sar_structs]) == 1
+    @test mean([x.advantage_norm for x in sar_structs]) == 0
+    @test std([x.advantage_norm for x in sar_structs]) == 1
 
     sar_structs = fill_q(sars, sar -> sar.q + 1)
     @test map(x -> x.q, sar_structs) == Float32.([2, 1, 1, 7, 13, 12, 11, 10])

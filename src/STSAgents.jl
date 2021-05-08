@@ -205,7 +205,7 @@ function train!(train_log, agent, ra, epochs)
     end
     log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     target_agent = deepcopy(agent)
-    sars = fill_q(agent.sars, sar -> sar.q_norm - state_value(target_agent, ra, sar.state)[2])
+    sars = fill_q(agent.sars, sar -> sar.q_norm - state_value(target_agent, ra, sar.state))
     local loss
     kl_divs = Float32[]
     actual_value = Float32[]
