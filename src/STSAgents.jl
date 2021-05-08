@@ -194,8 +194,8 @@ function train!(train_log, agent, ra)
         loss, grads = valgrad(prms) do
             mean(batch) do sar
                 predicted_q = state_value(agent, ra, sar.state)
-                actual_q = sar.q_norm
-                (predicted_q - actual_q)^2
+                actual_q = sar.q
+                predicted_q - actual_q
             end
         end
         log_value(train_log, "train/critic_loss", loss, step=epoch)
@@ -204,7 +204,7 @@ function train!(train_log, agent, ra)
     end
     log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     target_agent = deepcopy(agent)
-    sars = fill_q(agent.sars, sar -> sar.q_norm - state_value(target_agent, ra, sar.state))
+    sars = fill_q(agent.sars, sar -> sar.q - state_value(target_agent, ra, sar.state))
     local loss
     kl_divs = Float32[]
     actual_value = Float32[]
@@ -224,15 +224,15 @@ function train!(train_log, agent, ra)
                 online_ap = online_aps[sar.action]
                 Zygote.ignore() do
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
-                    push!(actual_value, online_ap * sar.q_norm)
+                    push!(actual_value, online_ap * sar.q)
                     push!(estimated_value, online_ap * state_value(target_agent, ra, sar.state))
-                    push!(estimated_advantage, online_ap * sar.advantage)
+                    push!(estimated_advantage, online_ap * sar.advantage_norm)
                     push!(entropys, entropy(online_aps))
                     push!(explore, explore_odds(online_aps))
                 end
                 sar.weight * min(
-                    (online_ap / target_ap) * sar.advantage,
-                    clip(online_ap / target_ap, 0.2) * sar.advantage)
+                    (online_ap / target_ap) * sar.advantage_norm,
+                    clip(online_ap / target_ap, 0.2) * sar.advantage_norm)
             end
         end
         log_value(train_log, "train/policy_loss", loss, step=epoch)
@@ -245,7 +245,7 @@ function train!(train_log, agent, ra)
         @assert !any(isnan, (loss, mean(kl_divs), mean(actual_value), mean(estimated_value),
                              mean(estimated_advantage), mean(entropys), mean(explore)))
         Flux.Optimise.update!(agent.policy_opt, prms, grads)
-        if epoch >= 10 || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
+        if epoch >= 20 || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
         empty!(entropys); empty!(explore)
     end
