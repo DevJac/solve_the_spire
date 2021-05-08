@@ -151,7 +151,7 @@ function state_value(agent::CombatAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::CombatAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOCHS)
+function train!(agent::CombatAgent, ra::RootAgent)
     train_log = TBLogger("tb_logs/train_CombatAgent")
-    train!(train_log, agent, ra, epochs)
+    train!(train_log, agent, ra)
 end

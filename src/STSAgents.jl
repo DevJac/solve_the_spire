@@ -17,7 +17,6 @@ const STANDARD_POLICY_LAYERS = [50, 50, 50]
 const STANDARD_CRITIC_LAYERS = [50, 50, 50]
 const STANDARD_EMBEDDER_LAYERS = [50]
 const STANDARD_EMBEDDER_OUT = 50
-const STANDARD_TRAINING_EPOCHS = 100
 const STANDARD_KL_DIV_EARLY_STOP = 1000 # disabled, no limit
 const STANDARD_OPTIMIZER = () -> ADADelta()
 
@@ -186,11 +185,11 @@ function floor_partial_credit(ra::RootAgent)
     ra.combat_agent.floor_partial_credit
 end
 
-function train!(train_log, agent, ra, epochs)
+function train!(train_log, agent, ra)
     sars = fill_q(agent.sars)
     if length(sars) < 2; return end
     for (epoch, batch) in enumerate(Batcher(sars, 100))
-        if epoch > epochs; break end
+        if epoch > 100; break end
         prms = params(agent.critic)
         loss, grads = valgrad(prms) do
             mean(batch) do sar
@@ -213,7 +212,7 @@ function train!(train_log, agent, ra, epochs)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 1000))
+    for (epoch, batch) in enumerate(Batcher(sars, 10_000))
         prms = params(
             agent.choice_encoder,
             agent.policy)
@@ -246,7 +245,7 @@ function train!(train_log, agent, ra, epochs)
         @assert !any(isnan, (loss, mean(kl_divs), mean(actual_value), mean(estimated_value),
                              mean(estimated_advantage), mean(entropys), mean(explore)))
         Flux.Optimise.update!(agent.policy_opt, prms, grads)
-        if epoch >= epochs || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
+        if epoch >= 10 || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
         empty!(entropys); empty!(explore)
     end

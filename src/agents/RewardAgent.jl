@@ -162,7 +162,7 @@ function state_value(agent::RewardAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::RewardAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOCHS)
+function train!(agent::RewardAgent, ra::RootAgent)
     train_log = TBLogger("tb_logs/train_RewardAgent")
-    train!(train_log, agent, ra, epochs)
+    train!(train_log, agent, ra)
 end

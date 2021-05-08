@@ -138,7 +138,7 @@ function state_value(agent::CampfireAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::CampfireAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOCHS)
+function train!(agent::CampfireAgent, ra::RootAgent)
     train_log = TBLogger("tb_logs/train_CampfireAgent")
-    train!(train_log, agent, ra, epochs)
+    train!(train_log, agent, ra)
 end

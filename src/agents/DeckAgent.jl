@@ -138,7 +138,7 @@ function state_value(agent::DeckAgent, ra::RootAgent, sts_state)
     only(agent.critic(state_encoded))
 end
 
-function train!(agent::DeckAgent, ra::RootAgent, epochs=STANDARD_TRAINING_EPOCHS)
+function train!(agent::DeckAgent, ra::RootAgent)
     train_log = TBLogger("tb_logs/train_DeckAgent")
-    train!(train_log, agent, ra, epochs)
+    train!(train_log, agent, ra)
 end
