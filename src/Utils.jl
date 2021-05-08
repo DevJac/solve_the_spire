@@ -1,9 +1,10 @@
 module Utils
+using Pushover
 using Random
 using SparseArrays
 using Zygote
 
-export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds, diagcat, nearest, kill_java
+export mc_q, onehot, clip, find, max_file_number, valgrad, explore_odds, diagcat, nearest, kill_java, pushover
 
 function mc_q(r, f, γ=1f0)
     result = Float32.(similar(r))
@@ -84,6 +85,12 @@ function kill_java()
     catch e
         if !isa(e, ProcessFailedException); rethrow() end
     end
+end
+
+function pushover(message)
+    client = PushoverClient(ENV["PUSHOVER_USER_KEY"], ENV["PUSHOVER_STS_API_TOKEN"])
+    response = send(client, message)
+    @assert response["status"] == 1
 end
 
 export Smoother, smooth!

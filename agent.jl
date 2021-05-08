@@ -74,21 +74,26 @@ function manual_command()
 end
 
 function main()
-    while true
-        try
-            mkpath("models")
-            root_agent = load_root_agent()
-            agent_main(root_agent)
-        catch e
-            if typeof(e) == ErrorException && occursin("Unexpected end of input", e.msg)
-                @warn "STS crashed, will restart" exception=e
-                sleep(3)
-                continue
+    try
+        pushover("STS started")
+        while true
+            try
+                mkpath("models")
+                root_agent = load_root_agent()
+                agent_main(root_agent)
+            catch e
+                if typeof(e) == ErrorException && occursin("Unexpected end of input", e.msg)
+                    @warn "STS crashed, will restart" exception=e
+                    sleep(3)
+                    continue
+                end
+                rethrow()
+            finally
+                kill_java()
             end
-            rethrow()
-        finally
-            kill_java()
         end
+    finally
+        pushover("STS stopped")
     end
 end
 
