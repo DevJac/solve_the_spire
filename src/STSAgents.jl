@@ -205,6 +205,7 @@ function train!(train_log, agent, ra, epochs)
     end
     log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     target_agent = deepcopy(agent)
+    sars = fill_q(agent.sars, sar -> sar.q_norm - state_value(target_agent, ra, sar.state)[2])
     local loss
     kl_divs = Float32[]
     actual_value = Float32[]
@@ -219,21 +220,20 @@ function train!(train_log, agent, ra, epochs)
         loss, grads = valgrad(prms) do
             -mean(batch) do sar
                 target_aps = Zygote.@ignore action_probabilities(target_agent, ra, sar.state)[2]
-                target_ap = Zygote.@ignore max(1e-8, target_aps[sar.action])
+                target_ap = Zygote.@ignore target_aps[sar.action]
                 online_aps = action_probabilities(agent, ra, sar.state)[2]
                 online_ap = online_aps[sar.action]
-                advantage = Zygote.@ignore sar.q_norm - state_value(target_agent, ra, sar.state)
                 Zygote.ignore() do
                     push!(kl_divs, Flux.Losses.kldivergence(online_aps, target_aps))
                     push!(actual_value, online_ap * sar.q_norm)
                     push!(estimated_value, online_ap * state_value(target_agent, ra, sar.state))
-                    push!(estimated_advantage, online_ap * advantage)
+                    push!(estimated_advantage, online_ap * sar.advantage)
                     push!(entropys, entropy(online_aps))
                     push!(explore, explore_odds(online_aps))
                 end
                 sar.weight * min(
-                    (online_ap / target_ap) * advantage,
-                    clip(online_ap / target_ap, 0.2) * advantage)
+                    (online_ap / target_ap) * sar.advantage,
+                    clip(online_ap / target_ap, 0.2) * sar.advantage)
             end
         end
         log_value(train_log, "train/policy_loss", loss, step=epoch)

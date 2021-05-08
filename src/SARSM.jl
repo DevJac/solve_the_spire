@@ -59,7 +59,7 @@ struct SingleSAR{S, A}
     weight         :: Float32
 end
 
-function fill_q(sars::SARS, advantage, discount_factor=1.0f0, episode_continuity_threshold=0.1)
+function fill_q(sars::SARS, advantage=_->0, discount_factor=1.0f0, episode_continuity_threshold=0.1)
     @assert all(v -> length(sars.states) == length(v), (sars.actions, sars.rewards))
     first_pass = SingleSAR[]
     q = 0.0f0
