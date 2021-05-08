@@ -16,7 +16,7 @@ export RootAgent, agent_command, action, train!
 const STANDARD_POLICY_LAYERS = [50, 50, 50]
 const STANDARD_CRITIC_LAYERS = [50, 50, 50]
 const STANDARD_EMBEDDER_LAYERS = [50]
-const STANDARD_EMBEDDER_OUT = 30
+const STANDARD_EMBEDDER_OUT = 50
 const STANDARD_TRAINING_EPOCHS = 20
 const STANDARD_KL_DIV_EARLY_STOP = 1000 # disabled, no limit
 const STANDARD_OPTIMIZER = () -> ADADelta()
