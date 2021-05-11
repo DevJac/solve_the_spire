@@ -186,7 +186,7 @@ function floor_partial_credit(ra::RootAgent)
 end
 
 function train!(train_log, agent, ra)
-    sars = fill_q(agent.sars)
+    sars = fill_q(agent.sars, _->0, 0.99)
     if length(sars) < 2; return end
     for (epoch, batch) in enumerate(Batcher(sars, 100))
         if epoch > 100; break end
@@ -204,7 +204,7 @@ function train!(train_log, agent, ra)
     end
     log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     target_agent = deepcopy(agent)
-    sars = fill_q(agent.sars, sar -> sar.q - state_value(target_agent, ra, sar.state))
+    sars = fill_q(agent.sars, sar -> sar.q - state_value(target_agent, ra, sar.state), 0.99)
     local loss
     kl_divs = Float32[]
     actual_value = Float32[]
