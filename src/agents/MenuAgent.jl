@@ -22,7 +22,7 @@ function action(agent::MenuAgent, ra::RootAgent, sts_state)
             log_value(ra.tb_log, "MenuAgent/floor_reached", floor_reached)
             log_value(ra.tb_log, "MenuAgent/score", gs["screen_state"]["score"])
             log_value(ra.tb_log, "MenuAgent/victory", Float32(gs["screen_state"]["victory"]))
-            println("Floor reached: $floor_reached ($(mean(agent.gen_floor_reached)))")
+            println("Floor reached: $floor_reached ($(round(mean(agent.gen_floor_reached), digits=1)))")
             return "proceed"
         end
     end
