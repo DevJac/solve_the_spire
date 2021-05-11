@@ -13,12 +13,12 @@ using Zygote
 
 export RootAgent, agent_command, action, train!
 
-const STANDARD_POLICY_LAYERS = [50, 50, 50]
-const STANDARD_CRITIC_LAYERS = [50, 50, 50]
+const STANDARD_POLICY_LAYERS = [200, 200, 200, 200]
+const STANDARD_CRITIC_LAYERS = [200, 200, 200, 200]
 const STANDARD_EMBEDDER_LAYERS = [50]
 const STANDARD_EMBEDDER_OUT = 50
 const STANDARD_KL_DIV_EARLY_STOP = 1000 # disabled, no limit
-const STANDARD_OPTIMIZER = () -> ADADelta()
+const STANDARD_OPTIMIZER = () -> RMSProp(0.000_03)
 
 mutable struct RootAgent
     errors         :: Int
@@ -212,7 +212,7 @@ function train!(train_log, agent, ra)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 10_000))
+    for (epoch, batch) in enumerate(Batcher(sars, 1000))
         prms = params(
             agent.choice_encoder,
             agent.policy)
