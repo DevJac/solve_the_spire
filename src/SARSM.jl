@@ -66,7 +66,7 @@ function fill_q(sars::SARS, advantage=_->0, discount_factor=1.0f0, episode_conti
     episode = 0f0
     for i in length(sars.rewards):-1:1
         reward, continuity = sars.rewards[i]
-        q *= continuity * discount_factor
+        q *= continuity * Float32(discount_factor)
         q += reward
         if continuity <= episode_continuity_threshold
             episode += 1
