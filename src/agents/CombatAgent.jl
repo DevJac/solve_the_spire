@@ -11,8 +11,6 @@ mutable struct CombatAgent
     choice_encoder
     policy
     critic
-    policy_opt
-    critic_opt
     sars
     initial_hp_stats     :: InitialHPStats
     floor_partial_credit :: Float32
@@ -42,8 +40,6 @@ function CombatAgent()
         choice_encoder,
         policy,
         critic,
-        STANDARD_OPTIMIZER(),
-        STANDARD_OPTIMIZER(),
         SARS(),
         InitialHPStats(0, 0, 0, 0), 0, 0)
 end

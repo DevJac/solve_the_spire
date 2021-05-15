@@ -4,8 +4,6 @@ mutable struct MapAgent
     choice_encoder
     policy
     critic
-    policy_opt
-    critic_opt
     sars
     last_floor_rewarded
     current_map_node
@@ -29,8 +27,6 @@ function MapAgent()
         choice_encoder,
         policy,
         critic,
-        STANDARD_OPTIMIZER(),
-        STANDARD_OPTIMIZER(),
         SARS(),
         0,
         (0, -1))

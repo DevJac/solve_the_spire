@@ -4,8 +4,6 @@ mutable struct RewardAgent
     choice_encoder
     policy
     critic
-    policy_opt
-    critic_opt
     sars
     last_floor_rewarded
     last_card_reward  # (floor, last card reward chosen, last card reward count)
@@ -32,8 +30,6 @@ function RewardAgent()
         choice_encoder,
         policy,
         critic,
-        STANDARD_OPTIMIZER(),
-        STANDARD_OPTIMIZER(),
         SARS(),
         0, (0, 0, 0))
 end

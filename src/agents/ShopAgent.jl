@@ -4,8 +4,6 @@ mutable struct ShopAgent
     choice_encoder
     policy
     critic
-    policy_opt
-    critic_opt
     sars
     last_floor_rewarded
     last_visited_shop_floor
@@ -34,8 +32,6 @@ function ShopAgent()
         choice_encoder,
         policy,
         critic,
-        STANDARD_OPTIMIZER(),
-        STANDARD_OPTIMIZER(),
         SARS(),
         0, 0)
 end

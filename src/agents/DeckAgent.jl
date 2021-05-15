@@ -4,8 +4,6 @@ mutable struct DeckAgent
     choice_encoder
     policy
     critic
-    policy_opt
-    critic_opt
     sars
     last_floor_rewarded
 end
@@ -30,8 +28,6 @@ function DeckAgent()
         choice_encoder,
         policy,
         critic,
-        STANDARD_OPTIMIZER(),
-        STANDARD_OPTIMIZER(),
         SARS(),
         0)
 end

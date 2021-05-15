@@ -13,12 +13,11 @@ using Zygote
 
 export RootAgent, agent_command, action, train!
 
-const STANDARD_POLICY_LAYERS = [200, 200, 200, 200]
-const STANDARD_CRITIC_LAYERS = [200, 200, 200, 200]
+const STANDARD_POLICY_LAYERS = [200, 200, 200, 200, 200, 200]
+const STANDARD_CRITIC_LAYERS = [200, 200, 200, 200, 200, 200]
 const STANDARD_EMBEDDER_LAYERS = [50]
 const STANDARD_EMBEDDER_OUT = 50
 const STANDARD_KL_DIV_EARLY_STOP = 1000 # disabled, no limit
-const STANDARD_OPTIMIZER = () -> RMSProp(0.000_03)
 
 mutable struct RootAgent
     errors         :: Int
@@ -186,6 +185,8 @@ function floor_partial_credit(ra::RootAgent)
 end
 
 function train!(train_log, agent, ra)
+    critic_opt = RMSProp(0.000_01)
+    policy_opt = RMSProp(0.000_1)
     sars = fill_q(agent.sars, _->0, 0.99)
     if length(sars) < 2; return end
     for (epoch, batch) in enumerate(Batcher(sars, 100))
@@ -200,7 +201,7 @@ function train!(train_log, agent, ra)
         end
         log_value(train_log, "train/critic_loss", loss, step=epoch)
         @assert !isnan(loss)
-        Flux.Optimise.update!(agent.critic_opt, prms, grads)
+        Flux.Optimise.update!(critic_opt, prms, grads)
     end
     log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     target_agent = deepcopy(agent)
@@ -212,7 +213,7 @@ function train!(train_log, agent, ra)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 1000))
+    for (epoch, batch) in enumerate(Batcher(sars, 100))
         prms = params(
             agent.choice_encoder,
             agent.policy)
@@ -244,8 +245,8 @@ function train!(train_log, agent, ra)
         log_value(train_log, "train/explore", mean(explore), step=epoch)
         @assert !any(isnan, (loss, mean(kl_divs), mean(actual_value), mean(estimated_value),
                              mean(estimated_advantage), mean(entropys), mean(explore)))
-        Flux.Optimise.update!(agent.policy_opt, prms, grads)
-        if epoch >= 20 || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
+        Flux.Optimise.update!(policy_opt, prms, grads)
+        if epoch >= 100 || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
         empty!(entropys); empty!(explore)
     end

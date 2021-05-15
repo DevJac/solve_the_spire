@@ -4,8 +4,6 @@ mutable struct SpecialActionAgent
     choice_encoder
     policy
     critic
-    policy_opt
-    critic_opt
     sars
     last_rewarded_target :: Float32
     hand_select_actions  :: Vector{String}
@@ -34,8 +32,6 @@ function SpecialActionAgent()
         choice_encoder,
         policy,
         critic,
-        STANDARD_OPTIMIZER(),
-        STANDARD_OPTIMIZER(),
         SARS(),
         0,
         hand_select_actions)
