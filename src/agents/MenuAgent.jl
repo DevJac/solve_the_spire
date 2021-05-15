@@ -6,7 +6,7 @@ mutable struct MenuAgent
     gen_victory        :: Vector{Float32}
     mean_floor_reached :: Vector{Float32}
 end
-MenuAgent() = MenuAgent([], [], [], [])
+MenuAgent() = MenuAgent([], [], [], [0])
 
 function action(agent::MenuAgent, ra::RootAgent, sts_state)
     if "in_game" in keys(sts_state) && !sts_state["in_game"]
@@ -30,11 +30,11 @@ end
 
 function train!(agent::MenuAgent, ra::RootAgent)
     mfr = mean(agent.gen_floor_reached)
-    push!(agent.mean_floor_reached, mfr)
     log_value(ra.tb_log, "MenuAgent/gen/mean_floor_reached", mfr)
     log_value(ra.tb_log, "MenuAgent/gen/mean_score", mean(agent.gen_score))
     log_value(ra.tb_log, "MenuAgent/gen/mean_victory", mean(agent.gen_victory))
     pushover(strip("Mean floor reached: $mfr ($(round(mfr - maximum(agent.mean_floor_reached), digits=1)))"))
+    push!(agent.mean_floor_reached, mfr)
     empty!(agent.gen_floor_reached)
     empty!(agent.gen_score)
     empty!(agent.gen_victory)
