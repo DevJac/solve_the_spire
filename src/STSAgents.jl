@@ -196,7 +196,7 @@ function train!(train_log, agent, ra)
             mean(batch) do sar
                 predicted_q = state_value(agent, ra, sar.state)
                 actual_q = sar.q
-                abs(predicted_q - actual_q)
+                (predicted_q - actual_q) ^ 2
             end
         end
         log_value(train_log, "train/critic_loss", loss, step=epoch)
@@ -205,7 +205,13 @@ function train!(train_log, agent, ra)
     end
     log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     target_agent = deepcopy(agent)
-    sars = fill_q(agent.sars, sar -> sar.q - state_value(target_agent, ra, sar.state), 0.99)
+    sars = fill_q(
+        agent.sars,
+        sars -> begin
+        a′ = isnothing(sar.state′) ? 0 : state_value(target_agent, ra, sar.state′)
+        a = state_value(target_agent, ra, sar.state)
+        a′ - a
+        end)
     local loss
     kl_divs = Float32[]
     actual_value = Float32[]

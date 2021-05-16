@@ -51,6 +51,7 @@ struct SingleSAR{S, A}
     state          :: S
     action         :: A
     reward         :: Float32
+    state′         :: Union{S, Nothing}
     continuity     :: Float32
     q              :: Float32
     q_norm         :: Float32
@@ -71,11 +72,12 @@ function fill_q(sars::SARS, advantage=_->0, discount_factor=1.0f0, episode_conti
         if continuity <= episode_continuity_threshold
             episode += 1
         end
-        push!(first_pass, SingleSAR(sars.states[i], sars.actions[i], reward, continuity, q, 0f0, 0f0, 0f0, episode))
+        state′ = i == length(sars.rewards) ? nothing : sars.states[i+1]
+        push!(first_pass, SingleSAR(sars.states[i], sars.actions[i], reward, state′, continuity, q, 0f0, 0f0, 0f0, episode))
     end
     second_pass = map(first_pass) do sar
         a = Float32(advantage(sar))
-        SingleSAR(sar.state, sar.action, sar.reward, sar.continuity, sar.q, sar.q_norm, a, 0f0, sar.weight)
+        SingleSAR(sar.state, sar.action, sar.reward, sar.state′, sar.continuity, sar.q, sar.q_norm, a, 0f0, sar.weight)
     end
     q_mean = mean([sar.q for sar in second_pass])
     q_std = std([sar.q for sar in second_pass])
@@ -90,6 +92,7 @@ function fill_q(sars::SARS, advantage=_->0, discount_factor=1.0f0, episode_conti
             sar.state,
             sar.action,
             sar.reward,
+            sar.state′,
             sar.continuity,
             sar.q,
             ((sar.q - q_mean) / q_std),
