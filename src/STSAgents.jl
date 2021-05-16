@@ -189,23 +189,8 @@ function train!(train_log, agent, ra)
     policy_opt = RMSProp(0.000_1)
     sars = fill_q(agent.sars, _->0, 0.99)
     if length(sars) < 2; return end
-    for (epoch, batch) in enumerate(Batcher(sars, 100))
-        if epoch > 100; break end
-        prms = params(agent.critic)
-        loss, grads = valgrad(prms) do
-            mean(batch) do sar
-                predicted_q = state_value(agent, ra, sar.state)
-                actual_q = sar.q
-                abs(predicted_q - actual_q)
-            end
-        end
-        log_value(train_log, "train/critic_loss", loss, step=epoch)
-        @assert !isnan(loss)
-        Flux.Optimise.update!(critic_opt, prms, grads)
-    end
-    log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     target_agent = deepcopy(agent)
-    sars = fill_q(agent.sars, sar -> sar.q - state_value(target_agent, ra, sar.state), 0.99)
+    sars = fill_q(agent.sars, sar -> sar.q - state_value(target_agent, ra, sar.state), 0.98)
     local loss
     kl_divs = Float32[]
     actual_value = Float32[]
@@ -257,6 +242,23 @@ function train!(train_log, agent, ra)
     log_value(ra.tb_log, "$(typeof(agent))/estimated_advantage", mean(estimated_advantage))
     log_value(ra.tb_log, "$(typeof(agent))/entropy", mean(entropys))
     log_value(ra.tb_log, "$(typeof(agent))/explore", mean(explore))
+    for (epoch, batch) in enumerate(Batcher(sars, 100))
+        if epoch > 100; break end
+        prms = params(
+            agent.choice_encoder,
+            agent.critic)
+        loss, grads = valgrad(prms) do
+            mean(batch) do sar
+                predicted_q = state_value(agent, ra, sar.state)
+                actual_q = sar.q
+                abs(predicted_q - actual_q)
+            end
+        end
+        log_value(train_log, "train/critic_loss", loss, step=epoch)
+        @assert !isnan(loss)
+        Flux.Optimise.update!(critic_opt, prms, grads)
+    end
+    log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     empty!(agent.sars)
 end
 
