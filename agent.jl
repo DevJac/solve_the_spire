@@ -19,6 +19,15 @@ using Utils
 
 const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
 
+struct Exit; end
+
+function maybe_exit()
+    if isfile(joinpath(tempdir(), "exit_sts"))
+        rm(joinpath(tempdir(), "exit_sts"))
+        throw(Exit())
+    end
+end
+
 function launch_sts()
     ENV["STS_COMMUNICATION_SOCKET"] = tempname()
     sts_process = run(pipeline(`./launch_sts.sh`, stdout="sts_out.txt", stderr="sts_err.txt"), wait=false)
@@ -76,6 +85,7 @@ end
 function main()
     try
         pushover("STS started")
+        maybe_exit()
         while true
             try
                 mkpath("models")
@@ -122,6 +132,7 @@ function agent_main(root_agent)
                 BSON.bson(
                     @sprintf("models/agent.%04d.t.bson", max_file_number("models", "agent")+1),
                     model=root_agent)
+                maybe_exit()
                 return
             end
             local sts_state
@@ -153,6 +164,7 @@ function agent_main(root_agent)
                     BSON.bson(
                         @sprintf("models/agent.%04d.s.bson", max_file_number("models", "agent")+1),
                         model=root_agent)
+                    maybe_exit()
                 end
             end
         end
