@@ -27,6 +27,7 @@ CeramicFish
 Chemical X
 ClockworkSouvenir
 Coffee Dripper
+CultistMask
 Cursed Key
 Darkstone Periapt
 Dead Branch

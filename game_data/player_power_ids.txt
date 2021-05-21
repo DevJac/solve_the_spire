@@ -2,6 +2,7 @@ Accuracy
 After Image
 Artifact
 Blur
+Buffer
 Burst
 Confusion
 DexLoss
@@ -23,6 +24,7 @@ Next Turn Block
 NoBlockPower
 No Draw
 Noxious Fumes
+Panache
 Pen Nib
 Phantasmal
 Plated Armor

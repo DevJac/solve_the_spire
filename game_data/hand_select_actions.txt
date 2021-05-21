@@ -1,5 +1,8 @@
 DiscardAction
+ExhaustAction
+ForethoughtAction
 GamblingChipAction
 NightmareAction
+PutOnDeckAction
 RetainCardsAction
 SetupAction
