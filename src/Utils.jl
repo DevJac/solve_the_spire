@@ -88,9 +88,13 @@ function kill_java()
 end
 
 function pushover(message)
-    client = PushoverClient(ENV["PUSHOVER_USER_KEY"], ENV["PUSHOVER_STS_API_TOKEN"])
-    response = send(client, message)
-    @assert response["status"] == 1
+    try
+        client = PushoverClient(ENV["PUSHOVER_USER_KEY"], ENV["PUSHOVER_STS_API_TOKEN"])
+        response = send(client, message)
+        @assert response["status"] == 1
+    catch e
+        @warn "Pushover failed" exception=e
+    end
 end
 
 export Smoother, smooth!
