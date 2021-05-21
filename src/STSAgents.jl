@@ -13,10 +13,10 @@ using Zygote
 
 export RootAgent, agent_command, action, train!
 
-const STANDARD_POLICY_LAYERS = [200, 200, 200, 200, 200, 200]
-const STANDARD_CRITIC_LAYERS = [200, 200, 200, 200, 200, 200]
-const STANDARD_EMBEDDER_LAYERS = [50]
-const STANDARD_EMBEDDER_OUT = 50
+const STANDARD_POLICY_LAYERS = [600, 600]
+const STANDARD_CRITIC_LAYERS = [600, 600]
+const STANDARD_EMBEDDER_LAYERS = [60]
+const STANDARD_EMBEDDER_OUT = 60
 const STANDARD_KL_DIV_EARLY_STOP = 1000 # disabled, no limit
 
 mutable struct RootAgent
