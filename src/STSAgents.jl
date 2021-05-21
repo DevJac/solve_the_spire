@@ -251,7 +251,7 @@ function train!(train_log, agent, ra)
             mean(batch) do sar
                 predicted_q = state_value(agent, ra, sar.state)
                 actual_q = sar.q
-                abs(predicted_q - actual_q)
+                (predicted_q - actual_q) ^ 2
             end
         end
         log_value(train_log, "train/critic_loss", loss, step=epoch)
