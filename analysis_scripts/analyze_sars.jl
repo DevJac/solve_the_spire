@@ -23,7 +23,7 @@ for agent in m.agents
     if :sars in fieldnames(typeof(agent))
         println("\n\n\n")
         println(typeof(agent))
-        qs = fill_q(agent.sars)
+        qs = fill_q(agent.sars, sar -> sar.q - STSAgents.state_value(agent, m, sar.state), 0.98)
         for (i, q) in enumerate(qs)
             floor = nothing
             while isnothing(floor)
@@ -35,16 +35,17 @@ for agent in m.agents
                 end
             end
             sv = STSAgents.state_value(agent, m, qs[i].state)
-            @printf("%4d %4d (%6.2f, %6.2f) %6.2f %6.2f (%6.2f - ev: %6.2f) = %6.2f",
+            @printf("%4d %4d (%6.2f, %6.2f) %6.2f %6.2f (%6.2f - ev: %6.2f) = %6.2f ad_norm: %6.2f",
                     i,
                     floor,
                     agent.sars.rewards[i][1],
                     agent.sars.rewards[i][2],
                     q.reward,
-                    q.q_norm,
-                    q.q_norm,
+                    q.q,
+                    q.q,
                     sv,
-                    q.q_norm - sv)
+                    q.advantage,
+                    q.advantage_norm)
             if "combat_state" in keys(qs[i].state["game_state"])
                 state = qs[i].state
                 as, aps = STSAgents.action_probabilities(agent, m, state)
