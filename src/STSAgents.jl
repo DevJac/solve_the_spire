@@ -185,12 +185,13 @@ function floor_partial_credit(ra::RootAgent)
 end
 
 function train!(train_log, agent, ra)
-    critic_opt = RMSProp(0.000_01)
+    sars_discount = 0.95
+    critic_opt = RMSProp(0.000_1)
     policy_opt = RMSProp(0.000_1)
-    sars = fill_q(agent.sars, _->0, 0.99)
+    sars = fill_q(agent.sars, _->0, sars_discount)
     if length(sars) < 2; return end
     target_agent = deepcopy(agent)
-    sars = fill_q(agent.sars, sar -> sar.q - state_value(target_agent, ra, sar.state), 0.98)
+    sars = fill_q(agent.sars, sar -> sar.q - state_value(target_agent, ra, sar.state), sars_discount)
     local loss
     kl_divs = Float32[]
     actual_value = Float32[]
@@ -198,7 +199,7 @@ function train!(train_log, agent, ra)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 100))
+    for (epoch, batch) in enumerate(Batcher(sars, 50))
         prms = params(
             agent.choice_encoder,
             agent.policy)
@@ -242,7 +243,7 @@ function train!(train_log, agent, ra)
     log_value(ra.tb_log, "$(typeof(agent))/estimated_advantage", mean(estimated_advantage))
     log_value(ra.tb_log, "$(typeof(agent))/entropy", mean(entropys))
     log_value(ra.tb_log, "$(typeof(agent))/explore", mean(explore))
-    for (epoch, batch) in enumerate(Batcher(sars, 100))
+    for (epoch, batch) in enumerate(Batcher(sars, 50))
         if epoch > 100; break end
         prms = params(
             agent.choice_encoder,
