@@ -171,7 +171,7 @@ function agent_main(root_agent)
                     end
                 end
             catch e
-                @warn "STS crashed, logging final state" exception=e
+                @warn "Logging final state" exception=e
                 open(CRASH_STATES_LOG_FILE, "a") do crash_states_log_file
                     write_json(crash_states_log_file, Dict("sts_state" => sts_state))
                 end
