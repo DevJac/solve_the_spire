@@ -18,6 +18,7 @@ using TensorBoardLogger
 using Utils
 
 const LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/log.txt"
+const CRASH_STATES_LOG_FILE = "/home/devjac/Code/julia/solve_the_spire/crash_states.txt"
 
 struct Exit; end
 
@@ -140,31 +141,38 @@ function agent_main(root_agent)
                 sts_state = JSON.parse(take!(sts_socket_channel))
                 if isempty(sts_socket_channel); break end
             end
-            write_json(log_file, Dict("sts_state" => sts_state))
-            ac = agent_command(root_agent, sts_state)
-            if isnothing(ac)
-                println("Agent gave no command. You may enter a manual command.")
-                mc = manual_command()
-                write_json(log_file, Dict("manual_command" => mc))
-                write(sts_socket, mc * "\n")
-            else
-                if typeof(ac) == String; ac = Command(ac) end
-                if isnothing(ac.extra)
-                    write_json(log_file, Dict("agent_command" => ac.command))
+            try
+                write_json(log_file, Dict("sts_state" => sts_state))
+                ac = agent_command(root_agent, sts_state)
+                if isnothing(ac)
+                    println("Agent gave no command. You may enter a manual command.")
+                    mc = manual_command()
+                    write_json(log_file, Dict("manual_command" => mc))
+                    write(sts_socket, mc * "\n")
                 else
-                    write_json(log_file, Dict("agent_command" => ac.command, "extra" => ac.extra))
+                    if typeof(ac) == String; ac = Command(ac) end
+                    if isnothing(ac.extra)
+                        write_json(log_file, Dict("agent_command" => ac.command))
+                    else
+                        write_json(log_file, Dict("agent_command" => ac.command, "extra" => ac.extra))
+                    end
+                    write(sts_socket, ac.command * "\n")
                 end
-                write(sts_socket, ac.command * "\n")
-            end
-            if is_game_over(sts_state)
-                root_agent.games += 1
-                println("Games played: $(root_agent.games)")
-                root_agent.ready_to_train = root_agent.games % 40 == 0
-                if root_agent.games % 10 == 0 || root_agent.ready_to_train
-                    BSON.bson(
-                        @sprintf("models/agent.%04d.s.bson", max_file_number("models", "agent")+1),
-                        model=root_agent)
-                    maybe_exit()
+                if is_game_over(sts_state)
+                    root_agent.games += 1
+                    println("Games played: $(root_agent.games)")
+                    root_agent.ready_to_train = root_agent.games % 40 == 0
+                    if root_agent.games % 10 == 0 || root_agent.ready_to_train
+                        BSON.bson(
+                            @sprintf("models/agent.%04d.s.bson", max_file_number("models", "agent")+1),
+                            model=root_agent)
+                        maybe_exit()
+                    end
+                end
+            finally
+                @warn "STS crashed, logging final state" exception=e
+                open(CRASH_STATES_LOG_FILE, "a") do crash_states_log_file
+                    write_json(crash_states_log_file, Dict("sts_state" => sts_state))
                 end
             end
         end
