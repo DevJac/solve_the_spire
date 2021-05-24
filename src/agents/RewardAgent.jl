@@ -51,6 +51,8 @@ function action(agent::RewardAgent, ra::RootAgent, sts_state)
         elseif gs["screen_type"] in ("COMBAT_REWARD", "BOSS_REWARD", "CHEST")
             if gs["screen_type"] == "CHEST"
                 # TODO: Give agent a choice if player has a cursed key
+                if !in("choose", sts_state["available_commands"])
+                    return "proceed"
                 return "choose 0"
             end
             if gs["screen_type"] == "COMBAT_REWARD"
