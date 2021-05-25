@@ -114,15 +114,17 @@ function setup_choice_encoder(agent::ShopAgent, ra::RootAgent, sts_state)
                     action)
                 continue
             end
-            if !isempty(matching_relics)
-                matching_relic = matching_relics[1]
-                if matching_relic["id"] == "PrismaticShard"; continue end
-                add_encoded_choice(
-                    agent.choice_encoder,
-                    :buy_relic,
-                    [matching_relic["price"]; relics_encoder([matching_relic])],
-                    action)
-                continue
+            if !any(r -> r["id"] == "Sozu", gs["relics"])
+                if !isempty(matching_relics)
+                    matching_relic = matching_relics[1]
+                    if matching_relic["id"] == "PrismaticShard"; continue end
+                    add_encoded_choice(
+                        agent.choice_encoder,
+                        :buy_relic,
+                        [matching_relic["price"]; relics_encoder([matching_relic])],
+                        action)
+                    continue
+                end
             end
             if !isempty(matching_potions)
                 if !any(p -> p["id"] == "Potion Slot", gs["potions"])
