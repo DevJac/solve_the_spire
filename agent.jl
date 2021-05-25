@@ -96,6 +96,7 @@ function main()
                 if typeof(e) == ErrorException && occursin("Unexpected end of input", e.msg)
                     @warn "STS crashed, will restart" exception=e
                     showerror(stdout, e, catch_backtrace())
+                    println()
                     sleep(3)
                     continue
                 end
