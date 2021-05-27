@@ -124,7 +124,10 @@ function setup_choice_encoder(agent::ShopAgent, ra::RootAgent, sts_state)
                     action)
                 continue
             end
-            if !isempty(matching_potions) && !any(r -> r["id"] == "Sozu", gs["relics"])
+            if !isempty(matching_potions)
+                if any(r -> r["id"] == "Sozu", gs["relics"])
+                    continue
+                end
                 if !any(p -> p["id"] == "Potion Slot", gs["potions"])
                     for (potion_i, potion) in enumerate(gs["potions"])
                         use_discard = potion["can_use"] ? "use" : "discard"
