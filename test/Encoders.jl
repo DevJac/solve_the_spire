@@ -3,8 +3,19 @@ using Test
 
 using Encoders
 
+@testset "make_screen_type_encoder" begin
+    gd = GameData([], [], [], [], [], [], [], [], [], ["GAME_OVER", "NONE"])
+    encoder = make_screen_type_encoder(gd)
+    j = JSON.parse("""
+        {"game_state": {
+            "screen_type": "NONE"
+        }}
+    """)
+    @test encoder(j) == Float32.([0, 1])
+end
+
 @testset "make_card_encoder" begin
-    gd = GameData([], ["card_1", "card_2"], ["COMMON", "RARE"], ["ATTACK", "DEFEND"], [], [], [], [], [])
+    gd = GameData([], ["card_1", "card_2"], ["COMMON", "RARE"], ["ATTACK", "DEFEND"], [], [], [], [], [], [])
     encoder = make_card_encoder(gd)
     # One-hot encoding for each card (2)
     # One-hot encoding for each rarity (2)
@@ -39,7 +50,7 @@ end
 end
 
 @testset "make_player_combat_encoder" begin
-    gd = GameData([], [], [], [], [], [], ["power_1", "power_2"], [], [])
+    gd = GameData([], [], [], [], [], [], ["power_1", "power_2"], [], [], [])
     encoder = make_player_combat_encoder(gd)
     # 2 encoded vectors for each power (2*2)
     # Current HP, max HP, HP ratio, energy, block, surplus block, cards discarded this turn (7)
@@ -96,7 +107,7 @@ end
 end
 
 @testset "make_monster_encoder" begin
-    gd = GameData([], [], [], [], ["monster_1", "monster_2"], ["m_power_1", "m_power_2"], [], [], [])
+    gd = GameData([], [], [], [], ["monster_1", "monster_2"], ["m_power_1", "m_power_2"], [], [], [], [])
     encoder = make_monster_encoder(gd)
     # One-hot encoded monster (2)
     # 2 encoded vectors for each power (2*2)
@@ -120,7 +131,7 @@ end
 end
 
 @testset "make_relics_encoder" begin
-    gd = GameData([], [], [], [], [], [], [], [], ["relic_1", "relic_2", "relic_3"])
+    gd = GameData([], [], [], [], [], [], [], [], ["relic_1", "relic_2", "relic_3"], [])
     encoder = make_relics_encoder(gd)
     # 2 encoded vectors for each relic (2*3)
     @test length(encoder) == 2*3
@@ -134,7 +145,7 @@ end
 end
 
 @testset "make_potions_encoder" begin
-    gd = GameData([], [], [], [], [], [], [], ["potion_1", "potion_2", "potion_3"], [])
+    gd = GameData([], [], [], [], [], [], [], ["potion_1", "potion_2", "potion_3"], [], [])
     encoder = make_potions_encoder(gd)
     # Count encoding for each potion (3)
     @test length(encoder) == 3

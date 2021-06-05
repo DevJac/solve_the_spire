@@ -15,6 +15,7 @@ struct GameData
     player_power_ids
     potion_ids
     relic_ids
+    screen_types
 end
 
 const DefaultGameData = GameData(
@@ -26,7 +27,8 @@ const DefaultGameData = GameData(
     readlines("game_data/monster_power_ids.txt"),
     readlines("game_data/player_power_ids.txt"),
     readlines("game_data/potion_ids.txt"),
-    readlines("game_data/relic_ids.txt"))
+    readlines("game_data/relic_ids.txt"),
+    readlines("game_data/screen_types.txt"))
 
 struct Encoder
     name     :: String
@@ -53,8 +55,20 @@ function add_encoder(f, encoder::Encoder)
     push!(encoder.encoders, f)
 end
 
-export make_card_encoder, make_player_basic_encoder, make_player_combat_encoder
+export make_screen_type_encoder, make_card_encoder, make_player_basic_encoder, make_player_combat_encoder
 export make_monster_encoder, make_relics_encoder, make_potions_encoder, make_map_encoder
+
+function make_screen_type_encoder(game_data)
+    encoder = Encoder("Screen Type")
+    ae(f) = add_encoder(f, encoder)
+    for screen_type in game_data.screen_types
+        ae() do j
+            @assert j["game_state"]["screen_type"] in game_data.screen_types
+            j["game_state"]["screen_type"] == screen_type
+        end
+    end
+    encoder
+end
 
 function make_card_encoder(game_data)
     encoder = Encoder("Card")
@@ -283,13 +297,12 @@ function map_paths(map_state, x, y)
 end
 
 function map_paths′(
-    symbol_map::Dict{Tuple{Int8,Int8},Char},
-    child_map::Dict{Tuple{Int8,Int8},Vector{Tuple{Int8,Int8}}},
-    x::Int8,
-    y::Int8,
-    all_paths::Vector{Vector{Char}},
-    path::Vector{Char}
-)
+        symbol_map::Dict{Tuple{Int8,Int8},Char},
+        child_map::Dict{Tuple{Int8,Int8},Vector{Tuple{Int8,Int8}}},
+        x::Int8,
+        y::Int8,
+        all_paths::Vector{Vector{Char}},
+        path::Vector{Char})
     leaf_node = true
     if (x, y) in keys(symbol_map); push!(path, symbol_map[(x, y)]) end
     for child_node in get(child_map, (x, y), [])
@@ -302,9 +315,10 @@ function map_paths′(
     all_paths
 end
 
-export card_encoder, player_basic_encoder, player_combat_encoder
+export screen_type_encoder, card_encoder, player_basic_encoder, player_combat_encoder
 export monster_encoder, relics_encoder, potions_encoder, map_encoder
 
+const screen_type_encoder = make_screen_type_encoder(DefaultGameData)
 const card_encoder = make_card_encoder(DefaultGameData)
 const player_basic_encoder = make_player_basic_encoder()
 const player_combat_encoder = make_player_combat_encoder(DefaultGameData)
