@@ -125,33 +125,75 @@ RetainCardsAction
 SetupAction
 * Refactor
 - [ ] .
-- [X] ├── agent.jl
+- [ ] ├── agent.0307.t.bson.xz
+- [ ] ├── agent.jl
+- [ ] ├── analysis_scripts
+- [ ] │   ├── analyze_network_size.jl
+- [ ] │   └── analyze_sars.jl
+- [ ] ├── check_settings.sh
+- [ ] ├── config_copies
+- [ ] │   ├── communication_mod_config.properties
+- [ ] │   └── SuperFastModeConfig.properties
+- [ ] ├── exit.jl
+- [ ] ├── game_data
+- [ ] │   ├── boss_ids.txt
+- [ ] │   ├── card_ids.txt
+- [ ] │   ├── card_rarities.txt
+- [ ] │   ├── card_types.txt
+- [ ] │   ├── hand_select_actions.txt
+- [ ] │   ├── monster_ids.txt
+- [ ] │   ├── monster_power_ids.txt
+- [ ] │   ├── player_power_ids.txt
+- [ ] │   ├── potion_ids.txt
+- [ ] │   └── relic_ids.txt
+- [ ] ├── jq_scripts
+- [ ] │   ├── extract_all.sh
+- [ ] │   ├── extract_bosses.sh
+- [ ] │   ├── extract_cards.sh
+- [ ] │   ├── extract_hand_select_actions.sh
+- [ ] │   ├── extract_monster_powers.sh
+- [ ] │   ├── extract_monsters.sh
+- [ ] │   ├── extract_player_powers.sh
+- [ ] │   ├── extract_potions.sh
+- [ ] │   └── extract_relics.sh
+- [ ] ├── launch_sts.sh
+- [ ] ├── logs
+- [ ] │   ├── random_log.txt.xz
+- [ ] │   └── README.txt
+- [ ] ├── make_J.jl
+- [ ] ├── Manifest.toml
 - [ ] ├── notes.org
+- [ ] ├── Project.toml
 - [ ] ├── README.md
-- [X] ├── relay.jl
+- [ ] ├── relay.jl
 - [ ] ├── src
-- [X] │   ├── Encoders.jl
-- [X] │   ├── Networks.jl
-- [X] │   ├── SARSM.jl
-- [X] │   ├── STSAgents.jl
-- [X] │   ├── Utils.jl
-- [ ] │   ├── agents
-- [ ] │   │   ├── CampfireAgent.jl
-- [X] │   │   ├── CombatAgent.jl
-- [X] │   │   ├── DeckAgent.jl
-- [ ] │   │   ├── EventAgent.jl
-- [X] │   │   ├── MapAgent.jl
-- [X] │   │   ├── MenuAgent.jl
-- [ ] │   │   ├── PotionAgent.jl
-- [ ] │   │   ├── RewardAgent.jl
-- [ ] │   │   ├── ShopAgent.jl
-- [ ] │   │   └── SpecialActionAgent.jl
-- [X] └── test
-- [X]     ├── Encoders.jl
-- [X]     ├── Networks.jl
-- [X]     ├── runtests.jl
-- [X]     ├── SARSM.jl
-- [X]     └── Utils.jl
+- [ ] │   ├── AgentCommands.jl
+- [ ] │   ├── agents
+- [ ] │   │   ├── CampfireAgent.jl
+- [ ] │   │   ├── CombatAgent.jl
+- [ ] │   │   ├── DeckAgent.jl
+- [ ] │   │   ├── EventAgent.jl
+- [ ] │   │   ├── MapAgent.jl
+- [ ] │   │   ├── MenuAgent.jl
+- [ ] │   │   ├── PotionAgent.jl
+- [ ] │   │   ├── RewardAgent.jl
+- [ ] │   │   ├── ShopAgent.jl
+- [ ] │   │   └── SpecialActionAgent.jl
+- [ ] │   ├── ChoiceEncoders.jl
+- [ ] │   ├── Encoders.jl
+- [ ] │   ├── Networks.jl
+- [ ] │   ├── SARSM.jl
+- [ ] │   ├── STSAgents.jl
+- [ ] │   └── Utils.jl
+- [ ] ├── test
+- [ ] │   ├── ChoiceEncoders.jl
+- [ ] │   ├── Encoders.jl
+- [ ] │   ├── map.json
+- [ ] │   ├── Networks.jl
+- [ ] │   ├── runtests.jl
+- [ ] │   ├── SARSM.jl
+- [ ] │   └── Utils.jl
+- [ ] └── test_with_coverage.sh
 * Available Commands
 - "play"
 - "end"
