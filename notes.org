@@ -124,49 +124,49 @@ NightmareAction
 RetainCardsAction
 SetupAction
 * Refactor
-- [ ] .
-- [ ] ├── agent.0307.t.bson.xz
+- [X] .
+- [X] ├── agent.0307.t.bson.xz
 - [ ] ├── agent.jl
-- [ ] ├── analysis_scripts
-- [ ] │   ├── analyze_network_size.jl
-- [ ] │   └── analyze_sars.jl
-- [ ] ├── check_settings.sh
-- [ ] ├── config_copies
-- [ ] │   ├── communication_mod_config.properties
-- [ ] │   └── SuperFastModeConfig.properties
-- [ ] ├── exit.jl
-- [ ] ├── game_data
-- [ ] │   ├── boss_ids.txt
-- [ ] │   ├── card_ids.txt
-- [ ] │   ├── card_rarities.txt
-- [ ] │   ├── card_types.txt
-- [ ] │   ├── hand_select_actions.txt
-- [ ] │   ├── monster_ids.txt
-- [ ] │   ├── monster_power_ids.txt
-- [ ] │   ├── player_power_ids.txt
-- [ ] │   ├── potion_ids.txt
-- [ ] │   └── relic_ids.txt
-- [ ] ├── jq_scripts
-- [ ] │   ├── extract_all.sh
-- [ ] │   ├── extract_bosses.sh
-- [ ] │   ├── extract_cards.sh
-- [ ] │   ├── extract_hand_select_actions.sh
-- [ ] │   ├── extract_monster_powers.sh
-- [ ] │   ├── extract_monsters.sh
-- [ ] │   ├── extract_player_powers.sh
-- [ ] │   ├── extract_potions.sh
-- [ ] │   └── extract_relics.sh
-- [ ] ├── launch_sts.sh
-- [ ] ├── logs
-- [ ] │   ├── random_log.txt.xz
-- [ ] │   └── README.txt
-- [ ] ├── make_J.jl
-- [ ] ├── Manifest.toml
+- [X] ├── analysis_scripts
+- [X] │   ├── analyze_network_size.jl
+- [X] │   └── analyze_sars.jl
+- [X] ├── check_settings.sh
+- [X] ├── config_copies
+- [X] │   ├── communication_mod_config.properties
+- [X] │   └── SuperFastModeConfig.properties
+- [X] ├── exit.jl
+- [X] ├── game_data
+- [X] │   ├── boss_ids.txt
+- [X] │   ├── card_ids.txt
+- [X] │   ├── card_rarities.txt
+- [X] │   ├── card_types.txt
+- [X] │   ├── hand_select_actions.txt
+- [X] │   ├── monster_ids.txt
+- [X] │   ├── monster_power_ids.txt
+- [X] │   ├── player_power_ids.txt
+- [X] │   ├── potion_ids.txt
+- [X] │   └── relic_ids.txt
+- [X] ├── jq_scripts
+- [X] │   ├── extract_all.sh
+- [X] │   ├── extract_bosses.sh
+- [X] │   ├── extract_cards.sh
+- [X] │   ├── extract_hand_select_actions.sh
+- [X] │   ├── extract_monster_powers.sh
+- [X] │   ├── extract_monsters.sh
+- [X] │   ├── extract_player_powers.sh
+- [X] │   ├── extract_potions.sh
+- [X] │   └── extract_relics.sh
+- [X] ├── launch_sts.sh
+- [X] ├── logs
+- [X] │   ├── random_log.txt.xz
+- [X] │   └── README.txt
+- [X] ├── make_J.jl
+- [X] ├── Manifest.toml
 - [ ] ├── notes.org
-- [ ] ├── Project.toml
-- [ ] ├── README.md
-- [ ] ├── relay.jl
-- [ ] ├── src
+- [X] ├── Project.toml
+- [X] ├── README.md
+- [X] ├── relay.jl
+- [X] ├── src
 - [ ] │   ├── AgentCommands.jl
 - [ ] │   ├── agents
 - [ ] │   │   ├── CampfireAgent.jl
@@ -185,7 +185,7 @@ SetupAction
 - [ ] │   ├── SARSM.jl
 - [ ] │   ├── STSAgents.jl
 - [ ] │   └── Utils.jl
-- [ ] ├── test
+- [X] ├── test
 - [ ] │   ├── ChoiceEncoders.jl
 - [ ] │   ├── Encoders.jl
 - [ ] │   ├── map.json
@@ -193,7 +193,7 @@ SetupAction
 - [ ] │   ├── runtests.jl
 - [ ] │   ├── SARSM.jl
 - [ ] │   └── Utils.jl
-- [ ] └── test_with_coverage.sh
+- [X] └── test_with_coverage.sh
 * Available Commands
 - "play"
 - "end"
