@@ -7,4 +7,4 @@ echo 'Syncing GOG Games'
 rsync -ac --info=progress2 ~/GOG\ Games root@$DROPLET_IP:
 
 echo 'Syncing ModTheSpire'
-rsync -ac --info=progress2 ~/.config/ModTheSpire root@$DROPLET_IP:
+rsync -ac --info=progress2 ~/.config/ModTheSpire root@$DROPLET_IP:.config
