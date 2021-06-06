@@ -425,9 +425,9 @@ uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 
 [[ProtoBuf]]
 deps = ["Logging", "protoc_jll"]
-git-tree-sha1 = "e0f3cfe23d6a9430b6b5970dd65dc0f88c141ba9"
+git-tree-sha1 = "3142e13697a7f6363798d1241daf3e6cead83008"
 uuid = "3349acd9-ac6a-5e09-bcdb-63829b23a429"
-version = "0.11.1"
+version = "0.11.2"
 
 [[Pushover]]
 deps = ["HTTP", "JSON", "Sockets", "Test"]
