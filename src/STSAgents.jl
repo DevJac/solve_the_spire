@@ -184,10 +184,20 @@ function floor_partial_credit(ra::RootAgent)
     ra.combat_agent.floor_partial_credit
 end
 
+function policy_opt(agent)
+    println("New optimizer for $agent")
+    RMSProp(0.000_1)
+end
+
+function critic_opt(agent)
+    println("New optimizer for $agent")
+    RMSProp(0.000_01)
+end
+
 function train!(train_log, agent, ra)
     sars_discount = 0.95
-    policy_opt = RMSProp(0.000_1)
-    critic_opt = RMSProp(0.000_01)
+    policy_opt = policy_opt(agent)
+    critic_opt = critic_opt(agent)
     sars = fill_q(agent.sars, _->0, sars_discount)
     if length(sars) < 2; return end
     target_agent = deepcopy(agent)
@@ -199,7 +209,7 @@ function train!(train_log, agent, ra)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 50))
+    for (epoch, batch) in enumerate(Batcher(sars, 5000))
         prms = params(
             agent.choice_encoder,
             agent.policy)
@@ -232,7 +242,7 @@ function train!(train_log, agent, ra)
         @assert !any(isnan, (loss, mean(kl_divs), mean(actual_value), mean(estimated_value),
                              mean(estimated_advantage), mean(entropys), mean(explore)))
         Flux.Optimise.update!(policy_opt, prms, grads)
-        if epoch >= 100 || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
+        if epoch >= 10 || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
         empty!(entropys); empty!(explore)
     end
