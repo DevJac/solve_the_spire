@@ -184,20 +184,16 @@ function floor_partial_credit(ra::RootAgent)
     ra.combat_agent.floor_partial_credit
 end
 
-function policy_opt(agent)
-    println("New optimizer for $agent")
-    RMSProp(0.000_1)
-end
-
-function critic_opt(agent)
-    println("New optimizer for $agent")
+@memoize function new_opt(agent_type, opt_type)
+    println("New $opt_type for $agent_type")
     RMSProp(0.000_01)
 end
 
+policy_opt(agent) = new_opt(typeof(agent), "policy optimizer")
+critic_opt(agent) = new_opt(typeof(agent), "critic optimizer")
+
 function train!(train_log, agent, ra)
     sars_discount = 0.95
-    policy_opt = policy_opt(agent)
-    critic_opt = critic_opt(agent)
     sars = fill_q(agent.sars, _->0, sars_discount)
     if length(sars) < 2; return end
     target_agent = deepcopy(agent)
@@ -241,7 +237,7 @@ function train!(train_log, agent, ra)
         log_value(train_log, "train/explore", mean(explore), step=epoch)
         @assert !any(isnan, (loss, mean(kl_divs), mean(actual_value), mean(estimated_value),
                              mean(estimated_advantage), mean(entropys), mean(explore)))
-        Flux.Optimise.update!(policy_opt, prms, grads)
+        Flux.Optimise.update!(policy_opt(agent), prms, grads)
         if epoch >= 10 || mean(kl_divs) > STANDARD_KL_DIV_EARLY_STOP; break end
         empty!(kl_divs); empty!(actual_value); empty!(estimated_value); empty!(estimated_advantage)
         empty!(entropys); empty!(explore)
@@ -267,7 +263,7 @@ function train!(train_log, agent, ra)
         end
         log_value(train_log, "train/critic_loss", loss, step=epoch)
         @assert !isnan(loss)
-        Flux.Optimise.update!(critic_opt, prms, grads)
+        Flux.Optimise.update!(critic_opt(agent), prms, grads)
     end
     log_value(ra.tb_log, "$(typeof(agent))/critic_loss", loss)
     empty!(agent.sars)
