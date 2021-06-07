@@ -37,7 +37,7 @@ function launch_sts()
         try
             return sts_process, connect(ENV["STS_COMMUNICATION_SOCKET"])
         catch e
-            if typeof(e) == Base.IOError && timeout_start + 30 > time()
+            if typeof(e) == Base.IOError && timeout_start + 300 > time()
                 sleep(3)
                 continue
             end
