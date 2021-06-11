@@ -13,10 +13,10 @@ using Zygote
 
 export RootAgent, agent_command, action, train!
 
-const STANDARD_POLICY_LAYERS = [600, 600]
-const STANDARD_CRITIC_LAYERS = [600, 600]
-const STANDARD_EMBEDDER_LAYERS = [60]
-const STANDARD_EMBEDDER_OUT = 60
+const STANDARD_POLICY_LAYERS = [800, 800, 800]
+const STANDARD_CRITIC_LAYERS = [800, 800, 800]
+const STANDARD_EMBEDDER_LAYERS = [200]
+const STANDARD_EMBEDDER_OUT = 80
 const STANDARD_KL_DIV_EARLY_STOP = 1000 # disabled, no limit
 
 mutable struct RootAgent
@@ -186,7 +186,7 @@ end
 
 @memoize function new_opt(agent_type, opt_type)
     println("New $opt_type for $agent_type")
-    RMSProp(0.000_01)
+    RMSProp(0.000_1)
 end
 
 policy_opt(agent) = new_opt(typeof(agent), "policy optimizer")
@@ -205,7 +205,7 @@ function train!(train_log, agent, ra)
     estimated_advantage = Float32[]
     entropys = Float32[]
     explore = Float32[]
-    for (epoch, batch) in enumerate(Batcher(sars, 5000))
+    for (epoch, batch) in enumerate(Batcher(sars, 100))
         prms = params(
             agent.choice_encoder,
             agent.policy)
