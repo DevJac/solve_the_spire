@@ -184,6 +184,21 @@ function floor_partial_credit(ra::RootAgent)
     ra.combat_agent.floor_partial_credit
 end
 
+function floor_adjusted(sts_floor)
+    sts_floor_bonuses = Dict(
+        16 => 16,
+        33 => 17,
+        51 => 18,
+        54 => 20,
+        55 => 30)
+    base = floor(sts_floor)
+    bonus = sum(sts_floor_bonuses) do (f, b)
+        f < base ? b : 0
+    end
+    bonus_partial = get(sts_floor_bonuses, base, 1) * (sts_floor % 1)
+    base + bonus + bonus_partial
+end
+
 @memoize function new_opt(agent_type, opt_type)
     println("New $opt_type for $agent_type")
     RMSProp(0.000_1)
