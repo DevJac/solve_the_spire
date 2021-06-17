@@ -13,11 +13,11 @@ using Zygote
 
 export RootAgent, agent_command, action, train!
 
-const STANDARD_POLICY_LAYERS = [800, 800, 800]
-const STANDARD_CRITIC_LAYERS = [800, 800, 800]
-const STANDARD_EMBEDDER_LAYERS = [200]
-const STANDARD_EMBEDDER_OUT = 80
-const STANDARD_KL_DIV_EARLY_STOP = 1000 # disabled, no limit
+const STANDARD_POLICY_LAYERS = [600, 600]
+const STANDARD_CRITIC_LAYERS = [600, 600]
+const STANDARD_EMBEDDER_LAYERS = [400, 400]
+const STANDARD_EMBEDDER_OUT = 200
+const STANDARD_KL_DIV_EARLY_STOP = 0.01 # disabled, no limit
 
 mutable struct RootAgent
     errors         :: Int
@@ -201,7 +201,7 @@ end
 
 @memoize function new_opt(agent_type, opt_type)
     println("New $opt_type for $agent_type")
-    RMSProp(0.000_1)
+    RMSProp(0.000_03)
 end
 
 policy_opt(agent) = new_opt(typeof(agent), "policy optimizer")
