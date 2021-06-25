@@ -163,7 +163,13 @@ function agent_main(root_agent)
                 if is_game_over(sts_state)
                     root_agent.games += 1
                     println("Games played: $(root_agent.games)")
-                    root_agent.ready_to_train = root_agent.games % 20 == 0
+                    root_agent.ready_to_train = root_agent.games % 40 == 0
+                    if root_agent.games % 20 == 0 || root_agent.ready_to_train
+                        BSON.bson(
+                            @sprintf("models/agent.%04d.s.bson", max_file_number("models", "agent")+1),
+                            model=root_agent)
+                        maybe_exit()
+                    end
                 end
             catch e
                 @warn "Logging final state" exception=e
